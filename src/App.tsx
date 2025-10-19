@@ -7,7 +7,10 @@ import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Feed from "./pages/Feed";
 import Reels from "./pages/Reels";
+import Search from "./pages/Search";
 import Create from "./pages/Create";
+import Messages from "./pages/Messages";
+import Conversation from "./pages/Conversation";
 import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
 
@@ -24,7 +27,10 @@ const App = () => (
           <Route path="/auth" element={<Auth />} />
           <Route path="/feed" element={<Feed />} />
           <Route path="/reels" element={<Reels />} />
+          <Route path="/search" element={<Search />} />
           <Route path="/create" element={<Create />} />
+          <Route path="/messages" element={<Messages />} />
+          <Route path="/messages/:conversationId" element={<Conversation />} />
           <Route path="/profile" element={<Profile />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />

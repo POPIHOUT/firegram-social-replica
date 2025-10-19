@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { Home, Film, PlusSquare, User } from "lucide-react";
+import { Home, Film, PlusSquare, Search, MessageCircle, User } from "lucide-react";
 import firegramLogo from "@/assets/firegram-logo.png";
 
 const Navigation = () => {
@@ -7,9 +7,10 @@ const Navigation = () => {
 
   const navItems = [
     { path: "/feed", icon: Home, label: "Feed" },
-    { path: "/reels", icon: Film, label: "Reels" },
-    { path: "/create", icon: PlusSquare, label: "Create" },
-    { path: "/profile", icon: User, label: "Profile" },
+    { path: "/search", icon: Search, label: "Hľadať" },
+    { path: "/create", icon: PlusSquare, label: "Vytvoriť" },
+    { path: "/messages", icon: MessageCircle, label: "Správy" },
+    { path: "/profile", icon: User, label: "Profil" },
   ];
 
   return (

@@ -1,0 +1,203 @@
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import Navigation from "@/components/Navigation";
+import { Input } from "@/components/ui/input";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Loader2, Search as SearchIcon, MessageCircle } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+
+interface Profile {
+  id: string;
+  username: string;
+  full_name: string | null;
+  avatar_url: string | null;
+  bio: string | null;
+}
+
+const Search = () => {
+  const [searchQuery, setSearchQuery] = useState("");
+  const [profiles, setProfiles] = useState<Profile[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const navigate = useNavigate();
+  const { toast } = useToast();
+
+  useEffect(() => {
+    checkAuth();
+  }, []);
+
+  const checkAuth = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      navigate("/auth");
+    } else {
+      setCurrentUserId(session.user.id);
+    }
+  };
+
+  const searchProfiles = async (query: string) => {
+    if (!query.trim()) {
+      setProfiles([]);
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("*")
+        .or(`username.ilike.%${query}%,full_name.ilike.%${query}%`)
+        .neq("id", currentUserId)
+        .limit(20);
+
+      if (error) throw error;
+      setProfiles(data || []);
+    } catch (error) {
+      console.error("Error searching profiles:", error);
+      toast({
+        title: "Chyba",
+        description: "Nepodarilo sa vyhľadať používateľov",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      searchProfiles(searchQuery);
+    }, 300);
+
+    return () => clearTimeout(timeoutId);
+  }, [searchQuery]);
+
+  const startConversation = async (userId: string) => {
+    if (!currentUserId) return;
+
+    try {
+      // Check if conversation already exists
+      const { data: existingConversations, error: fetchError } = await supabase
+        .from("conversation_participants")
+        .select("conversation_id")
+        .eq("user_id", currentUserId);
+
+      if (fetchError) throw fetchError;
+
+      // Check each conversation to see if it includes the target user
+      for (const conv of existingConversations || []) {
+        const { data: participants } = await supabase
+          .from("conversation_participants")
+          .select("user_id")
+          .eq("conversation_id", conv.conversation_id);
+
+        if (participants?.some(p => p.user_id === userId) && participants.length === 2) {
+          navigate(`/messages/${conv.conversation_id}`);
+          return;
+        }
+      }
+
+      // Create new conversation
+      const { data: conversation, error: convError } = await supabase
+        .from("conversations")
+        .insert({})
+        .select()
+        .single();
+
+      if (convError) throw convError;
+
+      // Add participants
+      const { error: participantsError } = await supabase
+        .from("conversation_participants")
+        .insert([
+          { conversation_id: conversation.id, user_id: currentUserId },
+          { conversation_id: conversation.id, user_id: userId }
+        ]);
+
+      if (participantsError) throw participantsError;
+
+      navigate(`/messages/${conversation.id}`);
+    } catch (error) {
+      console.error("Error starting conversation:", error);
+      toast({
+        title: "Chyba",
+        description: "Nepodarilo sa začať konverzáciu",
+        variant: "destructive",
+      });
+    }
+  };
+
+  return (
+    <div className="min-h-screen">
+      <Navigation />
+      <main className="max-w-2xl mx-auto pt-20 px-4 pb-24">
+        <h1 className="text-3xl font-bold mb-6 fire-text">Hľadať používateľov</h1>
+
+        <div className="relative mb-6">
+          <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-5 w-5" />
+          <Input
+            type="text"
+            placeholder="Hľadať podľa mena alebo používateľského mena..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-10"
+          />
+        </div>
+
+        {loading && (
+          <div className="flex justify-center py-8">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          </div>
+        )}
+
+        {!loading && searchQuery && profiles.length === 0 && (
+          <div className="text-center py-8 text-muted-foreground">
+            Žiadni používatelia nenájdení
+          </div>
+        )}
+
+        <div className="space-y-3">
+          {profiles.map((profile) => (
+            <Card key={profile.id} className="p-4">
+              <div className="flex items-center justify-between">
+                <div 
+                  className="flex items-center gap-3 flex-1 cursor-pointer"
+                  onClick={() => navigate('/profile')}
+                >
+                  <Avatar className="h-12 w-12">
+                    <AvatarImage src={profile.avatar_url || undefined} />
+                    <AvatarFallback className="bg-primary text-primary-foreground">
+                      {profile.username[0].toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1">
+                    <p className="font-semibold">{profile.username}</p>
+                    {profile.full_name && (
+                      <p className="text-sm text-muted-foreground">{profile.full_name}</p>
+                    )}
+                    {profile.bio && (
+                      <p className="text-sm text-muted-foreground line-clamp-1">{profile.bio}</p>
+                    )}
+                  </div>
+                </div>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  onClick={() => startConversation(profile.id)}
+                  className="ml-2"
+                >
+                  <MessageCircle className="h-5 w-5" />
+                </Button>
+              </div>
+            </Card>
+          ))}
+        </div>
+      </main>
+    </div>
+  );
+};
+
+export default Search;
