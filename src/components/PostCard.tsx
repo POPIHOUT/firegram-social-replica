@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Heart, MessageCircle, Bookmark, Shield, ChevronLeft, ChevronRight, Flame, Check } from "lucide-react";
+import { Flame, MessageCircle, Bookmark, Shield, ChevronLeft, ChevronRight, Check } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { supabase } from "@/integrations/supabase/client";
@@ -164,10 +164,7 @@ const PostCard = ({ post, onUpdate }: PostCardProps) => {
             {post.profiles.username}
           </span>
           {post.profiles.is_verified && (
-            <div className="relative flex-shrink-0">
-              <Flame size={16} className="text-orange-500" />
-              <Check size={8} className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-white" />
-            </div>
+            <Check size={16} className="text-primary" />
           )}
           {post.profiles.is_admin && (
             <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-accent/20">
@@ -220,9 +217,9 @@ const PostCard = ({ post, onUpdate }: PostCardProps) => {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <button onClick={handleLike} className="transition-transform active:scale-90">
-              <Heart
+              <Flame
                 size={24}
-                className={liked ? "fill-destructive text-destructive" : "text-foreground"}
+                className={liked ? "fill-orange-500 text-orange-500" : "text-foreground"}
               />
             </button>
             <button 
