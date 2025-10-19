@@ -4,9 +4,12 @@ import { supabase } from "@/integrations/supabase/client";
 import Navigation from "@/components/Navigation";
 import EditProfileDialog from "@/components/EditProfileDialog";
 import ImageViewerDialog from "@/components/ImageViewerDialog";
+import FollowersDialog from "@/components/FollowersDialog";
+import FollowingDialog from "@/components/FollowingDialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Shield, Grid, Film, Loader2, LogOut, Heart, MessageCircle, UserPlus, UserMinus, BadgeCheck } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Shield, Grid, Film, Loader2, LogOut, Heart, MessageCircle, UserPlus, UserMinus, Check } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface Profile {
@@ -52,6 +55,8 @@ const Profile = () => {
   const [imageViewerOpen, setImageViewerOpen] = useState(false);
   const [selectedImages, setSelectedImages] = useState<string[]>([]);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const [followersDialogOpen, setFollowersDialogOpen] = useState(false);
+  const [followingDialogOpen, setFollowingDialogOpen] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -208,13 +213,16 @@ const Profile = () => {
               <div className="flex items-center gap-3">
                 <h1 className="text-2xl font-bold">{profile.username}</h1>
                 {profile.is_verified && (
-                  <BadgeCheck size={24} className="text-primary fill-primary" />
+                  <Badge variant="default" className="flex items-center gap-1 px-2 py-1">
+                    <Check size={14} />
+                    Verified
+                  </Badge>
                 )}
                 {profile.is_admin && (
-                  <div className="flex items-center gap-1 px-3 py-1 rounded-full bg-accent/20">
-                    <Shield size={16} className="text-accent" />
-                    <span className="text-sm font-medium text-accent">Owner</span>
-                  </div>
+                  <Badge variant="secondary" className="flex items-center gap-1 px-2 py-1">
+                    <Shield size={14} />
+                    Owner
+                  </Badge>
                 )}
               </div>
 
@@ -223,14 +231,20 @@ const Profile = () => {
                   <p className="font-bold text-xl">{postsCount + reelsCount}</p>
                   <p className="text-sm text-muted-foreground">posts</p>
                 </div>
-                <div className="text-center">
+                <button 
+                  className="text-center hover:opacity-70 transition-opacity"
+                  onClick={() => setFollowersDialogOpen(true)}
+                >
                   <p className="font-bold text-xl">{followersCount}</p>
                   <p className="text-sm text-muted-foreground">followers</p>
-                </div>
-                <div className="text-center">
+                </button>
+                <button 
+                  className="text-center hover:opacity-70 transition-opacity"
+                  onClick={() => setFollowingDialogOpen(true)}
+                >
                   <p className="font-bold text-xl">{followingCount}</p>
                   <p className="text-sm text-muted-foreground">following</p>
-                </div>
+                </button>
               </div>
 
               {profile.full_name && (
@@ -414,6 +428,18 @@ const Profile = () => {
             setSelectedImageIndex((prev) => (prev === selectedImages.length - 1 ? 0 : prev + 1));
           }
         }}
+      />
+
+      <FollowersDialog
+        open={followersDialogOpen}
+        onOpenChange={setFollowersDialogOpen}
+        userId={profile?.id || ""}
+      />
+
+      <FollowingDialog
+        open={followingDialogOpen}
+        onOpenChange={setFollowingDialogOpen}
+        userId={profile?.id || ""}
       />
     </div>
   );

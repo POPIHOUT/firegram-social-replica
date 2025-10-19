@@ -11,7 +11,8 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Shield, Users, FileText, Film, Ban, Clock, Trash2, CheckCircle, XCircle, Loader2 } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Shield, Users, FileText, Film, Ban, Clock, Trash2, CheckCircle, XCircle, Loader2, Settings } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { formatDistanceToNow } from "date-fns";
 
@@ -69,6 +70,7 @@ const Admin = () => {
   const [banReason, setBanReason] = useState("");
   const [suspendReason, setSuspendReason] = useState("");
   const [suspendDays, setSuspendDays] = useState(7);
+  const [rolesDialogOpen, setRolesDialogOpen] = useState(false);
   const [stats, setStats] = useState({ users: 0, posts: 0, reels: 0 });
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -284,6 +286,30 @@ const Admin = () => {
     }
   };
 
+  const handleUpdateRoles = async (userId: string, roles: { is_admin?: boolean; is_verified?: boolean; is_support?: boolean }) => {
+    try {
+      const { error } = await supabase
+        .from("profiles")
+        .update(roles)
+        .eq("id", userId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Roles Updated",
+        description: "User roles have been updated successfully",
+      });
+
+      fetchData();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
   const filteredUsers = users.filter(
     (user) =>
       user.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -385,6 +411,18 @@ const Admin = () => {
                         </div>
 
                         <div className="flex gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              setSelectedUser(user);
+                              setRolesDialogOpen(true);
+                            }}
+                          >
+                            <Settings className="w-4 h-4 mr-2" />
+                            Roles
+                          </Button>
+
                           {user.banned ? (
                             <Button
                               variant="outline"
@@ -585,6 +623,78 @@ const Admin = () => {
             </Button>
             <Button onClick={handleSuspendUser}>
               Suspend User
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={rolesDialogOpen} onOpenChange={setRolesDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Manage User Roles</DialogTitle>
+            <DialogDescription>
+              Update roles for {selectedUser?.username}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <Label htmlFor="admin-role">Admin</Label>
+                <p className="text-sm text-muted-foreground">
+                  Full access to platform management
+                </p>
+              </div>
+              <Switch
+                id="admin-role"
+                checked={selectedUser?.is_admin || false}
+                onCheckedChange={(checked) => {
+                  if (selectedUser) {
+                    handleUpdateRoles(selectedUser.id, { is_admin: checked });
+                    setSelectedUser({ ...selectedUser, is_admin: checked });
+                  }
+                }}
+              />
+            </div>
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <Label htmlFor="verified-role">Verified</Label>
+                <p className="text-sm text-muted-foreground">
+                  Verified badge on profile
+                </p>
+              </div>
+              <Switch
+                id="verified-role"
+                checked={selectedUser?.is_verified || false}
+                onCheckedChange={(checked) => {
+                  if (selectedUser) {
+                    handleUpdateRoles(selectedUser.id, { is_verified: checked });
+                    setSelectedUser({ ...selectedUser, is_verified: checked });
+                  }
+                }}
+              />
+            </div>
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <Label htmlFor="support-role">Support</Label>
+                <p className="text-sm text-muted-foreground">
+                  Access to admin panel
+                </p>
+              </div>
+              <Switch
+                id="support-role"
+                checked={selectedUser?.is_support || false}
+                onCheckedChange={(checked) => {
+                  if (selectedUser) {
+                    handleUpdateRoles(selectedUser.id, { is_support: checked });
+                    setSelectedUser({ ...selectedUser, is_support: checked });
+                  }
+                }}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setRolesDialogOpen(false)}>
+              Close
             </Button>
           </DialogFooter>
         </DialogContent>
