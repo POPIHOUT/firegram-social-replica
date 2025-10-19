@@ -23,11 +23,12 @@ interface Comment {
 interface CommentsDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  postId: string;
+  postId?: string;
+  reelId?: string;
   onCommentAdded: () => void;
 }
 
-const CommentsDialog = ({ open, onOpenChange, postId, onCommentAdded }: CommentsDialogProps) => {
+const CommentsDialog = ({ open, onOpenChange, postId, reelId, onCommentAdded }: CommentsDialogProps) => {
   const [comments, setComments] = useState<Comment[]>([]);
   const [loading, setLoading] = useState(true);
   const [newComment, setNewComment] = useState("");
@@ -38,12 +39,13 @@ const CommentsDialog = ({ open, onOpenChange, postId, onCommentAdded }: Comments
     if (open) {
       fetchComments();
     }
-  }, [open, postId]);
+  }, [open, postId, reelId]);
 
   const fetchComments = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
+      
+      let query = supabase
         .from("comments")
         .select(`
           *,
@@ -51,9 +53,15 @@ const CommentsDialog = ({ open, onOpenChange, postId, onCommentAdded }: Comments
             username,
             avatar_url
           )
-        `)
-        .eq("post_id", postId)
-        .order("created_at", { ascending: false });
+        `);
+      
+      if (postId) {
+        query = query.eq("post_id", postId);
+      } else if (reelId) {
+        query = query.eq("reel_id", reelId);
+      }
+      
+      const { data, error } = await query.order("created_at", { ascending: false });
 
       if (error) throw error;
       setComments(data || []);
@@ -78,27 +86,47 @@ const CommentsDialog = ({ open, onOpenChange, postId, onCommentAdded }: Comments
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
+      const commentData: any = {
+        content: newComment.trim(),
+        user_id: user.id,
+      };
+
+      if (postId) {
+        commentData.post_id = postId;
+      } else if (reelId) {
+        commentData.reel_id = reelId;
+      }
+
       const { error: insertError } = await supabase
         .from("comments")
-        .insert({
-          content: newComment.trim(),
-          post_id: postId,
-          user_id: user.id,
-        });
+        .insert(commentData);
 
       if (insertError) throw insertError;
 
       // Update comments count
-      const { data: post } = await supabase
-        .from("posts")
-        .select("comments_count")
-        .eq("id", postId)
-        .single();
+      if (postId) {
+        const { data: post } = await supabase
+          .from("posts")
+          .select("comments_count")
+          .eq("id", postId)
+          .single();
 
-      await supabase
-        .from("posts")
-        .update({ comments_count: (post?.comments_count || 0) + 1 })
-        .eq("id", postId);
+        await supabase
+          .from("posts")
+          .update({ comments_count: (post?.comments_count || 0) + 1 })
+          .eq("id", postId);
+      } else if (reelId) {
+        const { data: reel } = await supabase
+          .from("reels")
+          .select("comments_count")
+          .eq("id", reelId)
+          .single();
+
+        await supabase
+          .from("reels")
+          .update({ comments_count: (reel?.comments_count || 0) + 1 })
+          .eq("id", reelId);
+      }
 
       setNewComment("");
       await fetchComments();
