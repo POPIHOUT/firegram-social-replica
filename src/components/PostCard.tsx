@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Heart, MessageCircle, Bookmark, Shield, ChevronLeft, ChevronRight, BadgeCheck } from "lucide-react";
+import { Heart, MessageCircle, Bookmark, Shield, ChevronLeft, ChevronRight, Flame, Check } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { supabase } from "@/integrations/supabase/client";
@@ -164,12 +164,15 @@ const PostCard = ({ post, onUpdate }: PostCardProps) => {
             {post.profiles.username}
           </span>
           {post.profiles.is_verified && (
-            <BadgeCheck size={16} className="text-primary fill-primary" />
+            <div className="relative flex-shrink-0">
+              <Flame size={16} className="text-orange-500" />
+              <Check size={8} className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-white" />
+            </div>
           )}
           {post.profiles.is_admin && (
             <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-accent/20">
               <Shield size={12} className="text-accent" />
-              <span className="text-xs font-medium text-accent">Owner</span>
+              <span className="text-xs font-medium text-accent">CEO</span>
             </div>
           )}
         </div>

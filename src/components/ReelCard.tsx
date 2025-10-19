@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Heart, MessageCircle, Share2, Play, Pause, BadgeCheck } from "lucide-react";
+import { Heart, MessageCircle, Share2, Play, Pause, Flame, Check } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -170,7 +170,10 @@ const ReelCard = ({ reel, profile, isActive, onUpdate }: ReelCardProps) => {
                 {profile.username}
               </span>
               {profile.is_verified && (
-                <BadgeCheck size={16} className="text-white fill-white" />
+                <div className="relative flex-shrink-0">
+                  <Flame size={16} className="text-orange-500" />
+                  <Check size={8} className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-white" />
+                </div>
               )}
             </div>
             </div>
