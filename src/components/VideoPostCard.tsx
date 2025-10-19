@@ -6,6 +6,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
+import CommentsDialog from "./CommentsDialog";
 
 interface VideoPostCardProps {
   reel: {
@@ -27,6 +28,7 @@ const VideoPostCard = ({ reel, onUpdate }: VideoPostCardProps) => {
   const [isLiked, setIsLiked] = useState(false);
   const [likesCount, setLikesCount] = useState(reel.likes_count);
   const [checkingLike, setCheckingLike] = useState(true);
+  const [commentsOpen, setCommentsOpen] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -159,12 +161,20 @@ const VideoPostCard = ({ reel, onUpdate }: VideoPostCardProps) => {
           <Button
             variant="ghost"
             size="sm"
+            onClick={() => setCommentsOpen(true)}
             className="flex items-center gap-2"
           >
             <MessageCircle className="w-5 h-5" />
           </Button>
         </div>
       </div>
+
+      <CommentsDialog
+        open={commentsOpen}
+        onOpenChange={setCommentsOpen}
+        reelId={reel.id}
+        onCommentAdded={onUpdate}
+      />
     </Card>
   );
 };

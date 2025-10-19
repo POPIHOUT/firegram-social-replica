@@ -5,6 +5,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
+import CommentsDialog from "./CommentsDialog";
 
 interface ReelCardProps {
   reel: {
@@ -22,13 +23,15 @@ interface ReelCardProps {
     avatar_url: string | null;
   };
   isActive: boolean;
+  onUpdate?: () => void;
 }
 
-const ReelCard = ({ reel, profile, isActive }: ReelCardProps) => {
+const ReelCard = ({ reel, profile, isActive, onUpdate }: ReelCardProps) => {
   const [isLiked, setIsLiked] = useState(false);
   const [likesCount, setLikesCount] = useState(reel.likes_count);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentUser, setCurrentUser] = useState<any>(null);
+  const [commentsOpen, setCommentsOpen] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -188,6 +191,7 @@ const ReelCard = ({ reel, profile, isActive }: ReelCardProps) => {
             <Button
               size="icon"
               variant="ghost"
+              onClick={() => setCommentsOpen(true)}
               className="h-12 w-12 rounded-full hover:bg-white/20"
             >
               <MessageCircle className="h-7 w-7 text-white" />
@@ -203,6 +207,13 @@ const ReelCard = ({ reel, profile, isActive }: ReelCardProps) => {
           </div>
         </div>
       </div>
+
+      <CommentsDialog
+        open={commentsOpen}
+        onOpenChange={setCommentsOpen}
+        reelId={reel.id}
+        onCommentAdded={() => onUpdate?.()}
+      />
     </div>
   );
 };

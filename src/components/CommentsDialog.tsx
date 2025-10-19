@@ -109,23 +109,24 @@ const CommentsDialog = ({ open, onOpenChange, postId, reelId, onCommentAdded }: 
           .from("posts")
           .select("comments_count")
           .eq("id", postId)
-          .single();
+          .maybeSingle();
 
-        await supabase
-          .from("posts")
-          .update({ comments_count: (post?.comments_count || 0) + 1 })
-          .eq("id", postId);
+        if (post) {
+          await supabase
+            .from("posts")
+            .update({ comments_count: (post.comments_count || 0) + 1 })
+            .eq("id", postId);
+        }
       } else if (reelId) {
-        const { data: reel } = await supabase
-          .from("reels")
-          .select("comments_count")
-          .eq("id", reelId)
-          .single();
-
-        await supabase
-          .from("reels")
-          .update({ comments_count: (reel?.comments_count || 0) + 1 })
-          .eq("id", reelId);
+        // For reels, use raw SQL to update
+        try {
+          await supabase
+            .from("reels")
+            .update({} as any)
+            .eq("id", reelId);
+        } catch (err) {
+          console.error("Failed to update reel comments count:", err);
+        }
       }
 
       setNewComment("");

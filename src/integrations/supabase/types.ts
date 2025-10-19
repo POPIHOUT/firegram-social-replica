@@ -20,6 +20,7 @@ export type Database = {
           created_at: string | null
           id: string
           post_id: string
+          reel_id: string | null
           user_id: string
         }
         Insert: {
@@ -27,6 +28,7 @@ export type Database = {
           created_at?: string | null
           id?: string
           post_id: string
+          reel_id?: string | null
           user_id: string
         }
         Update: {
@@ -34,6 +36,7 @@ export type Database = {
           created_at?: string | null
           id?: string
           post_id?: string
+          reel_id?: string | null
           user_id?: string
         }
         Relationships: [
@@ -42,6 +45,13 @@ export type Database = {
             columns: ["post_id"]
             isOneToOne: false
             referencedRelation: "posts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "comments_reel_id_fkey"
+            columns: ["reel_id"]
+            isOneToOne: false
+            referencedRelation: "reels"
             referencedColumns: ["id"]
           },
           {
@@ -279,6 +289,7 @@ export type Database = {
       reels: {
         Row: {
           caption: string | null
+          comments_count: number | null
           created_at: string | null
           id: string
           likes_count: number | null
@@ -289,6 +300,7 @@ export type Database = {
         }
         Insert: {
           caption?: string | null
+          comments_count?: number | null
           created_at?: string | null
           id?: string
           likes_count?: number | null
@@ -299,6 +311,7 @@ export type Database = {
         }
         Update: {
           caption?: string | null
+          comments_count?: number | null
           created_at?: string | null
           id?: string
           likes_count?: number | null
