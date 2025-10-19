@@ -24,6 +24,7 @@ interface Post {
 
 interface Reel {
   id: string;
+  user_id: string;
   video_url: string;
   caption: string | null;
   likes_count: number;

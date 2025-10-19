@@ -1,14 +1,15 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import Navigation from "@/components/Navigation";
 import EditProfileDialog from "@/components/EditProfileDialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Shield, Grid, Film, Loader2, LogOut, Heart, MessageCircle } from "lucide-react";
+import { Shield, Grid, Film, Loader2, LogOut, Heart, MessageCircle, UserPlus, UserMinus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface Profile {
+  id: string;
   username: string;
   full_name: string;
   bio: string;
@@ -24,56 +25,145 @@ interface Post {
   comments_count: number;
 }
 
+interface Reel {
+  id: string;
+  video_url: string;
+  thumbnail_url: string | null;
+  likes_count: number;
+}
+
 const Profile = () => {
+  const { userId } = useParams();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [posts, setPosts] = useState<Post[]>([]);
+  const [reels, setReels] = useState<Reel[]>([]);
   const [postsCount, setPostsCount] = useState(0);
+  const [reelsCount, setReelsCount] = useState(0);
+  const [followersCount, setFollowersCount] = useState(0);
+  const [followingCount, setFollowingCount] = useState(0);
+  const [isFollowing, setIsFollowing] = useState(false);
   const [loading, setLoading] = useState(true);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<"posts" | "reels">("posts");
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [isOwnProfile, setIsOwnProfile] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
   useEffect(() => {
     checkAuth();
-    fetchProfile();
-  }, []);
+  }, [userId]);
 
   const checkAuth = async () => {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) {
       navigate("/auth");
+      return;
     }
+    setCurrentUserId(session.user.id);
+    const profileId = userId || session.user.id;
+    setIsOwnProfile(!userId || userId === session.user.id);
+    fetchProfile(profileId, session.user.id);
   };
 
-  const fetchProfile = async () => {
+  const fetchProfile = async (profileId: string, currentUserId: string) => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
       const { data: profileData, error: profileError } = await supabase
         .from("profiles")
         .select("*")
-        .eq("id", user.id)
+        .eq("id", profileId)
         .single();
 
       if (profileError) throw profileError;
       setProfile(profileData);
 
       // Fetch posts with count
-      const { data: postsData, error: postsError, count } = await supabase
+      const { data: postsData, error: postsError, count: postsTotal } = await supabase
         .from("posts")
         .select("*", { count: "exact" })
-        .eq("user_id", user.id)
+        .eq("user_id", profileId)
         .order("created_at", { ascending: false });
 
       if (postsError) throw postsError;
-      
       setPosts(postsData || []);
-      setPostsCount(count || 0);
+      setPostsCount(postsTotal || 0);
+
+      // Fetch reels with count
+      const { data: reelsData, error: reelsError, count: reelsTotal } = await supabase
+        .from("reels")
+        .select("*", { count: "exact" })
+        .eq("user_id", profileId)
+        .order("created_at", { ascending: false });
+
+      if (reelsError) throw reelsError;
+      setReels(reelsData || []);
+      setReelsCount(reelsTotal || 0);
+
+      // Fetch followers count
+      const { count: followersTotal } = await supabase
+        .from("follows")
+        .select("*", { count: "exact", head: true })
+        .eq("following_id", profileId);
+
+      setFollowersCount(followersTotal || 0);
+
+      // Fetch following count
+      const { count: followingTotal } = await supabase
+        .from("follows")
+        .select("*", { count: "exact", head: true })
+        .eq("follower_id", profileId);
+
+      setFollowingCount(followingTotal || 0);
+
+      // Check if current user is following this profile
+      if (profileId !== currentUserId) {
+        const { data: followData } = await supabase
+          .from("follows")
+          .select()
+          .eq("follower_id", currentUserId)
+          .eq("following_id", profileId)
+          .maybeSingle();
+
+        setIsFollowing(!!followData);
+      }
     } catch (error) {
       console.error("Error fetching profile:", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleFollow = async () => {
+    if (!currentUserId || !profile) return;
+
+    try {
+      if (isFollowing) {
+        await supabase
+          .from("follows")
+          .delete()
+          .eq("follower_id", currentUserId)
+          .eq("following_id", profile.id);
+
+        setIsFollowing(false);
+        setFollowersCount(prev => Math.max(0, prev - 1));
+      } else {
+        await supabase
+          .from("follows")
+          .insert({
+            follower_id: currentUserId,
+            following_id: profile.id,
+          });
+
+        setIsFollowing(true);
+        setFollowersCount(prev => prev + 1);
+      }
+    } catch (error) {
+      console.error("Error toggling follow:", error);
+      toast({
+        title: "Chyba",
+        description: "Nepodarilo sa aktualizovať sledovanie",
+        variant: "destructive",
+      });
     }
   };
 
@@ -122,16 +212,16 @@ const Profile = () => {
 
               <div className="flex gap-8">
                 <div className="text-center">
-                  <p className="font-bold text-xl">{postsCount}</p>
-                  <p className="text-sm text-muted-foreground">posts</p>
+                  <p className="font-bold text-xl">{postsCount + reelsCount}</p>
+                  <p className="text-sm text-muted-foreground">príspevky</p>
                 </div>
                 <div className="text-center">
-                  <p className="font-bold text-xl">0</p>
-                  <p className="text-sm text-muted-foreground">followers</p>
+                  <p className="font-bold text-xl">{followersCount}</p>
+                  <p className="text-sm text-muted-foreground">sledujúci</p>
                 </div>
                 <div className="text-center">
-                  <p className="font-bold text-xl">0</p>
-                  <p className="text-sm text-muted-foreground">following</p>
+                  <p className="font-bold text-xl">{followingCount}</p>
+                  <p className="text-sm text-muted-foreground">sleduje</p>
                 </div>
               </div>
 
@@ -141,76 +231,143 @@ const Profile = () => {
               {profile.bio && <p className="text-sm">{profile.bio}</p>}
 
               <div className="flex gap-2">
-                <Button 
-                  variant="outline" 
-                  className="flex-1 sm:flex-initial"
-                  onClick={() => setEditDialogOpen(true)}
-                >
-                  Edit Profile
-                </Button>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={handleLogout}
-                  className="text-destructive hover:text-destructive"
-                >
-                  <LogOut size={20} />
-                </Button>
+                {isOwnProfile ? (
+                  <>
+                    <Button 
+                      variant="outline" 
+                      className="flex-1 sm:flex-initial"
+                      onClick={() => setEditDialogOpen(true)}
+                    >
+                      Upraviť profil
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={handleLogout}
+                      className="text-destructive hover:text-destructive"
+                    >
+                      <LogOut size={20} />
+                    </Button>
+                  </>
+                ) : (
+                  <Button 
+                    variant={isFollowing ? "outline" : "default"}
+                    className="flex-1"
+                    onClick={handleFollow}
+                  >
+                    {isFollowing ? (
+                      <>
+                        <UserMinus className="mr-2 h-4 w-4" />
+                        Nesledovať
+                      </>
+                    ) : (
+                      <>
+                        <UserPlus className="mr-2 h-4 w-4" />
+                        Sledovať
+                      </>
+                    )}
+                  </Button>
+                )}
               </div>
             </div>
           </div>
 
           <div className="border-t border-border pt-8">
             <div className="flex justify-center gap-12 mb-6">
-              <button className="flex items-center gap-2 text-sm font-semibold border-t-2 border-primary pt-2 -mt-8">
+              <button 
+                className={`flex items-center gap-2 text-sm font-semibold pt-2 -mt-8 ${
+                  activeTab === "posts" 
+                    ? "border-t-2 border-primary" 
+                    : "text-muted-foreground"
+                }`}
+                onClick={() => setActiveTab("posts")}
+              >
                 <Grid size={16} />
-                POSTS
+                POSTY
               </button>
-              <button className="flex items-center gap-2 text-sm text-muted-foreground pt-2 -mt-8">
+              <button 
+                className={`flex items-center gap-2 text-sm pt-2 -mt-8 ${
+                  activeTab === "reels" 
+                    ? "border-t-2 border-primary font-semibold" 
+                    : "text-muted-foreground"
+                }`}
+                onClick={() => setActiveTab("reels")}
+              >
                 <Film size={16} />
                 REELS
               </button>
             </div>
 
-            {posts.length === 0 ? (
-              <div className="text-center py-20">
-                <p className="text-muted-foreground">No posts yet</p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-3 gap-1">
-                {posts.map((post) => {
-                  const displayImage = post.images && post.images.length > 0 
-                    ? post.images[0] 
-                    : post.image_url;
-                  
-                  return (
-                    <div key={post.id} className="relative aspect-square group cursor-pointer">
-                      <img
-                        src={displayImage}
-                        alt="Post"
-                        className="w-full h-full object-cover"
-                      />
-                      <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-6 text-white">
-                        <div className="flex items-center gap-2">
-                          <Heart className="fill-white" size={20} />
-                          <span className="font-semibold">{post.likes_count}</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <MessageCircle className="fill-white" size={20} />
-                          <span className="font-semibold">{post.comments_count}</span>
-                        </div>
-                      </div>
-                      {post.images && post.images.length > 1 && (
-                        <div className="absolute top-2 right-2">
-                          <div className="bg-black/70 rounded-full p-1">
-                            <Grid size={16} className="text-white" />
+            {activeTab === "posts" ? (
+              posts.length === 0 ? (
+                <div className="text-center py-20">
+                  <p className="text-muted-foreground">Žiadne posty</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-3 gap-1">
+                  {posts.map((post) => {
+                    const displayImage = post.images && post.images.length > 0 
+                      ? post.images[0] 
+                      : post.image_url;
+                    
+                    return (
+                      <div key={post.id} className="relative aspect-square group cursor-pointer">
+                        <img
+                          src={displayImage}
+                          alt="Post"
+                          className="w-full h-full object-cover"
+                        />
+                        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-6 text-white">
+                          <div className="flex items-center gap-2">
+                            <Heart className="fill-white" size={20} />
+                            <span className="font-semibold">{post.likes_count}</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <MessageCircle className="fill-white" size={20} />
+                            <span className="font-semibold">{post.comments_count}</span>
                           </div>
                         </div>
-                      )}
+                        {post.images && post.images.length > 1 && (
+                          <div className="absolute top-2 right-2">
+                            <div className="bg-black/70 rounded-full p-1">
+                              <Grid size={16} className="text-white" />
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )
+            ) : (
+              reels.length === 0 ? (
+                <div className="text-center py-20">
+                  <p className="text-muted-foreground">Žiadne reels</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-3 gap-1">
+                  {reels.map((reel) => (
+                    <div key={reel.id} className="relative aspect-[9/16] group cursor-pointer bg-black">
+                      <video
+                        src={reel.video_url}
+                        className="w-full h-full object-cover"
+                        onClick={() => navigate('/reels')}
+                      />
+                      <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white">
+                        <div className="flex items-center gap-2">
+                          <Heart className="fill-white" size={20} />
+                          <span className="font-semibold">{reel.likes_count}</span>
+                        </div>
+                      </div>
+                      <div className="absolute top-2 right-2">
+                        <div className="bg-black/70 rounded-full p-1">
+                          <Film size={16} className="text-white" />
+                        </div>
+                      </div>
                     </div>
-                  );
-                })}
-              </div>
+                  ))}
+                </div>
+              )
             )}
           </div>
         </div>
@@ -220,7 +377,7 @@ const Profile = () => {
         open={editDialogOpen}
         onOpenChange={setEditDialogOpen}
         profile={profile}
-        onUpdate={fetchProfile}
+        onUpdate={() => profile && currentUserId && fetchProfile(profile.id, currentUserId)}
       />
     </div>
   );

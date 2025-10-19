@@ -73,7 +73,7 @@ const Search = () => {
     }, 300);
 
     return () => clearTimeout(timeoutId);
-  }, [searchQuery]);
+  }, [searchQuery, currentUserId]);
 
   const startConversation = async (userId: string) => {
     if (!currentUserId) return;
@@ -160,40 +160,40 @@ const Search = () => {
         )}
 
         <div className="space-y-3">
-          {profiles.map((profile) => (
-            <Card key={profile.id} className="p-4">
-              <div className="flex items-center justify-between">
-                <div 
-                  className="flex items-center gap-3 flex-1 cursor-pointer"
-                  onClick={() => navigate('/profile')}
-                >
-                  <Avatar className="h-12 w-12">
-                    <AvatarImage src={profile.avatar_url || undefined} />
-                    <AvatarFallback className="bg-primary text-primary-foreground">
-                      {profile.username[0].toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1">
-                    <p className="font-semibold">{profile.username}</p>
-                    {profile.full_name && (
-                      <p className="text-sm text-muted-foreground">{profile.full_name}</p>
-                    )}
-                    {profile.bio && (
-                      <p className="text-sm text-muted-foreground line-clamp-1">{profile.bio}</p>
-                    )}
+            {profiles.map((profile) => (
+              <Card key={profile.id} className="p-4">
+                <div className="flex items-center justify-between">
+                  <div 
+                    className="flex items-center gap-3 flex-1 cursor-pointer"
+                    onClick={() => navigate(`/profile/${profile.id}`)}
+                  >
+                    <Avatar className="h-12 w-12">
+                      <AvatarImage src={profile.avatar_url || undefined} />
+                      <AvatarFallback className="bg-primary text-primary-foreground">
+                        {profile.username[0].toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1">
+                      <p className="font-semibold">{profile.username}</p>
+                      {profile.full_name && (
+                        <p className="text-sm text-muted-foreground">{profile.full_name}</p>
+                      )}
+                      {profile.bio && (
+                        <p className="text-sm text-muted-foreground line-clamp-1">{profile.bio}</p>
+                      )}
+                    </div>
                   </div>
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    onClick={() => startConversation(profile.id)}
+                    className="ml-2"
+                  >
+                    <MessageCircle className="h-5 w-5" />
+                  </Button>
                 </div>
-                <Button
-                  size="icon"
-                  variant="ghost"
-                  onClick={() => startConversation(profile.id)}
-                  className="ml-2"
-                >
-                  <MessageCircle className="h-5 w-5" />
-                </Button>
-              </div>
-            </Card>
-          ))}
+              </Card>
+            ))}
         </div>
       </main>
     </div>

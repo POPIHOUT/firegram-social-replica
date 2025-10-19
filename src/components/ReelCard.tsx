@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import { useNavigate } from "react-router-dom";
 
 interface ReelCardProps {
   reel: {
@@ -30,6 +31,7 @@ const ReelCard = ({ reel, profile, isActive }: ReelCardProps) => {
   const [currentUser, setCurrentUser] = useState<any>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   useEffect(() => {
     checkAuth();
@@ -147,13 +149,21 @@ const ReelCard = ({ reel, profile, isActive }: ReelCardProps) => {
         <div className="flex items-start justify-between">
           <div className="flex-1 space-y-2">
             <div className="flex items-center gap-2">
-              <Avatar className="h-10 w-10 border-2 border-white">
-                <AvatarImage src={profile.avatar_url || undefined} />
-                <AvatarFallback className="bg-primary text-primary-foreground">
-                  {profile.username[0].toUpperCase()}
-                </AvatarFallback>
-              </Avatar>
-              <span className="font-semibold text-white">{profile.username}</span>
+            <Avatar 
+              className="h-10 w-10 border-2 border-white cursor-pointer"
+              onClick={() => navigate(`/profile/${reel.user_id}`)}
+            >
+              <AvatarImage src={profile.avatar_url || undefined} />
+              <AvatarFallback className="bg-primary text-primary-foreground">
+                {profile.username[0].toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
+            <span 
+              className="font-semibold text-white cursor-pointer hover:opacity-70"
+              onClick={() => navigate(`/profile/${reel.user_id}`)}
+            >
+              {profile.username}
+            </span>
             </div>
             {reel.caption && (
               <p className="text-sm text-white/90">{reel.caption}</p>

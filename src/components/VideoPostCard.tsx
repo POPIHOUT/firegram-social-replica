@@ -10,6 +10,7 @@ import { useNavigate } from "react-router-dom";
 interface VideoPostCardProps {
   reel: {
     id: string;
+    user_id: string;
     video_url: string;
     caption: string | null;
     likes_count: number;
@@ -102,7 +103,7 @@ const VideoPostCard = ({ reel, onUpdate }: VideoPostCardProps) => {
         <div className="flex items-center gap-3 mb-4">
           <Avatar 
             className="cursor-pointer" 
-            onClick={() => navigate('/profile')}
+            onClick={() => navigate(`/profile/${reel.user_id}`)}
           >
             <AvatarImage src={reel.profiles.avatar_url || undefined} />
             <AvatarFallback className="bg-primary text-primary-foreground">
@@ -110,7 +111,12 @@ const VideoPostCard = ({ reel, onUpdate }: VideoPostCardProps) => {
             </AvatarFallback>
           </Avatar>
           <div>
-            <p className="font-semibold">{reel.profiles.username}</p>
+            <p 
+              className="font-semibold cursor-pointer hover:opacity-70"
+              onClick={() => navigate(`/profile/${reel.user_id}`)}
+            >
+              {reel.profiles.username}
+            </p>
             <p className="text-xs text-muted-foreground">
               {new Date(reel.created_at).toLocaleDateString()}
             </p>

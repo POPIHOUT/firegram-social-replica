@@ -5,6 +5,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { formatDistanceToNow } from "date-fns";
+import { useNavigate } from "react-router-dom";
 
 interface PostCardProps {
   post: {
@@ -31,6 +32,7 @@ const PostCard = ({ post, onUpdate }: PostCardProps) => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isCheckingLike, setIsCheckingLike] = useState(true);
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const images = post.images && post.images.length > 0 ? post.images : [post.image_url];
 
@@ -140,14 +142,22 @@ const PostCard = ({ post, onUpdate }: PostCardProps) => {
   return (
     <Card className="border-border bg-card overflow-hidden">
       <div className="p-4 flex items-center gap-3">
-        <Avatar className="w-10 h-10 border-2 border-primary/20">
+        <Avatar 
+          className="w-10 h-10 border-2 border-primary/20 cursor-pointer"
+          onClick={() => navigate(`/profile/${post.user_id}`)}
+        >
           <AvatarImage src={post.profiles.avatar_url} />
           <AvatarFallback className="bg-muted">
             {post.profiles.username.charAt(0).toUpperCase()}
           </AvatarFallback>
         </Avatar>
         <div className="flex items-center gap-2">
-          <span className="font-semibold">{post.profiles.username}</span>
+          <span 
+            className="font-semibold cursor-pointer hover:opacity-70"
+            onClick={() => navigate(`/profile/${post.user_id}`)}
+          >
+            {post.profiles.username}
+          </span>
           {post.profiles.is_admin && (
             <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-accent/20">
               <Shield size={12} className="text-accent" />
