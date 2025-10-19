@@ -19,7 +19,7 @@ export type Database = {
           content: string
           created_at: string | null
           id: string
-          post_id: string
+          post_id: string | null
           reel_id: string | null
           user_id: string
         }
@@ -27,7 +27,7 @@ export type Database = {
           content: string
           created_at?: string | null
           id?: string
-          post_id: string
+          post_id?: string | null
           reel_id?: string | null
           user_id: string
         }
@@ -35,7 +35,7 @@ export type Database = {
           content?: string
           created_at?: string | null
           id?: string
-          post_id?: string
+          post_id?: string | null
           reel_id?: string | null
           user_id?: string
         }
