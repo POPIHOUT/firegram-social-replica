@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Flame, MessageCircle, Share2, Play, Pause, Check } from "lucide-react";
+import { Flame, MessageCircle, Share2, Play, Pause, Check, Bookmark } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -29,6 +29,7 @@ interface ReelCardProps {
 
 const ReelCard = ({ reel, profile, isActive, onUpdate }: ReelCardProps) => {
   const [isLiked, setIsLiked] = useState(false);
+  const [isSaved, setIsSaved] = useState(false);
   const [likesCount, setLikesCount] = useState(reel.likes_count);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentUser, setCurrentUser] = useState<any>(null);
@@ -40,6 +41,7 @@ const ReelCard = ({ reel, profile, isActive, onUpdate }: ReelCardProps) => {
   useEffect(() => {
     checkAuth();
     checkIfLiked();
+    checkIfSaved();
   }, []);
 
   useEffect(() => {
@@ -71,6 +73,20 @@ const ReelCard = ({ reel, profile, isActive, onUpdate }: ReelCardProps) => {
       .maybeSingle();
 
     setIsLiked(!!data);
+  };
+
+  const checkIfSaved = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    const { data } = await supabase
+      .from("saved")
+      .select()
+      .eq("reel_id", reel.id)
+      .eq("user_id", user.id)
+      .maybeSingle();
+
+    setIsSaved(!!data);
   };
 
   const handleLike = async () => {
@@ -109,6 +125,41 @@ const ReelCard = ({ reel, profile, isActive, onUpdate }: ReelCardProps) => {
 
       setIsLiked(true);
       setLikesCount(likesCount + 1);
+    }
+  };
+
+  const handleSave = async () => {
+    if (!currentUser) {
+      toast({
+        title: "Login required",
+        description: "You must be logged in to save",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (isSaved) {
+      await supabase
+        .from("saved")
+        .delete()
+        .eq("reel_id", reel.id)
+        .eq("user_id", currentUser.id);
+
+      setIsSaved(false);
+      toast({
+        title: "Removed from saved",
+        description: "Reel removed from your saved items",
+      });
+    } else {
+      await supabase
+        .from("saved")
+        .insert({ reel_id: reel.id, user_id: currentUser.id });
+
+      setIsSaved(true);
+      toast({
+        title: "Saved",
+        description: "Reel saved to your profile",
+      });
     }
   };
 
@@ -206,9 +257,10 @@ const ReelCard = ({ reel, profile, isActive, onUpdate }: ReelCardProps) => {
             <Button
               size="icon"
               variant="ghost"
+              onClick={handleSave}
               className="h-12 w-12 rounded-full hover:bg-white/20"
             >
-              <Share2 className="h-7 w-7 text-white" />
+              <Bookmark className={`h-7 w-7 ${isSaved ? "fill-white text-white" : "text-white"}`} />
             </Button>
           </div>
         </div>

@@ -9,7 +9,7 @@ import FollowingDialog from "@/components/FollowingDialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Shield, Grid, Film, Loader2, LogOut, Heart, MessageCircle, UserPlus, UserMinus, Flame, Check } from "lucide-react";
+import { Shield, Grid, Film, Loader2, LogOut, Heart, MessageCircle, UserPlus, UserMinus, Flame, Check, Bookmark } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface Profile {
@@ -42,6 +42,8 @@ const Profile = () => {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [posts, setPosts] = useState<Post[]>([]);
   const [reels, setReels] = useState<Reel[]>([]);
+  const [savedPosts, setSavedPosts] = useState<Post[]>([]);
+  const [savedReels, setSavedReels] = useState<Reel[]>([]);
   const [postsCount, setPostsCount] = useState(0);
   const [reelsCount, setReelsCount] = useState(0);
   const [followersCount, setFollowersCount] = useState(0);
@@ -49,7 +51,7 @@ const Profile = () => {
   const [isFollowing, setIsFollowing] = useState(false);
   const [loading, setLoading] = useState(true);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<"posts" | "reels">("posts");
+  const [activeTab, setActiveTab] = useState<"posts" | "reels" | "saved">("posts");
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [isOwnProfile, setIsOwnProfile] = useState(false);
   const [imageViewerOpen, setImageViewerOpen] = useState(false);
@@ -136,10 +138,57 @@ const Profile = () => {
 
         setIsFollowing(!!followData);
       }
+
+      // Fetch saved items if it's the user's own profile
+      if (profileId === currentUserId) {
+        await fetchSavedItems(profileId);
+      }
     } catch (error) {
       console.error("Error fetching profile:", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchSavedItems = async (userId: string) => {
+    try {
+      // Fetch saved posts
+      const { data: savedPostsData } = await supabase
+        .from("saved")
+        .select("post_id")
+        .eq("user_id", userId)
+        .not("post_id", "is", null);
+
+      if (savedPostsData && savedPostsData.length > 0) {
+        const postIds = savedPostsData.map(item => item.post_id);
+        const { data: postsData } = await supabase
+          .from("posts")
+          .select("*")
+          .in("id", postIds)
+          .order("created_at", { ascending: false });
+
+        setSavedPosts(postsData || []);
+      }
+
+      // Fetch saved reels
+      const { data: savedReelsData } = await supabase
+        .from("saved")
+        .select("reel_id")
+        .eq("user_id", userId)
+        .not("reel_id", "is", null);
+
+      if (savedReelsData && savedReelsData.length > 0) {
+        const reelIds = savedReelsData.map(item => item.reel_id);
+        const { data: reelsData } = await supabase
+          .from("reels")
+          .select("*")
+          .in("id", reelIds)
+          .order("created_at", { ascending: false });
+
+        setSavedReels(reelsData || []);
+      }
+    } catch (error) {
+      console.error("Error fetching saved items:", error);
     }
   };
 
@@ -315,6 +364,19 @@ const Profile = () => {
                 <Film size={16} />
                 REELS
               </button>
+              {isOwnProfile && (
+                <button 
+                  className={`flex items-center gap-2 text-sm pt-2 -mt-8 ${
+                    activeTab === "saved" 
+                      ? "border-t-2 border-primary font-semibold" 
+                      : "text-muted-foreground"
+                  }`}
+                  onClick={() => setActiveTab("saved")}
+                >
+                  <Bookmark size={16} />
+                  ULOŽENÉ
+                </button>
+              )}
             </div>
 
             {activeTab === "posts" ? (
@@ -369,7 +431,7 @@ const Profile = () => {
                   })}
                 </div>
               )
-            ) : (
+            ) : activeTab === "reels" ? (
               reels.length === 0 ? (
                 <div className="text-center py-20">
                   <p className="text-muted-foreground">No reels</p>
@@ -399,6 +461,89 @@ const Profile = () => {
                       </div>
                     </div>
                   ))}
+                </div>
+              )
+            ) : (
+              // Saved tab
+              savedPosts.length === 0 && savedReels.length === 0 ? (
+                <div className="text-center py-20">
+                  <p className="text-muted-foreground">No saved items</p>
+                </div>
+              ) : (
+                <div className="space-y-8">
+                  {savedPosts.length > 0 && (
+                    <div>
+                      <h3 className="text-sm font-semibold mb-2">Saved Posts</h3>
+                      <div className="grid grid-cols-3 gap-1">
+                        {savedPosts.map((post) => {
+                          const displayImage = post.images && post.images.length > 0 
+                            ? post.images[0] 
+                            : post.image_url;
+                          const allImages = post.images && post.images.length > 0 
+                            ? post.images 
+                            : [post.image_url];
+                          
+                          return (
+                            <div 
+                              key={post.id} 
+                              className="relative aspect-square group cursor-pointer"
+                              onClick={() => {
+                                setSelectedImages(allImages);
+                                setSelectedImageIndex(0);
+                                setImageViewerOpen(true);
+                              }}
+                            >
+                              <img
+                                src={displayImage}
+                                alt="Post"
+                                className="w-full h-full object-cover"
+                              />
+                              <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-6 text-white">
+                                <div className="flex items-center gap-2">
+                                  <Heart className="fill-white" size={20} />
+                                  <span className="font-semibold">{post.likes_count}</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <MessageCircle className="fill-white" size={20} />
+                                  <span className="font-semibold">{post.comments_count}</span>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                  {savedReels.length > 0 && (
+                    <div>
+                      <h3 className="text-sm font-semibold mb-2">Saved Reels</h3>
+                      <div className="grid grid-cols-3 gap-1">
+                        {savedReels.map((reel) => (
+                          <div 
+                            key={reel.id} 
+                            className="relative aspect-[9/16] group cursor-pointer bg-black"
+                            onClick={() => navigate('/reels', { state: { initialReelId: reel.id } })}
+                          >
+                            <video
+                              src={reel.video_url}
+                              className="w-full h-full object-cover"
+                            />
+                            <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white">
+                              <div className="flex items-center gap-2">
+                                <Heart className="fill-white" size={20} />
+                                <span className="font-semibold">{reel.likes_count}</span>
+                              </div>
+                            </div>
+                            <div className="absolute top-2 right-2">
+                              <div className="bg-black/70 rounded-full p-1">
+                                <Film size={16} className="text-white" />
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               )
             )}
