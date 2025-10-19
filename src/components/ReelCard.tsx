@@ -138,27 +138,46 @@ const ReelCard = ({ reel, profile, isActive, onUpdate }: ReelCardProps) => {
       return;
     }
 
-    if (isSaved) {
-      await supabase
-        .from("saved")
-        .delete()
-        .eq("reel_id", reel.id)
-        .eq("user_id", currentUser.id);
+    try {
+      if (isSaved) {
+        const { error } = await supabase
+          .from("saved")
+          .delete()
+          .eq("reel_id", reel.id)
+          .eq("user_id", currentUser.id);
 
-      setIsSaved(false);
-      toast({
-        title: "Removed from saved",
-        description: "Reel removed from your saved items",
-      });
-    } else {
-      await supabase
-        .from("saved")
-        .insert({ reel_id: reel.id, user_id: currentUser.id });
+        if (error) throw error;
 
-      setIsSaved(true);
+        setIsSaved(false);
+        toast({
+          title: "Removed from saved",
+          description: "Reel removed from your saved items",
+        });
+      } else {
+        const { error } = await supabase
+          .from("saved")
+          .insert({ reel_id: reel.id, user_id: currentUser.id });
+
+        if (error) {
+          if (error.code === '23505') {
+            setIsSaved(true);
+            return;
+          }
+          throw error;
+        }
+
+        setIsSaved(true);
+        toast({
+          title: "Saved",
+          description: "Reel saved to your profile",
+        });
+      }
+    } catch (error: any) {
+      console.error("Error saving reel:", error);
       toast({
-        title: "Saved",
-        description: "Reel saved to your profile",
+        title: "Error",
+        description: error.message || "Failed to save reel",
+        variant: "destructive",
       });
     }
   };
