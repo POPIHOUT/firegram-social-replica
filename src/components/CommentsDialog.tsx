@@ -68,8 +68,8 @@ const CommentsDialog = ({ open, onOpenChange, postId, reelId, onCommentAdded }: 
     } catch (error) {
       console.error("Error fetching comments:", error);
       toast({
-        title: "Chyba",
-        description: "Nepodarilo sa načítať komentáre",
+        title: "Error",
+        description: "Failed to load comments",
         variant: "destructive",
       });
     } finally {
@@ -134,14 +134,14 @@ const CommentsDialog = ({ open, onOpenChange, postId, reelId, onCommentAdded }: 
       onCommentAdded();
 
       toast({
-        title: "Úspech",
-        description: "Komentár bol pridaný",
+        title: "Success",
+        description: "Comment added",
       });
     } catch (error: any) {
       console.error("Error adding comment:", error);
       toast({
-        title: "Chyba",
-        description: error.message || "Nepodarilo sa pridať komentár",
+        title: "Error",
+        description: error.message || "Failed to add comment",
         variant: "destructive",
       });
     } finally {
@@ -153,7 +153,7 @@ const CommentsDialog = ({ open, onOpenChange, postId, reelId, onCommentAdded }: 
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg max-h-[80vh] flex flex-col p-0">
         <DialogHeader className="px-6 py-4 border-b">
-          <DialogTitle>Komentáre</DialogTitle>
+          <DialogTitle>Comments</DialogTitle>
         </DialogHeader>
 
         <ScrollArea className="flex-1 px-6">
@@ -163,7 +163,7 @@ const CommentsDialog = ({ open, onOpenChange, postId, reelId, onCommentAdded }: 
             </div>
           ) : comments.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
-              Zatiaľ žiadne komentáre. Buďte prvý!
+              No comments yet. Be the first!
             </div>
           ) : (
             <div className="space-y-4 py-4">
@@ -197,7 +197,7 @@ const CommentsDialog = ({ open, onOpenChange, postId, reelId, onCommentAdded }: 
             <Input
               value={newComment}
               onChange={(e) => setNewComment(e.target.value)}
-              placeholder="Pridať komentár..."
+              placeholder="Add a comment..."
               disabled={submitting}
               className="flex-1"
             />

@@ -6,7 +6,7 @@ import EditProfileDialog from "@/components/EditProfileDialog";
 import ImageViewerDialog from "@/components/ImageViewerDialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Shield, Grid, Film, Loader2, LogOut, Heart, MessageCircle, UserPlus, UserMinus } from "lucide-react";
+import { Shield, Grid, Film, Loader2, LogOut, Heart, MessageCircle, UserPlus, UserMinus, BadgeCheck } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface Profile {
@@ -16,6 +16,7 @@ interface Profile {
   bio: string;
   avatar_url: string;
   is_admin: boolean;
+  is_verified: boolean;
 }
 
 interface Post {
@@ -164,8 +165,8 @@ const Profile = () => {
     } catch (error) {
       console.error("Error toggling follow:", error);
       toast({
-        title: "Chyba",
-        description: "Nepodarilo sa aktualizovať sledovanie",
+        title: "Error",
+        description: "Failed to update following",
         variant: "destructive",
       });
     }
@@ -206,6 +207,9 @@ const Profile = () => {
             <div className="flex-1 space-y-4">
               <div className="flex items-center gap-3">
                 <h1 className="text-2xl font-bold">{profile.username}</h1>
+                {profile.is_verified && (
+                  <BadgeCheck size={24} className="text-primary fill-primary" />
+                )}
                 {profile.is_admin && (
                   <div className="flex items-center gap-1 px-3 py-1 rounded-full bg-accent/20">
                     <Shield size={16} className="text-accent" />
@@ -217,15 +221,15 @@ const Profile = () => {
               <div className="flex gap-8">
                 <div className="text-center">
                   <p className="font-bold text-xl">{postsCount + reelsCount}</p>
-                  <p className="text-sm text-muted-foreground">príspevky</p>
+                  <p className="text-sm text-muted-foreground">posts</p>
                 </div>
                 <div className="text-center">
                   <p className="font-bold text-xl">{followersCount}</p>
-                  <p className="text-sm text-muted-foreground">sledujúci</p>
+                  <p className="text-sm text-muted-foreground">followers</p>
                 </div>
                 <div className="text-center">
                   <p className="font-bold text-xl">{followingCount}</p>
-                  <p className="text-sm text-muted-foreground">sleduje</p>
+                  <p className="text-sm text-muted-foreground">following</p>
                 </div>
               </div>
 
@@ -242,7 +246,7 @@ const Profile = () => {
                       className="flex-1 sm:flex-initial"
                       onClick={() => setEditDialogOpen(true)}
                     >
-                      Upraviť profil
+                      Edit profile
                     </Button>
                     <Button
                       variant="outline"
@@ -262,12 +266,12 @@ const Profile = () => {
                     {isFollowing ? (
                       <>
                         <UserMinus className="mr-2 h-4 w-4" />
-                        Nesledovať
+                        Unfollow
                       </>
                     ) : (
                       <>
                         <UserPlus className="mr-2 h-4 w-4" />
-                        Sledovať
+                        Follow
                       </>
                     )}
                   </Button>
@@ -287,7 +291,7 @@ const Profile = () => {
                 onClick={() => setActiveTab("posts")}
               >
                 <Grid size={16} />
-                POSTY
+                POSTS
               </button>
               <button 
                 className={`flex items-center gap-2 text-sm pt-2 -mt-8 ${
@@ -305,7 +309,7 @@ const Profile = () => {
             {activeTab === "posts" ? (
               posts.length === 0 ? (
                 <div className="text-center py-20">
-                  <p className="text-muted-foreground">Žiadne posty</p>
+                  <p className="text-muted-foreground">No posts</p>
                 </div>
               ) : (
                 <div className="grid grid-cols-3 gap-1">
@@ -357,7 +361,7 @@ const Profile = () => {
             ) : (
               reels.length === 0 ? (
                 <div className="text-center py-20">
-                  <p className="text-muted-foreground">Žiadne reels</p>
+                  <p className="text-muted-foreground">No reels</p>
                 </div>
               ) : (
                 <div className="grid grid-cols-3 gap-1">

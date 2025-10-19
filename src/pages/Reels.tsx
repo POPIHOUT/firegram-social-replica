@@ -19,6 +19,7 @@ interface Reel {
 interface Profile {
   username: string;
   avatar_url: string | null;
+  is_verified: boolean;
 }
 
 const Reels = () => {
@@ -72,7 +73,7 @@ const Reels = () => {
         const userIds = [...new Set(reelsData.map(reel => reel.user_id))];
         const { data: profilesData } = await supabase
           .from("profiles")
-          .select("id, username, avatar_url")
+          .select("id, username, avatar_url, is_verified")
           .in("id", userIds);
 
         if (profilesData) {
@@ -81,6 +82,7 @@ const Reels = () => {
             profilesMap[profile.id] = {
               username: profile.username,
               avatar_url: profile.avatar_url,
+              is_verified: profile.is_verified || false,
             };
           });
           setProfiles(profilesMap);
@@ -121,8 +123,8 @@ const Reels = () => {
         <Navigation />
         <main className="flex items-center justify-center h-screen">
           <div className="text-center">
-            <h2 className="text-2xl font-bold text-white mb-4">Zatiaľ žiadne reels</h2>
-            <p className="text-white/60">Buďte prvý, kto pridá reel 🔥</p>
+            <h2 className="text-2xl font-bold text-white mb-4">No reels yet</h2>
+            <p className="text-white/60">Be the first to add a reel 🔥</p>
           </div>
         </main>
       </div>
@@ -151,7 +153,7 @@ const Reels = () => {
           <ReelCard
             key={reel.id}
             reel={reel}
-            profile={profiles[reel.user_id] || { username: "User", avatar_url: null }}
+            profile={profiles[reel.user_id] || { username: "User", avatar_url: null, is_verified: false }}
             isActive={index === currentIndex}
           />
         ))}

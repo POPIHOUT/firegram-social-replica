@@ -19,6 +19,7 @@ interface Post {
     username: string;
     avatar_url: string;
     is_admin: boolean;
+    is_verified: boolean;
   };
 }
 
@@ -32,6 +33,7 @@ interface Reel {
   profiles: {
     username: string;
     avatar_url: string | null;
+    is_verified: boolean;
   };
 }
 
@@ -66,7 +68,8 @@ const Feed = () => {
             profiles (
               username,
               avatar_url,
-              is_admin
+              is_admin,
+              is_verified
             )
           `)
           .order("created_at", { ascending: false }),
@@ -76,7 +79,8 @@ const Feed = () => {
             *,
             profiles (
               username,
-              avatar_url
+              avatar_url,
+              is_verified
             )
           `)
           .order("created_at", { ascending: false })
@@ -122,8 +126,8 @@ const Feed = () => {
         <div className="space-y-6">
           {feedItems.length === 0 ? (
             <div className="text-center py-20">
-              <p className="text-muted-foreground text-lg">Zatiaľ žiadny obsah</p>
-              <p className="text-sm text-muted-foreground mt-2">Buďte prvý, kto pridá obsah! 🔥</p>
+              <p className="text-muted-foreground text-lg">No content yet</p>
+              <p className="text-sm text-muted-foreground mt-2">Be the first to add content! 🔥</p>
             </div>
           ) : (
             feedItems.map((item) => 

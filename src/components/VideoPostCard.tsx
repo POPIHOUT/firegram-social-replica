@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Heart, MessageCircle, Play } from "lucide-react";
+import { Heart, MessageCircle, Play, BadgeCheck } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card } from "@/components/ui/card";
@@ -19,6 +19,7 @@ interface VideoPostCardProps {
     profiles: {
       username: string;
       avatar_url: string | null;
+      is_verified: boolean;
     };
   };
   onUpdate: () => void;
@@ -61,8 +62,8 @@ const VideoPostCard = ({ reel, onUpdate }: VideoPostCardProps) => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
       toast({
-        title: "Prihlásenie potrebné",
-        description: "Musíte byť prihlásený",
+        title: "Login required",
+        description: "You must be logged in",
         variant: "destructive",
       });
       return;
@@ -112,13 +113,16 @@ const VideoPostCard = ({ reel, onUpdate }: VideoPostCardProps) => {
               {reel.profiles.username[0].toUpperCase()}
             </AvatarFallback>
           </Avatar>
-          <div>
+          <div className="flex items-center gap-2">
             <p 
               className="font-semibold cursor-pointer hover:opacity-70"
               onClick={() => navigate(`/profile/${reel.user_id}`)}
             >
               {reel.profiles.username}
             </p>
+            {reel.profiles.is_verified && (
+              <BadgeCheck size={16} className="text-primary fill-primary" />
+            )}
             <p className="text-xs text-muted-foreground">
               {new Date(reel.created_at).toLocaleDateString()}
             </p>

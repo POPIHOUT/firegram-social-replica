@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Heart, MessageCircle, Bookmark, Shield, ChevronLeft, ChevronRight } from "lucide-react";
+import { Heart, MessageCircle, Bookmark, Shield, ChevronLeft, ChevronRight, BadgeCheck } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { supabase } from "@/integrations/supabase/client";
@@ -23,6 +23,7 @@ interface PostCardProps {
       username: string;
       avatar_url: string;
       is_admin: boolean;
+      is_verified: boolean;
     };
   };
   onUpdate: () => void;
@@ -162,6 +163,9 @@ const PostCard = ({ post, onUpdate }: PostCardProps) => {
           >
             {post.profiles.username}
           </span>
+          {post.profiles.is_verified && (
+            <BadgeCheck size={16} className="text-primary fill-primary" />
+          )}
           {post.profiles.is_admin && (
             <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-accent/20">
               <Shield size={12} className="text-accent" />
@@ -243,7 +247,7 @@ const PostCard = ({ post, onUpdate }: PostCardProps) => {
               onClick={() => setCommentsOpen(true)}
               className="text-sm text-muted-foreground hover:text-foreground"
             >
-              Zobraziť všetkých {post.comments_count} komentárov
+              View all {post.comments_count} comments
             </button>
           )}
           <p className="text-xs text-muted-foreground">

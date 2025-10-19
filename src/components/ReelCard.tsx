@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Heart, MessageCircle, Share2, Play, Pause } from "lucide-react";
+import { Heart, MessageCircle, Share2, Play, Pause, BadgeCheck } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -21,6 +21,7 @@ interface ReelCardProps {
   profile: {
     username: string;
     avatar_url: string | null;
+    is_verified: boolean;
   };
   isActive: boolean;
   onUpdate?: () => void;
@@ -75,8 +76,8 @@ const ReelCard = ({ reel, profile, isActive, onUpdate }: ReelCardProps) => {
   const handleLike = async () => {
     if (!currentUser) {
       toast({
-        title: "Prihlásenie potrebné",
-        description: "Musíte byť prihlásený pre lajkovanie",
+        title: "Login required",
+        description: "You must be logged in to like",
         variant: "destructive",
       });
       return;
@@ -161,12 +162,17 @@ const ReelCard = ({ reel, profile, isActive, onUpdate }: ReelCardProps) => {
                 {profile.username[0].toUpperCase()}
               </AvatarFallback>
             </Avatar>
-            <span 
-              className="font-semibold text-white cursor-pointer hover:opacity-70"
-              onClick={() => navigate(`/profile/${reel.user_id}`)}
-            >
-              {profile.username}
-            </span>
+            <div className="flex items-center gap-1">
+              <span 
+                className="font-semibold text-white cursor-pointer hover:opacity-70"
+                onClick={() => navigate(`/profile/${reel.user_id}`)}
+              >
+                {profile.username}
+              </span>
+              {profile.is_verified && (
+                <BadgeCheck size={16} className="text-white fill-white" />
+              )}
+            </div>
             </div>
             {reel.caption && (
               <p className="text-sm text-white/90">{reel.caption}</p>
