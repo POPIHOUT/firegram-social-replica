@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Loader2, Flame } from "lucide-react";
+import { Loader2, Flame, Check } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 interface Profile {
@@ -89,7 +89,10 @@ const FollowingDialog = ({ open, onOpenChange, userId }: FollowingDialogProps) =
                     <div className="flex items-center gap-1">
                       <p className="font-semibold truncate">{followedUser.username}</p>
                       {followedUser.is_verified && (
-                        <Flame size={16} className="text-primary fill-primary flex-shrink-0" />
+                        <div className="relative flex-shrink-0">
+                          <Flame size={16} className="text-orange-500" />
+                          <Check size={8} className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-white" />
+                        </div>
                       )}
                     </div>
                     {followedUser.full_name && (
