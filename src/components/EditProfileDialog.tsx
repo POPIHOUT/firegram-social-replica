@@ -14,6 +14,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Loader2, Upload } from "lucide-react";
+import ImageCropper from "@/components/ImageCropper";
 
 interface EditProfileDialogProps {
   open: boolean;
@@ -34,6 +35,8 @@ const EditProfileDialog = ({ open, onOpenChange, profile, onUpdate }: EditProfil
   const [avatarUrl, setAvatarUrl] = useState(profile.avatar_url || "");
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string>("");
+  const [tempImageUrl, setTempImageUrl] = useState<string>("");
+  const [showCropper, setShowCropper] = useState(false);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
@@ -44,8 +47,8 @@ const EditProfileDialog = ({ open, onOpenChange, profile, onUpdate }: EditProfil
     // Check file type
     if (!file.type.startsWith('image/')) {
       toast({
-        title: "Invalid file type",
-        description: "Please select an image file",
+        title: "Neplatný typ súboru",
+        description: "Vyberte prosím obrázok",
         variant: "destructive",
       });
       return;
@@ -61,9 +64,33 @@ const EditProfileDialog = ({ open, onOpenChange, profile, onUpdate }: EditProfil
       return;
     }
 
-    setAvatarFile(file);
-    const preview = URL.createObjectURL(file);
+    const tempUrl = URL.createObjectURL(file);
+    setTempImageUrl(tempUrl);
+    setShowCropper(true);
+  };
+
+  const handleCropComplete = (croppedBlob: Blob) => {
+    const croppedFile = new File([croppedBlob], "avatar.jpg", { type: "image/jpeg" });
+    setAvatarFile(croppedFile);
+    
+    const preview = URL.createObjectURL(croppedBlob);
+    if (previewUrl) {
+      URL.revokeObjectURL(previewUrl);
+    }
     setPreviewUrl(preview);
+    
+    if (tempImageUrl) {
+      URL.revokeObjectURL(tempImageUrl);
+    }
+    setShowCropper(false);
+  };
+
+  const handleCropCancel = () => {
+    if (tempImageUrl) {
+      URL.revokeObjectURL(tempImageUrl);
+    }
+    setTempImageUrl("");
+    setShowCropper(false);
   };
 
   const uploadAvatar = async (userId: string): Promise<string> => {
@@ -139,14 +166,23 @@ const EditProfileDialog = ({ open, onOpenChange, profile, onUpdate }: EditProfil
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px] bg-card border-border max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="fire-text">Edit Profile</DialogTitle>
-          <DialogDescription>
-            Make changes to your profile here. Click save when you're done.
-          </DialogDescription>
-        </DialogHeader>
+    <>
+      {showCropper && tempImageUrl && (
+        <ImageCropper
+          image={tempImageUrl}
+          onCropComplete={handleCropComplete}
+          onCancel={handleCropCancel}
+        />
+      )}
+      
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="sm:max-w-[425px] bg-card border-border max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="fire-text">Upraviť profil</DialogTitle>
+            <DialogDescription>
+              Upravte svoj profil. Kliknite na uložiť po dokončení.
+            </DialogDescription>
+          </DialogHeader>
         <div className="space-y-4 py-4">
           {/* Avatar Upload */}
           <div className="flex flex-col items-center gap-4">
@@ -169,13 +205,13 @@ const EditProfileDialog = ({ open, onOpenChange, profile, onUpdate }: EditProfil
                 className="flex items-center gap-2 px-4 py-2 bg-muted border border-border rounded-lg hover:border-primary hover:bg-muted/80 transition-all cursor-pointer text-sm"
               >
                 <Upload size={16} />
-                <span>Upload Avatar</span>
+                <span>Nahrať avatar</span>
               </label>
             </div>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="username">Username</Label>
+            <Label htmlFor="username">Užívateľské meno</Label>
             <Input
               id="username"
               value={username}
@@ -184,7 +220,7 @@ const EditProfileDialog = ({ open, onOpenChange, profile, onUpdate }: EditProfil
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="fullName">Full Name</Label>
+            <Label htmlFor="fullName">Celé meno</Label>
             <Input
               id="fullName"
               value={fullName}
@@ -209,7 +245,7 @@ const EditProfileDialog = ({ open, onOpenChange, profile, onUpdate }: EditProfil
             onClick={() => onOpenChange(false)}
             className="flex-1"
           >
-            Cancel
+            Zrušiť
           </Button>
           <Button
             onClick={handleSave}
@@ -219,15 +255,16 @@ const EditProfileDialog = ({ open, onOpenChange, profile, onUpdate }: EditProfil
             {loading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Saving...
+                Ukladám...
               </>
             ) : (
-              "Save Changes"
+              "Uložiť zmeny"
             )}
           </Button>
         </div>
       </DialogContent>
     </Dialog>
+    </>
   );
 };
 
