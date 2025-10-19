@@ -12,7 +12,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Loader2 } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Loader2, Upload } from "lucide-react";
 
 interface EditProfileDialogProps {
   open: boolean;
@@ -31,8 +32,67 @@ const EditProfileDialog = ({ open, onOpenChange, profile, onUpdate }: EditProfil
   const [fullName, setFullName] = useState(profile.full_name || "");
   const [bio, setBio] = useState(profile.bio || "");
   const [avatarUrl, setAvatarUrl] = useState(profile.avatar_url || "");
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string>("");
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
+
+  const handleAvatarSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Check file type
+    if (!file.type.startsWith('image/')) {
+      toast({
+        title: "Invalid file type",
+        description: "Please select an image file",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Check file size (max 2MB)
+    if (file.size > 2 * 1024 * 1024) {
+      toast({
+        title: "File too large",
+        description: "Avatar image must be less than 2MB",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setAvatarFile(file);
+    const preview = URL.createObjectURL(file);
+    setPreviewUrl(preview);
+  };
+
+  const uploadAvatar = async (userId: string): Promise<string> => {
+    if (!avatarFile) return avatarUrl;
+
+    const fileExt = avatarFile.name.split('.').pop();
+    const fileName = `${userId}/avatar.${fileExt}`;
+
+    // Delete old avatar if exists
+    await supabase.storage
+      .from('avatars')
+      .remove([fileName]);
+
+    const { data, error } = await supabase.storage
+      .from('avatars')
+      .upload(fileName, avatarFile, {
+        cacheControl: '3600',
+        upsert: true
+      });
+
+    if (error) throw error;
+
+    // Get public URL
+    const { data: { publicUrl } } = supabase.storage
+      .from('avatars')
+      .getPublicUrl(fileName);
+
+    return publicUrl;
+  };
 
   const handleSave = async () => {
     setLoading(true);
@@ -40,13 +100,16 @@ const EditProfileDialog = ({ open, onOpenChange, profile, onUpdate }: EditProfil
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
+      // Upload avatar if new file selected
+      const finalAvatarUrl = await uploadAvatar(user.id);
+
       const { error } = await supabase
         .from("profiles")
         .update({
           username,
           full_name: fullName,
           bio,
-          avatar_url: avatarUrl,
+          avatar_url: finalAvatarUrl,
         })
         .eq("id", user.id);
 
@@ -56,6 +119,12 @@ const EditProfileDialog = ({ open, onOpenChange, profile, onUpdate }: EditProfil
         title: "Profile updated! 🔥",
         description: "Your changes have been saved.",
       });
+      
+      // Clean up preview URL
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl);
+      }
+      
       onUpdate();
       onOpenChange(false);
     } catch (error: any) {
@@ -71,7 +140,7 @@ const EditProfileDialog = ({ open, onOpenChange, profile, onUpdate }: EditProfil
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px] bg-card border-border">
+      <DialogContent className="sm:max-w-[425px] bg-card border-border max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="fire-text">Edit Profile</DialogTitle>
           <DialogDescription>
@@ -79,6 +148,32 @@ const EditProfileDialog = ({ open, onOpenChange, profile, onUpdate }: EditProfil
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4 py-4">
+          {/* Avatar Upload */}
+          <div className="flex flex-col items-center gap-4">
+            <Avatar className="w-24 h-24 border-2 border-primary/20">
+              <AvatarImage src={previewUrl || avatarUrl} />
+              <AvatarFallback className="bg-muted text-2xl">
+                {username.charAt(0).toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
+            <div>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleAvatarSelect}
+                className="hidden"
+                id="avatar-upload"
+              />
+              <label
+                htmlFor="avatar-upload"
+                className="flex items-center gap-2 px-4 py-2 bg-muted border border-border rounded-lg hover:border-primary hover:bg-muted/80 transition-all cursor-pointer text-sm"
+              >
+                <Upload size={16} />
+                <span>Upload Avatar</span>
+              </label>
+            </div>
+          </div>
+
           <div className="space-y-2">
             <Label htmlFor="username">Username</Label>
             <Input
@@ -105,17 +200,6 @@ const EditProfileDialog = ({ open, onOpenChange, profile, onUpdate }: EditProfil
               onChange={(e) => setBio(e.target.value)}
               className="bg-muted border-border resize-none"
               rows={3}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="avatarUrl">Avatar URL</Label>
-            <Input
-              id="avatarUrl"
-              type="url"
-              value={avatarUrl}
-              onChange={(e) => setAvatarUrl(e.target.value)}
-              className="bg-muted border-border"
-              placeholder="https://example.com/avatar.jpg"
             />
           </div>
         </div>
