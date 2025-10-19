@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import Navigation from "@/components/Navigation";
 import PostCard from "@/components/PostCard";
+import VideoPostCard from "@/components/VideoPostCard";
 import { Loader2 } from "lucide-react";
 
 interface Post {
@@ -21,14 +22,30 @@ interface Post {
   };
 }
 
+interface Reel {
+  id: string;
+  video_url: string;
+  caption: string | null;
+  likes_count: number;
+  created_at: string;
+  profiles: {
+    username: string;
+    avatar_url: string | null;
+  };
+}
+
+type FeedItem = 
+  | { type: 'post'; data: Post }
+  | { type: 'reel'; data: Reel };
+
 const Feed = () => {
-  const [posts, setPosts] = useState<Post[]>([]);
+  const [feedItems, setFeedItems] = useState<FeedItem[]>([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
   useEffect(() => {
     checkAuth();
-    fetchPosts();
+    fetchFeed();
   }, []);
 
   const checkAuth = async () => {
@@ -38,24 +55,52 @@ const Feed = () => {
     }
   };
 
-  const fetchPosts = async () => {
+  const fetchFeed = async () => {
     try {
-      const { data, error } = await supabase
-        .from("posts")
-        .select(`
-          *,
-          profiles (
-            username,
-            avatar_url,
-            is_admin
-          )
-        `)
-        .order("created_at", { ascending: false });
+      const [postsResult, reelsResult] = await Promise.all([
+        supabase
+          .from("posts")
+          .select(`
+            *,
+            profiles (
+              username,
+              avatar_url,
+              is_admin
+            )
+          `)
+          .order("created_at", { ascending: false }),
+        supabase
+          .from("reels")
+          .select(`
+            *,
+            profiles (
+              username,
+              avatar_url
+            )
+          `)
+          .order("created_at", { ascending: false })
+      ]);
 
-      if (error) throw error;
-      setPosts(data || []);
+      if (postsResult.error) throw postsResult.error;
+      if (reelsResult.error) throw reelsResult.error;
+
+      const posts: FeedItem[] = (postsResult.data || []).map(post => ({
+        type: 'post' as const,
+        data: post
+      }));
+
+      const reels: FeedItem[] = (reelsResult.data || []).map(reel => ({
+        type: 'reel' as const,
+        data: reel
+      }));
+
+      const combined = [...posts, ...reels].sort((a, b) => 
+        new Date(b.data.created_at).getTime() - new Date(a.data.created_at).getTime()
+      );
+
+      setFeedItems(combined);
     } catch (error) {
-      console.error("Error fetching posts:", error);
+      console.error("Error fetching feed:", error);
     } finally {
       setLoading(false);
     }
@@ -74,15 +119,19 @@ const Feed = () => {
       <Navigation />
       <main className="max-w-2xl mx-auto pt-20 px-4 pb-24">
         <div className="space-y-6">
-          {posts.length === 0 ? (
+          {feedItems.length === 0 ? (
             <div className="text-center py-20">
-              <p className="text-muted-foreground text-lg">No posts yet</p>
-              <p className="text-sm text-muted-foreground mt-2">Be the first to create a post! 🔥</p>
+              <p className="text-muted-foreground text-lg">Zatiaľ žiadny obsah</p>
+              <p className="text-sm text-muted-foreground mt-2">Buďte prvý, kto pridá obsah! 🔥</p>
             </div>
           ) : (
-            posts.map((post) => (
-              <PostCard key={post.id} post={post} onUpdate={fetchPosts} />
-            ))
+            feedItems.map((item) => 
+              item.type === 'post' ? (
+                <PostCard key={item.data.id} post={item.data} onUpdate={fetchFeed} />
+              ) : (
+                <VideoPostCard key={item.data.id} reel={item.data} onUpdate={fetchFeed} />
+              )
+            )
           )}
         </div>
       </main>

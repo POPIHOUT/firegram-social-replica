@@ -5,14 +5,16 @@ import Navigation from "@/components/Navigation";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { Upload, Loader2, X, Image as ImageIcon } from "lucide-react";
+import { Upload, Loader2, X, Image as ImageIcon, Video as VideoIcon } from "lucide-react";
 
 const Create = () => {
   const [caption, setCaption] = useState("");
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [previewUrls, setPreviewUrls] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
+  const [uploadType, setUploadType] = useState<"images" | "video">("images");
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -32,13 +34,27 @@ const Create = () => {
     
     if (files.length === 0) return;
 
+    if (uploadType === "video" && files.length > 1) {
+      toast({
+        title: "Príliš veľa súborov",
+        description: "Môžete nahrať len jedno video",
+        variant: "destructive",
+      });
+      return;
+    }
+
     // Check file types
     const validFiles = files.filter(file => {
-      const isValidType = file.type.startsWith('image/');
+      const isValidType = uploadType === "images" 
+        ? file.type.startsWith('image/') 
+        : file.type.startsWith('video/');
+      
       if (!isValidType) {
         toast({
-          title: "Invalid file type",
-          description: `${file.name} is not an image file`,
+          title: "Neplatný typ súboru",
+          description: uploadType === "images" 
+            ? `${file.name} nie je obrázok`
+            : `${file.name} nie je video`,
           variant: "destructive",
         });
       }
@@ -47,24 +63,29 @@ const Create = () => {
 
     if (validFiles.length === 0) return;
 
-    // Check file sizes (max 5MB per file)
-    const oversizedFiles = validFiles.filter(file => file.size > 5 * 1024 * 1024);
+    // Check file sizes
+    const maxSize = uploadType === "images" ? 10 * 1024 * 1024 : 100 * 1024 * 1024;
+    const oversizedFiles = validFiles.filter(file => file.size > maxSize);
     if (oversizedFiles.length > 0) {
       toast({
-        title: "File too large",
-        description: "Each image must be less than 5MB",
+        title: "Súbor je príliš veľký",
+        description: uploadType === "images"
+          ? "Každý obrázok musí byť pod 10MB"
+          : "Video musí byť pod 100MB",
         variant: "destructive",
       });
       return;
     }
 
-    // Add to existing files
-    const newFiles = [...selectedFiles, ...validFiles];
-    setSelectedFiles(newFiles);
-
-    // Create preview URLs
-    const newPreviewUrls = validFiles.map(file => URL.createObjectURL(file));
-    setPreviewUrls([...previewUrls, ...newPreviewUrls]);
+    if (uploadType === "video") {
+      setSelectedFiles([validFiles[0]]);
+      setPreviewUrls([URL.createObjectURL(validFiles[0])]);
+    } else {
+      const newFiles = [...selectedFiles, ...validFiles];
+      setSelectedFiles(newFiles);
+      const newPreviewUrls = validFiles.map(file => URL.createObjectURL(file));
+      setPreviewUrls([...previewUrls, ...newPreviewUrls]);
+    }
   };
 
   const removeFile = (index: number) => {
@@ -106,13 +127,36 @@ const Create = () => {
     return uploadedUrls;
   };
 
+  const uploadVideo = async (userId: string): Promise<string> => {
+    const file = selectedFiles[0];
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${userId}/${Date.now()}.${fileExt}`;
+
+    const { data, error } = await supabase.storage
+      .from('reels')
+      .upload(fileName, file, {
+        cacheControl: '3600',
+        upsert: false
+      });
+
+    if (error) throw error;
+
+    const { data: { publicUrl } } = supabase.storage
+      .from('reels')
+      .getPublicUrl(fileName);
+
+    return publicUrl;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (selectedFiles.length === 0) {
       toast({
-        title: "No images selected",
-        description: "Please select at least one image to upload",
+        title: "Žiadne súbory",
+        description: uploadType === "images" 
+          ? "Vyberte prosím aspoň jeden obrázok"
+          : "Vyberte prosím video",
         variant: "destructive",
       });
       return;
@@ -123,31 +167,44 @@ const Create = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
-      // Upload all images
-      const imageUrls = await uploadImages(user.id);
+      if (uploadType === "images") {
+        const imageUrls = await uploadImages(user.id);
 
-      // Create post with uploaded images
-      const { error } = await supabase.from("posts").insert({
-        user_id: user.id,
-        image_url: imageUrls[0], // First image as primary
-        images: imageUrls,
-        caption: caption,
-      });
+        const { error } = await supabase.from("posts").insert({
+          user_id: user.id,
+          image_url: imageUrls[0],
+          images: imageUrls,
+          caption: caption || null,
+        });
 
-      if (error) throw error;
+        if (error) throw error;
 
-      toast({
-        title: "Success!",
-        description: `Your post with ${imageUrls.length} ${imageUrls.length === 1 ? 'image' : 'images'} has been created 🔥`,
-      });
-      
-      // Clean up preview URLs
+        toast({
+          title: "Post vytvorený!",
+          description: `Váš post s ${imageUrls.length} ${imageUrls.length === 1 ? 'obrázkom' : 'obrázkami'} bol vytvorený 🔥`,
+        });
+      } else {
+        const videoUrl = await uploadVideo(user.id);
+
+        const { error } = await supabase.from("reels").insert({
+          user_id: user.id,
+          video_url: videoUrl,
+          caption: caption || null,
+        });
+
+        if (error) throw error;
+
+        toast({
+          title: "Video vytvorené!",
+          description: "Vaše video bolo úspešne nahrané 🔥",
+        });
+      }
+
       previewUrls.forEach(url => URL.revokeObjectURL(url));
-      
       navigate("/feed");
     } catch (error: any) {
       toast({
-        title: "Error",
+        title: "Chyba",
         description: error.message,
         variant: "destructive",
       });
@@ -161,8 +218,27 @@ const Create = () => {
       <Navigation />
       <main className="max-w-2xl mx-auto pt-20 px-4 pb-24">
         <Card className="p-6 border-border bg-card">
-          <h1 className="text-2xl font-bold mb-6 fire-text">Create New Post</h1>
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <h1 className="text-2xl font-bold mb-6 fire-text">Vytvoriť obsah</h1>
+          
+          <Tabs value={uploadType} onValueChange={(v) => {
+            setUploadType(v as "images" | "video");
+            setSelectedFiles([]);
+            previewUrls.forEach(url => URL.revokeObjectURL(url));
+            setPreviewUrls([]);
+          }}>
+            <TabsList className="grid w-full grid-cols-2 mb-6">
+              <TabsTrigger value="images" className="flex items-center gap-2">
+                <ImageIcon className="h-4 w-4" />
+                Obrázky
+              </TabsTrigger>
+              <TabsTrigger value="video" className="flex items-center gap-2">
+                <VideoIcon className="h-4 w-4" />
+                Video
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="images">
+              <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <label className="block text-sm font-medium">Upload Images</label>
@@ -240,16 +316,103 @@ const Create = () => {
               {loading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Uploading...
+                  Nahrávam...
                 </>
               ) : (
                 <>
                   <ImageIcon className="mr-2 h-4 w-4" />
-                  Create Post
+                  Vytvoriť post
                 </>
               )}
             </Button>
           </form>
+        </TabsContent>
+
+        <TabsContent value="video">
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <label className="block text-sm font-medium">Nahrať video</label>
+                {selectedFiles.length > 0 && (
+                  <span className="text-xs text-muted-foreground">
+                    Video vybrané
+                  </span>
+                )}
+              </div>
+              
+              <div className="relative">
+                <input
+                  type="file"
+                  accept="video/*"
+                  onChange={handleFileSelect}
+                  className="hidden"
+                  id="video-upload"
+                />
+                <label
+                  htmlFor="video-upload"
+                  className="flex items-center justify-center gap-2 w-full px-4 py-8 bg-muted border-2 border-dashed border-border rounded-lg hover:border-primary hover:bg-muted/80 transition-all cursor-pointer"
+                >
+                  <Upload className="text-muted-foreground" size={24} />
+                  <span className="text-muted-foreground font-medium">
+                    Kliknite pre výber videa
+                  </span>
+                </label>
+              </div>
+
+              {previewUrls.length > 0 && (
+                <div className="relative">
+                  <div className="rounded-lg overflow-hidden border border-border bg-black">
+                    <video
+                      src={previewUrls[0]}
+                      controls
+                      className="w-full aspect-video object-contain"
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      URL.revokeObjectURL(previewUrls[0]);
+                      setSelectedFiles([]);
+                      setPreviewUrls([]);
+                    }}
+                    className="absolute top-2 right-2 bg-destructive text-destructive-foreground rounded-full p-1.5"
+                  >
+                    <X size={16} />
+                  </button>
+                </div>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-2">Popis</label>
+              <Textarea
+                placeholder="Napíšte popis..."
+                value={caption}
+                onChange={(e) => setCaption(e.target.value)}
+                className="min-h-[100px] bg-muted border-border focus:border-primary resize-none"
+              />
+            </div>
+
+            <Button
+              type="submit"
+              disabled={loading || selectedFiles.length === 0}
+              className="w-full fire-gradient hover:opacity-90 font-semibold"
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Nahrávam...
+                </>
+              ) : (
+                <>
+                  <VideoIcon className="mr-2 h-4 w-4" />
+                  Vytvoriť video
+                </>
+              )}
+            </Button>
+          </form>
+        </TabsContent>
+      </Tabs>
         </Card>
       </main>
     </div>
