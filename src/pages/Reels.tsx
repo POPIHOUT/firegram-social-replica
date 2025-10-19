@@ -134,8 +134,13 @@ const Reels = () => {
       <Navigation />
       <div
         ref={containerRef}
-        className="h-screen overflow-y-scroll snap-y snap-mandatory scroll-smooth"
-        style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+        className="h-screen overflow-y-scroll snap-y snap-mandatory"
+        style={{ 
+          scrollbarWidth: 'none', 
+          msOverflowStyle: 'none',
+          scrollBehavior: 'smooth',
+          overscrollBehavior: 'contain'
+        }}
       >
         <style>{`
           div::-webkit-scrollbar {

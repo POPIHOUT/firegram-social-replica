@@ -4,7 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import Navigation from "@/components/Navigation";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card } from "@/components/ui/card";
-import { Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Loader2, MessageSquarePlus } from "lucide-react";
 
 interface Conversation {
   id: string;
@@ -133,7 +134,16 @@ const Messages = () => {
     <div className="min-h-screen">
       <Navigation />
       <main className="max-w-2xl mx-auto pt-20 px-4 pb-24">
-        <h1 className="text-3xl font-bold mb-6 fire-text">Správy</h1>
+        <div className="flex items-center justify-between mb-6">
+          <h1 className="text-3xl font-bold fire-text">Správy</h1>
+          <Button
+            onClick={() => navigate("/search")}
+            className="flex items-center gap-2"
+          >
+            <MessageSquarePlus size={20} />
+            Nová konverzácia
+          </Button>
+        </div>
 
         {conversations.length === 0 ? (
           <div className="text-center py-20">
@@ -141,6 +151,13 @@ const Messages = () => {
             <p className="text-sm text-muted-foreground mt-2">
               Začnite konverzáciu vyhľadaním používateľov 💬
             </p>
+            <Button
+              onClick={() => navigate("/search")}
+              className="mt-4"
+              variant="outline"
+            >
+              Vyhľadať používateľov
+            </Button>
           </div>
         ) : (
           <div className="space-y-3">
