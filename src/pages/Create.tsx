@@ -64,13 +64,13 @@ const Create = () => {
     if (validFiles.length === 0) return;
 
     // Check file sizes
-    const maxSize = uploadType === "images" ? 10 * 1024 * 1024 : 100 * 1024 * 1024;
+    const maxSize = uploadType === "images" ? 15 * 1024 * 1024 : 100 * 1024 * 1024;
     const oversizedFiles = validFiles.filter(file => file.size > maxSize);
     if (oversizedFiles.length > 0) {
       toast({
         title: "Súbor je príliš veľký",
         description: uploadType === "images"
-          ? "Každý obrázok musí byť pod 10MB"
+          ? "Každý obrázok musí byť pod 15MB"
           : "Video musí byť pod 100MB",
         variant: "destructive",
       });
