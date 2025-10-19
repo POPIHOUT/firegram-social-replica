@@ -92,7 +92,7 @@ export const ImageCropper = ({ image, onCropComplete, onCancel }: ImageCropperPr
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black">
+    <div className="fixed inset-0 z-[100] bg-black">
       <div className="relative w-full h-full">
         <Cropper
           image={image}
