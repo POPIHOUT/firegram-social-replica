@@ -214,11 +214,11 @@ const Create = () => {
   };
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen pb-safe">
       <Navigation />
-      <main className="max-w-2xl mx-auto pt-20 px-4 pb-24">
-        <Card className="p-6 border-border bg-card">
-          <h1 className="text-2xl font-bold mb-6 fire-text">Vytvoriť obsah</h1>
+      <main className="max-w-2xl mx-auto pt-16 sm:pt-20 px-3 sm:px-4 pb-20 sm:pb-24">
+        <Card className="p-4 sm:p-6 border-border bg-card">
+          <h1 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6 fire-text">Vytvoriť obsah</h1>
           
           <Tabs value={uploadType} onValueChange={(v) => {
             setUploadType(v as "images" | "video");
@@ -226,13 +226,13 @@ const Create = () => {
             previewUrls.forEach(url => URL.revokeObjectURL(url));
             setPreviewUrls([]);
           }}>
-            <TabsList className="grid w-full grid-cols-2 mb-6">
-              <TabsTrigger value="images" className="flex items-center gap-2">
-                <ImageIcon className="h-4 w-4" />
+            <TabsList className="grid w-full grid-cols-2 mb-4 sm:mb-6">
+              <TabsTrigger value="images" className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm">
+                <ImageIcon className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                 Obrázky
               </TabsTrigger>
-              <TabsTrigger value="video" className="flex items-center gap-2">
-                <VideoIcon className="h-4 w-4" />
+              <TabsTrigger value="video" className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm">
+                <VideoIcon className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                 Video
               </TabsTrigger>
             </TabsList>

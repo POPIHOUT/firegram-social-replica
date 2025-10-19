@@ -131,59 +131,59 @@ const Messages = () => {
   }
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen pb-safe">
       <Navigation />
-      <main className="max-w-2xl mx-auto pt-20 px-4 pb-24">
-        <div className="flex items-center justify-between mb-6">
-          <h1 className="text-3xl font-bold fire-text">Správy</h1>
+      <main className="max-w-2xl mx-auto pt-16 sm:pt-20 px-3 sm:px-4 pb-20 sm:pb-24">
+        <div className="flex items-center justify-between mb-4 sm:mb-6">
+          <h1 className="text-2xl sm:text-3xl font-bold fire-text">Správy</h1>
           <Button
             onClick={() => navigate("/search")}
-            className="flex items-center gap-2"
+            className="flex items-center gap-1.5 text-xs sm:text-sm h-8 sm:h-9"
           >
-            <MessageSquarePlus size={20} />
-            Nová konverzácia
+            <MessageSquarePlus size={16} className="sm:w-5 sm:h-5" />
+            <span className="hidden xs:inline">Nová</span>
           </Button>
         </div>
 
         {conversations.length === 0 ? (
-          <div className="text-center py-20">
-            <p className="text-muted-foreground text-lg">Žiadne správy</p>
-            <p className="text-sm text-muted-foreground mt-2">
+          <div className="text-center py-12 sm:py-20 px-4">
+            <p className="text-muted-foreground text-base sm:text-lg">Žiadne správy</p>
+            <p className="text-xs sm:text-sm text-muted-foreground mt-2">
               Začnite konverzáciu vyhľadaním používateľov 💬
             </p>
             <Button
               onClick={() => navigate("/search")}
-              className="mt-4"
+              className="mt-4 text-xs sm:text-sm h-8 sm:h-9"
               variant="outline"
             >
               Vyhľadať používateľov
             </Button>
           </div>
         ) : (
-          <div className="space-y-3">
+          <div className="space-y-2 sm:space-y-3">
             {conversations.map((conversation) => (
               <Card
                 key={conversation.id}
-                className="p-4 cursor-pointer hover:bg-muted/50 transition-colors"
+                className="p-3 sm:p-4 cursor-pointer hover:bg-muted/50 transition-colors touch-manipulation active:scale-[0.98]"
                 onClick={() => navigate(`/messages/${conversation.id}`)}
               >
-                <div className="flex items-center gap-3">
-                  <Avatar className="h-12 w-12">
+                <div className="flex items-center gap-2 sm:gap-3">
+                  <Avatar className="h-11 w-11 sm:h-12 sm:w-12">
                     <AvatarImage src={conversation.otherUser.avatar_url || undefined} />
-                    <AvatarFallback className="bg-primary text-primary-foreground">
+                    <AvatarFallback className="bg-primary text-primary-foreground text-sm">
                       {conversation.otherUser.username[0].toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
                   <div className="flex-1 min-w-0">
-                    <p className="font-semibold">{conversation.otherUser.username}</p>
+                    <p className="font-semibold text-sm sm:text-base">{conversation.otherUser.username}</p>
                     {conversation.lastMessage && (
-                      <p className="text-sm text-muted-foreground truncate">
+                      <p className="text-xs sm:text-sm text-muted-foreground truncate">
                         {conversation.lastMessage.content}
                       </p>
                     )}
                   </div>
                   {conversation.lastMessage && (
-                    <span className="text-xs text-muted-foreground">
+                    <span className="text-[10px] sm:text-xs text-muted-foreground whitespace-nowrap">
                       {new Date(conversation.lastMessage.created_at).toLocaleDateString()}
                     </span>
                   )}

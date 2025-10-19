@@ -246,64 +246,64 @@ const Profile = () => {
   if (!profile) return null;
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen pb-safe">
       <Navigation />
-      <main className="max-w-4xl mx-auto pt-20 px-4 pb-24">
-        <div className="space-y-8">
-          <div className="flex items-center gap-8">
-            <Avatar className="w-32 h-32 border-4 border-primary/20">
+      <main className="max-w-4xl mx-auto pt-16 sm:pt-20 px-3 sm:px-4 pb-20 sm:pb-24">
+        <div className="space-y-4 sm:space-y-8">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-8">
+            <Avatar className="w-20 h-20 sm:w-32 sm:h-32 border-2 sm:border-4 border-primary/20 mx-auto sm:mx-0">
               <AvatarImage src={profile.avatar_url} />
-              <AvatarFallback className="bg-muted text-3xl">
+              <AvatarFallback className="bg-muted text-2xl sm:text-3xl">
                 {profile.username.charAt(0).toUpperCase()}
               </AvatarFallback>
             </Avatar>
 
-            <div className="flex-1 space-y-4">
-              <div className="flex items-center gap-3">
-                <h1 className="text-2xl font-bold">{profile.username}</h1>
+            <div className="flex-1 w-full space-y-3 sm:space-y-4">
+              <div className="flex flex-col sm:flex-row items-center sm:items-center gap-2 sm:gap-3">
+                <h1 className="text-xl sm:text-2xl font-bold">{profile.username}</h1>
                 {profile.is_verified && (
-                  <Check size={20} className="text-primary" />
+                  <Check size={18} className="text-primary sm:w-5 sm:h-5" />
                 )}
                 {profile.is_admin && (
-                  <Badge variant="secondary" className="flex items-center gap-1 px-2 py-1">
-                    <Shield size={14} />
+                  <Badge variant="secondary" className="flex items-center gap-1 px-2 py-0.5 sm:py-1 text-xs">
+                    <Shield size={12} className="sm:w-3.5 sm:h-3.5" />
                     CEO
                   </Badge>
                 )}
               </div>
 
-              <div className="flex gap-8">
+              <div className="flex gap-4 sm:gap-8 justify-center sm:justify-start">
                 <div className="text-center">
-                  <p className="font-bold text-xl">{postsCount + reelsCount}</p>
-                  <p className="text-sm text-muted-foreground">posts</p>
+                  <p className="font-bold text-base sm:text-xl">{postsCount + reelsCount}</p>
+                  <p className="text-xs sm:text-sm text-muted-foreground">posts</p>
                 </div>
                 <button 
-                  className="text-center hover:opacity-70 transition-opacity"
+                  className="text-center hover:opacity-70 transition-opacity touch-manipulation"
                   onClick={() => setFollowersDialogOpen(true)}
                 >
-                  <p className="font-bold text-xl">{followersCount}</p>
-                  <p className="text-sm text-muted-foreground">followers</p>
+                  <p className="font-bold text-base sm:text-xl">{followersCount}</p>
+                  <p className="text-xs sm:text-sm text-muted-foreground">followers</p>
                 </button>
                 <button 
-                  className="text-center hover:opacity-70 transition-opacity"
+                  className="text-center hover:opacity-70 transition-opacity touch-manipulation"
                   onClick={() => setFollowingDialogOpen(true)}
                 >
-                  <p className="font-bold text-xl">{followingCount}</p>
-                  <p className="text-sm text-muted-foreground">following</p>
+                  <p className="font-bold text-base sm:text-xl">{followingCount}</p>
+                  <p className="text-xs sm:text-sm text-muted-foreground">following</p>
                 </button>
               </div>
 
               {profile.full_name && (
-                <p className="font-semibold">{profile.full_name}</p>
+                <p className="font-semibold text-sm sm:text-base text-center sm:text-left">{profile.full_name}</p>
               )}
-              {profile.bio && <p className="text-sm">{profile.bio}</p>}
+              {profile.bio && <p className="text-xs sm:text-sm text-center sm:text-left">{profile.bio}</p>}
 
-              <div className="flex gap-2">
+              <div className="flex gap-2 w-full">
                 {isOwnProfile ? (
                   <>
                     <Button 
                       variant="outline" 
-                      className="flex-1 sm:flex-initial"
+                      className="flex-1 text-xs sm:text-sm h-8 sm:h-9"
                       onClick={() => setEditDialogOpen(true)}
                     >
                       Edit profile
@@ -312,26 +312,26 @@ const Profile = () => {
                       variant="outline"
                       size="icon"
                       onClick={handleLogout}
-                      className="text-destructive hover:text-destructive"
+                      className="text-destructive hover:text-destructive h-8 w-8 sm:h-9 sm:w-9"
                     >
-                      <LogOut size={20} />
+                      <LogOut size={16} className="sm:w-5 sm:h-5" />
                     </Button>
                   </>
                 ) : (
                   <Button 
                     variant={isFollowing ? "outline" : "default"}
-                    className="flex-1"
+                    className="flex-1 text-xs sm:text-sm h-8 sm:h-9"
                     onClick={handleFollow}
                   >
                     {isFollowing ? (
                       <>
-                        <UserMinus className="mr-2 h-4 w-4" />
-                        Unfollow
+                        <UserMinus className="mr-1 h-3.5 w-3.5 sm:mr-2 sm:h-4 sm:w-4" />
+                        <span className="hidden xs:inline">Unfollow</span>
                       </>
                     ) : (
                       <>
-                        <UserPlus className="mr-2 h-4 w-4" />
-                        Follow
+                        <UserPlus className="mr-1 h-3.5 w-3.5 sm:mr-2 sm:h-4 sm:w-4" />
+                        <span className="hidden xs:inline">Follow</span>
                       </>
                     )}
                   </Button>
@@ -340,40 +340,40 @@ const Profile = () => {
             </div>
           </div>
 
-          <div className="border-t border-border pt-8">
-            <div className="flex justify-center gap-12 mb-6">
+          <div className="border-t border-border pt-4 sm:pt-8">
+            <div className="flex justify-center gap-6 sm:gap-12 mb-4 sm:mb-6 overflow-x-auto">
               <button 
-                className={`flex items-center gap-2 text-sm font-semibold pt-2 -mt-8 ${
+                className={`flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm font-semibold pt-2 -mt-4 sm:-mt-8 whitespace-nowrap touch-manipulation ${
                   activeTab === "posts" 
                     ? "border-t-2 border-primary" 
                     : "text-muted-foreground"
                 }`}
                 onClick={() => setActiveTab("posts")}
               >
-                <Grid size={16} />
+                <Grid size={14} className="sm:w-4 sm:h-4" />
                 POSTS
               </button>
               <button 
-                className={`flex items-center gap-2 text-sm pt-2 -mt-8 ${
+                className={`flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm pt-2 -mt-4 sm:-mt-8 whitespace-nowrap touch-manipulation ${
                   activeTab === "reels" 
                     ? "border-t-2 border-primary font-semibold" 
                     : "text-muted-foreground"
                 }`}
                 onClick={() => setActiveTab("reels")}
               >
-                <Film size={16} />
+                <Film size={14} className="sm:w-4 sm:h-4" />
                 REELS
               </button>
               {isOwnProfile && (
                 <button 
-                  className={`flex items-center gap-2 text-sm pt-2 -mt-8 ${
+                  className={`flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm pt-2 -mt-4 sm:-mt-8 whitespace-nowrap touch-manipulation ${
                     activeTab === "saved" 
                       ? "border-t-2 border-primary font-semibold" 
                       : "text-muted-foreground"
                   }`}
                   onClick={() => setActiveTab("saved")}
                 >
-                  <Bookmark size={16} />
+                  <Bookmark size={14} className="sm:w-4 sm:h-4" />
                   ULOŽENÉ
                 </button>
               )}

@@ -224,30 +224,30 @@ const PostCard = ({ post, onUpdate }: PostCardProps) => {
 
   return (
     <Card className="border-border bg-card overflow-hidden">
-      <div className="p-4 flex items-center gap-3">
+      <div className="p-3 sm:p-4 flex items-center gap-2 sm:gap-3">
         <Avatar 
-          className="w-10 h-10 border-2 border-primary/20 cursor-pointer"
+          className="w-9 h-9 sm:w-10 sm:h-10 border-2 border-primary/20 cursor-pointer touch-manipulation"
           onClick={() => navigate(`/profile/${post.user_id}`)}
         >
           <AvatarImage src={post.profiles.avatar_url} />
-          <AvatarFallback className="bg-muted">
+          <AvatarFallback className="bg-muted text-sm">
             {post.profiles.username.charAt(0).toUpperCase()}
           </AvatarFallback>
         </Avatar>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 sm:gap-2 flex-1 min-w-0">
           <span 
-            className="font-semibold cursor-pointer hover:opacity-70"
+            className="font-semibold cursor-pointer hover:opacity-70 text-sm sm:text-base truncate touch-manipulation"
             onClick={() => navigate(`/profile/${post.user_id}`)}
           >
             {post.profiles.username}
           </span>
           {post.profiles.is_verified && (
-            <Check size={16} className="text-primary" />
+            <Check size={14} className="text-primary flex-shrink-0 sm:w-4 sm:h-4" />
           )}
           {post.profiles.is_admin && (
-            <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-accent/20">
-              <Shield size={12} className="text-accent" />
-              <span className="text-xs font-medium text-accent">CEO</span>
+            <div className="flex items-center gap-0.5 sm:gap-1 px-1.5 sm:px-2 py-0.5 rounded-full bg-accent/20 flex-shrink-0">
+              <Shield size={10} className="text-accent sm:w-3 sm:h-3" />
+              <span className="text-[10px] sm:text-xs font-medium text-accent">CEO</span>
             </div>
           )}
         </div>
@@ -257,7 +257,7 @@ const PostCard = ({ post, onUpdate }: PostCardProps) => {
         <img
           src={images[currentImageIndex]}
           alt={post.caption || "Post"}
-          className="w-full aspect-square object-cover cursor-pointer"
+          className="w-full aspect-square object-cover cursor-pointer touch-manipulation"
           onClick={() => setImageViewerOpen(true)}
         />
         
@@ -265,23 +265,23 @@ const PostCard = ({ post, onUpdate }: PostCardProps) => {
           <>
             <button
               onClick={prevImage}
-              className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white rounded-full p-2 transition-colors"
+              className="absolute left-1 sm:left-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white rounded-full p-1.5 sm:p-2 transition-colors touch-manipulation active:scale-95"
             >
-              <ChevronLeft size={20} />
+              <ChevronLeft size={18} className="sm:w-5 sm:h-5" />
             </button>
             <button
               onClick={nextImage}
-              className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white rounded-full p-2 transition-colors"
+              className="absolute right-1 sm:right-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white rounded-full p-1.5 sm:p-2 transition-colors touch-manipulation active:scale-95"
             >
-              <ChevronRight size={20} />
+              <ChevronRight size={18} className="sm:w-5 sm:h-5" />
             </button>
-            <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
+            <div className="absolute bottom-2 sm:bottom-3 left-1/2 -translate-x-1/2 flex gap-1 sm:gap-1.5">
               {images.map((_, index) => (
                 <div
                   key={index}
                   className={`w-1.5 h-1.5 rounded-full transition-all ${
                     index === currentImageIndex
-                      ? "bg-white w-6"
+                      ? "bg-white w-5 sm:w-6"
                       : "bg-white/50"
                   }`}
                 />
@@ -291,31 +291,31 @@ const PostCard = ({ post, onUpdate }: PostCardProps) => {
         )}
       </div>
 
-      <div className="p-4 space-y-3">
+      <div className="p-3 sm:p-4 space-y-2 sm:space-y-3">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <button onClick={handleLike} className="transition-transform active:scale-90">
+          <div className="flex items-center gap-3 sm:gap-4">
+            <button onClick={handleLike} className="transition-transform active:scale-90 touch-manipulation">
               <Flame
-                size={24}
-                className={liked ? "fill-orange-500 text-orange-500" : "text-foreground"}
+                size={22}
+                className={`sm:w-6 sm:h-6 ${liked ? "fill-orange-500 text-orange-500" : "text-foreground"}`}
               />
             </button>
             <button 
               onClick={() => setCommentsOpen(true)}
-              className="transition-transform active:scale-90"
+              className="transition-transform active:scale-90 touch-manipulation"
             >
-              <MessageCircle size={24} />
+              <MessageCircle size={22} className="sm:w-6 sm:h-6" />
             </button>
           </div>
-          <button onClick={handleSave} className="transition-transform active:scale-90">
-            <Bookmark size={24} className={saved ? "fill-foreground" : ""} />
+          <button onClick={handleSave} className="transition-transform active:scale-90 touch-manipulation">
+            <Bookmark size={22} className={`sm:w-6 sm:h-6 ${saved ? "fill-foreground" : ""}`} />
           </button>
         </div>
 
         <div className="space-y-1">
-          <p className="font-semibold">{post.likes_count.toLocaleString()} likes</p>
+          <p className="font-semibold text-sm sm:text-base">{post.likes_count.toLocaleString()} likes</p>
           {post.caption && (
-            <p className="text-sm">
+            <p className="text-xs sm:text-sm">
               <span className="font-semibold mr-2">{post.profiles.username}</span>
               {post.caption}
             </p>
@@ -323,7 +323,7 @@ const PostCard = ({ post, onUpdate }: PostCardProps) => {
           {post.comments_count > 0 && (
             <button 
               onClick={() => setCommentsOpen(true)}
-              className="text-sm text-muted-foreground hover:text-foreground"
+              className="text-xs sm:text-sm text-muted-foreground hover:text-foreground touch-manipulation"
             >
               View all {post.comments_count} comments
             </button>
