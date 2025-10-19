@@ -256,6 +256,8 @@ export type Database = {
       profiles: {
         Row: {
           avatar_url: string | null
+          ban_reason: string | null
+          banned: boolean | null
           bio: string | null
           created_at: string | null
           full_name: string | null
@@ -263,11 +265,16 @@ export type Database = {
           is_admin: boolean | null
           is_support: boolean | null
           is_verified: boolean | null
+          suspended: boolean | null
+          suspended_reason: string | null
+          suspended_until: string | null
           updated_at: string | null
           username: string
         }
         Insert: {
           avatar_url?: string | null
+          ban_reason?: string | null
+          banned?: boolean | null
           bio?: string | null
           created_at?: string | null
           full_name?: string | null
@@ -275,11 +282,16 @@ export type Database = {
           is_admin?: boolean | null
           is_support?: boolean | null
           is_verified?: boolean | null
+          suspended?: boolean | null
+          suspended_reason?: string | null
+          suspended_until?: string | null
           updated_at?: string | null
           username: string
         }
         Update: {
           avatar_url?: string | null
+          ban_reason?: string | null
+          banned?: boolean | null
           bio?: string | null
           created_at?: string | null
           full_name?: string | null
@@ -287,6 +299,9 @@ export type Database = {
           is_admin?: boolean | null
           is_support?: boolean | null
           is_verified?: boolean | null
+          suspended?: boolean | null
+          suspended_reason?: string | null
+          suspended_until?: string | null
           updated_at?: string | null
           username?: string
         }
