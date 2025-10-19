@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { formatDistanceToNow } from "date-fns";
 import { useNavigate } from "react-router-dom";
+import CommentsDialog from "./CommentsDialog";
 
 interface PostCardProps {
   post: {
@@ -31,6 +32,7 @@ const PostCard = ({ post, onUpdate }: PostCardProps) => {
   const [saved, setSaved] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isCheckingLike, setIsCheckingLike] = useState(true);
+  const [commentsOpen, setCommentsOpen] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -213,7 +215,10 @@ const PostCard = ({ post, onUpdate }: PostCardProps) => {
                 className={liked ? "fill-destructive text-destructive" : "text-foreground"}
               />
             </button>
-            <button className="transition-transform active:scale-90">
+            <button 
+              onClick={() => setCommentsOpen(true)}
+              className="transition-transform active:scale-90"
+            >
               <MessageCircle size={24} />
             </button>
           </div>
@@ -231,8 +236,11 @@ const PostCard = ({ post, onUpdate }: PostCardProps) => {
             </p>
           )}
           {post.comments_count > 0 && (
-            <button className="text-sm text-muted-foreground hover:text-foreground">
-              View all {post.comments_count} comments
+            <button 
+              onClick={() => setCommentsOpen(true)}
+              className="text-sm text-muted-foreground hover:text-foreground"
+            >
+              Zobraziť všetkých {post.comments_count} komentárov
             </button>
           )}
           <p className="text-xs text-muted-foreground">
@@ -240,6 +248,13 @@ const PostCard = ({ post, onUpdate }: PostCardProps) => {
           </p>
         </div>
       </div>
+
+      <CommentsDialog
+        open={commentsOpen}
+        onOpenChange={setCommentsOpen}
+        postId={post.id}
+        onCommentAdded={onUpdate}
+      />
     </Card>
   );
 };
