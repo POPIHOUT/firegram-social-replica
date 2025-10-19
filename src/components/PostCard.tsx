@@ -7,6 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import { formatDistanceToNow } from "date-fns";
 import { useNavigate } from "react-router-dom";
 import CommentsDialog from "./CommentsDialog";
+import ImageViewerDialog from "./ImageViewerDialog";
 
 interface PostCardProps {
   post: {
@@ -33,6 +34,7 @@ const PostCard = ({ post, onUpdate }: PostCardProps) => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isCheckingLike, setIsCheckingLike] = useState(true);
   const [commentsOpen, setCommentsOpen] = useState(false);
+  const [imageViewerOpen, setImageViewerOpen] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -173,7 +175,8 @@ const PostCard = ({ post, onUpdate }: PostCardProps) => {
         <img
           src={images[currentImageIndex]}
           alt={post.caption || "Post"}
-          className="w-full aspect-square object-cover"
+          className="w-full aspect-square object-cover cursor-pointer"
+          onClick={() => setImageViewerOpen(true)}
         />
         
         {images.length > 1 && (
@@ -254,6 +257,20 @@ const PostCard = ({ post, onUpdate }: PostCardProps) => {
         onOpenChange={setCommentsOpen}
         postId={post.id}
         onCommentAdded={onUpdate}
+      />
+
+      <ImageViewerDialog
+        open={imageViewerOpen}
+        onOpenChange={setImageViewerOpen}
+        images={images}
+        currentIndex={currentImageIndex}
+        onNavigate={(direction) => {
+          if (direction === "prev") {
+            setCurrentImageIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1));
+          } else {
+            setCurrentImageIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1));
+          }
+        }}
       />
     </Card>
   );

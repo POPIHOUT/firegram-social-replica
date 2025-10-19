@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import Navigation from "@/components/Navigation";
 import EditProfileDialog from "@/components/EditProfileDialog";
+import ImageViewerDialog from "@/components/ImageViewerDialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Shield, Grid, Film, Loader2, LogOut, Heart, MessageCircle, UserPlus, UserMinus } from "lucide-react";
@@ -47,6 +48,9 @@ const Profile = () => {
   const [activeTab, setActiveTab] = useState<"posts" | "reels">("posts");
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [isOwnProfile, setIsOwnProfile] = useState(false);
+  const [imageViewerOpen, setImageViewerOpen] = useState(false);
+  const [selectedImages, setSelectedImages] = useState<string[]>([]);
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -309,9 +313,20 @@ const Profile = () => {
                     const displayImage = post.images && post.images.length > 0 
                       ? post.images[0] 
                       : post.image_url;
+                    const allImages = post.images && post.images.length > 0 
+                      ? post.images 
+                      : [post.image_url];
                     
                     return (
-                      <div key={post.id} className="relative aspect-square group cursor-pointer">
+                      <div 
+                        key={post.id} 
+                        className="relative aspect-square group cursor-pointer"
+                        onClick={() => {
+                          setSelectedImages(allImages);
+                          setSelectedImageIndex(0);
+                          setImageViewerOpen(true);
+                        }}
+                      >
                         <img
                           src={displayImage}
                           alt="Post"
@@ -381,6 +396,20 @@ const Profile = () => {
         onOpenChange={setEditDialogOpen}
         profile={profile}
         onUpdate={() => profile && currentUserId && fetchProfile(profile.id, currentUserId)}
+      />
+
+      <ImageViewerDialog
+        open={imageViewerOpen}
+        onOpenChange={setImageViewerOpen}
+        images={selectedImages}
+        currentIndex={selectedImageIndex}
+        onNavigate={(direction) => {
+          if (direction === "prev") {
+            setSelectedImageIndex((prev) => (prev === 0 ? selectedImages.length - 1 : prev - 1));
+          } else {
+            setSelectedImageIndex((prev) => (prev === selectedImages.length - 1 ? 0 : prev + 1));
+          }
+        }}
       />
     </div>
   );
