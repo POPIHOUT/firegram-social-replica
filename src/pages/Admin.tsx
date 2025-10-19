@@ -300,7 +300,13 @@ const Admin = () => {
         description: "User roles have been updated successfully",
       });
 
-      fetchData();
+      await fetchData();
+      
+      // Update selected user after refresh
+      const updatedUser = users.find(u => u.id === userId);
+      if (updatedUser) {
+        setSelectedUser(updatedUser);
+      }
     } catch (error: any) {
       toast({
         title: "Error",
@@ -650,7 +656,6 @@ const Admin = () => {
                 onCheckedChange={(checked) => {
                   if (selectedUser) {
                     handleUpdateRoles(selectedUser.id, { is_admin: checked });
-                    setSelectedUser({ ...selectedUser, is_admin: checked });
                   }
                 }}
               />
@@ -668,7 +673,6 @@ const Admin = () => {
                 onCheckedChange={(checked) => {
                   if (selectedUser) {
                     handleUpdateRoles(selectedUser.id, { is_verified: checked });
-                    setSelectedUser({ ...selectedUser, is_verified: checked });
                   }
                 }}
               />
@@ -686,7 +690,6 @@ const Admin = () => {
                 onCheckedChange={(checked) => {
                   if (selectedUser) {
                     handleUpdateRoles(selectedUser.id, { is_support: checked });
-                    setSelectedUser({ ...selectedUser, is_support: checked });
                   }
                 }}
               />
