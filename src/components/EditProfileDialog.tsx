@@ -51,11 +51,11 @@ const EditProfileDialog = ({ open, onOpenChange, profile, onUpdate }: EditProfil
       return;
     }
 
-    // Check file size (max 2MB)
-    if (file.size > 2 * 1024 * 1024) {
+    // Check file size (max 15MB)
+    if (file.size > 15 * 1024 * 1024) {
       toast({
-        title: "File too large",
-        description: "Avatar image must be less than 2MB",
+        title: "Súbor je príliš veľký",
+        description: "Avatar musí byť pod 15MB",
         variant: "destructive",
       });
       return;
