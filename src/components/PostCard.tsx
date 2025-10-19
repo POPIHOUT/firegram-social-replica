@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Heart, MessageCircle, Bookmark, Shield } from "lucide-react";
+import { Heart, MessageCircle, Bookmark, Shield, ChevronLeft, ChevronRight } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { supabase } from "@/integrations/supabase/client";
@@ -11,6 +11,7 @@ interface PostCardProps {
     id: string;
     user_id: string;
     image_url: string;
+    images?: string[];
     caption: string;
     likes_count: number;
     comments_count: number;
@@ -27,7 +28,18 @@ interface PostCardProps {
 const PostCard = ({ post, onUpdate }: PostCardProps) => {
   const [liked, setLiked] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const { toast } = useToast();
+
+  const images = post.images && post.images.length > 0 ? post.images : [post.image_url];
+
+  const nextImage = () => {
+    setCurrentImageIndex((prev) => (prev + 1) % images.length);
+  };
+
+  const prevImage = () => {
+    setCurrentImageIndex((prev) => (prev - 1 + images.length) % images.length);
+  };
 
   const handleLike = async () => {
     try {
@@ -88,11 +100,42 @@ const PostCard = ({ post, onUpdate }: PostCardProps) => {
         </div>
       </div>
 
-      <img
-        src={post.image_url}
-        alt={post.caption || "Post"}
-        className="w-full aspect-square object-cover"
-      />
+      <div className="relative">
+        <img
+          src={images[currentImageIndex]}
+          alt={post.caption || "Post"}
+          className="w-full aspect-square object-cover"
+        />
+        
+        {images.length > 1 && (
+          <>
+            <button
+              onClick={prevImage}
+              className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white rounded-full p-2 transition-colors"
+            >
+              <ChevronLeft size={20} />
+            </button>
+            <button
+              onClick={nextImage}
+              className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white rounded-full p-2 transition-colors"
+            >
+              <ChevronRight size={20} />
+            </button>
+            <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
+              {images.map((_, index) => (
+                <div
+                  key={index}
+                  className={`w-1.5 h-1.5 rounded-full transition-all ${
+                    index === currentImageIndex
+                      ? "bg-white w-6"
+                      : "bg-white/50"
+                  }`}
+                />
+              ))}
+            </div>
+          </>
+        )}
+      </div>
 
       <div className="p-4 space-y-3">
         <div className="flex items-center justify-between">

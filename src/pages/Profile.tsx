@@ -2,9 +2,11 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import Navigation from "@/components/Navigation";
+import EditProfileDialog from "@/components/EditProfileDialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Shield, Grid, Film, Loader2 } from "lucide-react";
+import { Shield, Grid, Film, Loader2, LogOut } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 interface Profile {
   username: string;
@@ -18,7 +20,9 @@ const Profile = () => {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [postsCount, setPostsCount] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   useEffect(() => {
     checkAuth();
@@ -67,12 +71,21 @@ const Profile = () => {
     );
   }
 
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    toast({
+      title: "Logged out",
+      description: "See you soon! 🔥",
+    });
+    navigate("/auth");
+  };
+
   if (!profile) return null;
 
   return (
     <div className="min-h-screen">
       <Navigation />
-      <main className="max-w-4xl mx-auto pt-20 px-4 pb-20">
+      <main className="max-w-4xl mx-auto pt-20 px-4 pb-24">
         <div className="space-y-8">
           <div className="flex items-center gap-8">
             <Avatar className="w-32 h-32 border-4 border-primary/20">
@@ -113,9 +126,23 @@ const Profile = () => {
               )}
               {profile.bio && <p className="text-sm">{profile.bio}</p>}
 
-              <Button variant="outline" className="w-full sm:w-auto">
-                Edit Profile
-              </Button>
+              <div className="flex gap-2">
+                <Button 
+                  variant="outline" 
+                  className="flex-1 sm:flex-initial"
+                  onClick={() => setEditDialogOpen(true)}
+                >
+                  Edit Profile
+                </Button>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={handleLogout}
+                  className="text-destructive hover:text-destructive"
+                >
+                  <LogOut size={20} />
+                </Button>
+              </div>
             </div>
           </div>
 
@@ -137,6 +164,13 @@ const Profile = () => {
           </div>
         </div>
       </main>
+
+      <EditProfileDialog
+        open={editDialogOpen}
+        onOpenChange={setEditDialogOpen}
+        profile={profile}
+        onUpdate={fetchProfile}
+      />
     </div>
   );
 };

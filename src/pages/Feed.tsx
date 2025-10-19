@@ -9,6 +9,7 @@ interface Post {
   id: string;
   user_id: string;
   image_url: string;
+  images?: string[];
   caption: string;
   likes_count: number;
   comments_count: number;
@@ -69,9 +70,9 @@ const Feed = () => {
   }
 
   return (
-    <div className="min-h-screen pb-20">
+    <div className="min-h-screen">
       <Navigation />
-      <main className="max-w-2xl mx-auto pt-20 px-4">
+      <main className="max-w-2xl mx-auto pt-20 px-4 pb-24">
         <div className="space-y-6">
           {posts.length === 0 ? (
             <div className="text-center py-20">
