@@ -79,47 +79,13 @@ const Search = () => {
     if (!currentUserId) return;
 
     try {
-      // Check if conversation already exists
-      const { data: existingConversations, error: fetchError } = await supabase
-        .from("conversation_participants")
-        .select("conversation_id")
-        .eq("user_id", currentUserId);
+      // Use the database function to create or get conversation
+      const { data, error } = await supabase
+        .rpc('create_or_get_conversation', { other_user_id: userId });
 
-      if (fetchError) throw fetchError;
+      if (error) throw error;
 
-      // Check each conversation to see if it includes the target user
-      for (const conv of existingConversations || []) {
-        const { data: participants } = await supabase
-          .from("conversation_participants")
-          .select("user_id")
-          .eq("conversation_id", conv.conversation_id);
-
-        if (participants?.some(p => p.user_id === userId) && participants.length === 2) {
-          navigate(`/messages/${conv.conversation_id}`);
-          return;
-        }
-      }
-
-      // Create new conversation
-      const { data: conversation, error: convError } = await supabase
-        .from("conversations")
-        .insert({})
-        .select()
-        .single();
-
-      if (convError) throw convError;
-
-      // Add participants
-      const { error: participantsError } = await supabase
-        .from("conversation_participants")
-        .insert([
-          { conversation_id: conversation.id, user_id: currentUserId },
-          { conversation_id: conversation.id, user_id: userId }
-        ]);
-
-      if (participantsError) throw participantsError;
-
-      navigate(`/messages/${conversation.id}`);
+      navigate(`/messages/${data}`);
     } catch (error) {
       console.error("Error starting conversation:", error);
       toast({
