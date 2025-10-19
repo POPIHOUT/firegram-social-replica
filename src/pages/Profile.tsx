@@ -9,7 +9,7 @@ import FollowingDialog from "@/components/FollowingDialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Shield, Grid, Film, Loader2, LogOut, Heart, MessageCircle, UserPlus, UserMinus, Check } from "lucide-react";
+import { Shield, Grid, Film, Loader2, LogOut, Heart, MessageCircle, UserPlus, UserMinus, Flame } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface Profile {
@@ -214,7 +214,7 @@ const Profile = () => {
                 <h1 className="text-2xl font-bold">{profile.username}</h1>
                 {profile.is_verified && (
                   <Badge variant="default" className="rounded-full p-1">
-                    <Check size={16} />
+                    <Flame size={16} />
                   </Badge>
                 )}
                 {profile.is_admin && (
