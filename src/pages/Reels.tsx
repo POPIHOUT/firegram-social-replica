@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import Navigation from "@/components/Navigation";
 import ReelCard from "@/components/ReelCard";
@@ -28,6 +28,7 @@ const Reels = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
     checkAuth();
@@ -83,6 +84,20 @@ const Reels = () => {
             };
           });
           setProfiles(profilesMap);
+        }
+
+        // Scroll to initial reel if specified
+        const state = location.state as { initialReelId?: string } | null;
+        if (state?.initialReelId) {
+          const index = reelsData.findIndex(r => r.id === state.initialReelId);
+          if (index !== -1) {
+            setCurrentIndex(index);
+            setTimeout(() => {
+              if (containerRef.current) {
+                containerRef.current.scrollTop = index * containerRef.current.clientHeight;
+              }
+            }, 100);
+          }
         }
       }
     } catch (error) {

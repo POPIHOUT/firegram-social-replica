@@ -7,23 +7,44 @@ const Navigation = () => {
 
   const navItems = [
     { path: "/feed", icon: Home, label: "Feed" },
-    { path: "/search", icon: Search, label: "Hľadať" },
+    { path: "/reels", icon: Film, label: "Reels" },
     { path: "/create", icon: PlusSquare, label: "Vytvoriť" },
-    { path: "/messages", icon: MessageCircle, label: "Správy" },
     { path: "/profile", icon: User, label: "Profil" },
   ];
 
   return (
     <>
-      {/* Top Header with Logo */}
+      {/* Top Header with Logo and Actions */}
       <header className="fixed top-0 left-0 right-0 z-50 bg-card/80 backdrop-blur-md border-b border-border">
-        <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-center">
+        <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
           <Link to="/feed" className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-full fire-gradient p-0.5">
               <img src={firegramLogo} alt="Firegram" className="w-full h-full rounded-full" />
             </div>
             <span className="text-xl font-bold fire-text">Firegram</span>
           </Link>
+          <div className="flex items-center gap-4">
+            <Link
+              to="/search"
+              className={`transition-colors ${
+                location.pathname === "/search"
+                  ? "text-primary"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <Search size={24} />
+            </Link>
+            <Link
+              to="/messages"
+              className={`transition-colors ${
+                location.pathname === "/messages" || location.pathname.startsWith("/messages/")
+                  ? "text-primary"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <MessageCircle size={24} />
+            </Link>
+          </div>
         </div>
       </header>
 

@@ -347,11 +347,14 @@ const Profile = () => {
               ) : (
                 <div className="grid grid-cols-3 gap-1">
                   {reels.map((reel) => (
-                    <div key={reel.id} className="relative aspect-[9/16] group cursor-pointer bg-black">
+                    <div 
+                      key={reel.id} 
+                      className="relative aspect-[9/16] group cursor-pointer bg-black"
+                      onClick={() => navigate('/reels', { state: { initialReelId: reel.id } })}
+                    >
                       <video
                         src={reel.video_url}
                         className="w-full h-full object-cover"
-                        onClick={() => navigate('/reels')}
                       />
                       <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white">
                         <div className="flex items-center gap-2">
