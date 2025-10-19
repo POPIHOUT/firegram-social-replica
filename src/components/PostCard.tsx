@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Heart, MessageCircle, Bookmark, Shield, ChevronLeft, ChevronRight } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -29,9 +29,40 @@ const PostCard = ({ post, onUpdate }: PostCardProps) => {
   const [liked, setLiked] = useState(false);
   const [saved, setSaved] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [isCheckingLike, setIsCheckingLike] = useState(true);
   const { toast } = useToast();
 
   const images = post.images && post.images.length > 0 ? post.images : [post.image_url];
+
+  // Check if user already liked this post
+  useEffect(() => {
+    const checkIfLiked = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+          setIsCheckingLike(false);
+          return;
+        }
+
+        const { data, error } = await supabase
+          .from("likes")
+          .select("id")
+          .eq("user_id", user.id)
+          .eq("post_id", post.id)
+          .maybeSingle();
+
+        if (!error && data) {
+          setLiked(true);
+        }
+      } catch (error) {
+        console.error("Error checking like status:", error);
+      } finally {
+        setIsCheckingLike(false);
+      }
+    };
+
+    checkIfLiked();
+  }, [post.id]);
 
   const nextImage = () => {
     setCurrentImageIndex((prev) => (prev + 1) % images.length);
@@ -42,39 +73,65 @@ const PostCard = ({ post, onUpdate }: PostCardProps) => {
   };
 
   const handleLike = async () => {
+    if (isCheckingLike) return; // Prevent action while checking
+    
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
       if (liked) {
-        await supabase
+        // Unlike
+        const { error: deleteError } = await supabase
           .from("likes")
           .delete()
           .eq("user_id", user.id)
           .eq("post_id", post.id);
         
-        await supabase
+        if (deleteError) throw deleteError;
+
+        const { error: updateError } = await supabase
           .from("posts")
           .update({ likes_count: Math.max(0, post.likes_count - 1) })
           .eq("id", post.id);
+
+        if (updateError) throw updateError;
+        
+        setLiked(false);
       } else {
-        await supabase
+        // Like
+        const { error: insertError } = await supabase
           .from("likes")
           .insert({ user_id: user.id, post_id: post.id });
 
-        await supabase
+        if (insertError) {
+          // Check if it's a duplicate key error (user already liked)
+          if (insertError.code === '23505') {
+            toast({
+              title: "Already liked",
+              description: "You already liked this post",
+            });
+            setLiked(true);
+            return;
+          }
+          throw insertError;
+        }
+
+        const { error: updateError } = await supabase
           .from("posts")
           .update({ likes_count: post.likes_count + 1 })
           .eq("id", post.id);
+
+        if (updateError) throw updateError;
+        
+        setLiked(true);
       }
 
-      setLiked(!liked);
       onUpdate();
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error liking post:", error);
       toast({
         title: "Error",
-        description: "Failed to like post",
+        description: error.message || "Failed to like post",
         variant: "destructive",
       });
     }

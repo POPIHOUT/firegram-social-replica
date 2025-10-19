@@ -5,7 +5,7 @@ import Navigation from "@/components/Navigation";
 import EditProfileDialog from "@/components/EditProfileDialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Shield, Grid, Film, Loader2, LogOut } from "lucide-react";
+import { Shield, Grid, Film, Loader2, LogOut, Heart, MessageCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface Profile {
@@ -16,8 +16,17 @@ interface Profile {
   is_admin: boolean;
 }
 
+interface Post {
+  id: string;
+  image_url: string;
+  images?: string[];
+  likes_count: number;
+  comments_count: number;
+}
+
 const Profile = () => {
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [posts, setPosts] = useState<Post[]>([]);
   const [postsCount, setPostsCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
@@ -50,11 +59,16 @@ const Profile = () => {
       if (profileError) throw profileError;
       setProfile(profileData);
 
-      const { count } = await supabase
+      // Fetch posts with count
+      const { data: postsData, error: postsError, count } = await supabase
         .from("posts")
-        .select("*", { count: "exact", head: true })
-        .eq("user_id", user.id);
+        .select("*", { count: "exact" })
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false });
 
+      if (postsError) throw postsError;
+      
+      setPosts(postsData || []);
       setPostsCount(count || 0);
     } catch (error) {
       console.error("Error fetching profile:", error);
@@ -158,9 +172,46 @@ const Profile = () => {
               </button>
             </div>
 
-            <div className="text-center py-20">
-              <p className="text-muted-foreground">No posts yet</p>
-            </div>
+            {posts.length === 0 ? (
+              <div className="text-center py-20">
+                <p className="text-muted-foreground">No posts yet</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-3 gap-1">
+                {posts.map((post) => {
+                  const displayImage = post.images && post.images.length > 0 
+                    ? post.images[0] 
+                    : post.image_url;
+                  
+                  return (
+                    <div key={post.id} className="relative aspect-square group cursor-pointer">
+                      <img
+                        src={displayImage}
+                        alt="Post"
+                        className="w-full h-full object-cover"
+                      />
+                      <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-6 text-white">
+                        <div className="flex items-center gap-2">
+                          <Heart className="fill-white" size={20} />
+                          <span className="font-semibold">{post.likes_count}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <MessageCircle className="fill-white" size={20} />
+                          <span className="font-semibold">{post.comments_count}</span>
+                        </div>
+                      </div>
+                      {post.images && post.images.length > 1 && (
+                        <div className="absolute top-2 right-2">
+                          <div className="bg-black/70 rounded-full p-1">
+                            <Grid size={16} className="text-white" />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </div>
       </main>
