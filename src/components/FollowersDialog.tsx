@@ -36,16 +36,27 @@ const FollowersDialog = ({ open, onOpenChange, userId }: FollowersDialogProps) =
     try {
       const { data, error } = await supabase
         .from("follows")
-        .select("follower_id, profiles!follows_follower_id_fkey(id, username, full_name, avatar_url, is_verified)")
+        .select("follower_id")
         .eq("following_id", userId);
 
       if (error) throw error;
 
-      const profilesData = data
-        .map((item: any) => item.profiles)
-        .filter((profile: any) => profile !== null);
+      if (!data || data.length === 0) {
+        setFollowers([]);
+        setLoading(false);
+        return;
+      }
 
-      setFollowers(profilesData);
+      const followerIds = data.map((item: any) => item.follower_id);
+
+      const { data: profilesData, error: profilesError } = await supabase
+        .from("profiles")
+        .select("id, username, full_name, avatar_url, is_verified")
+        .in("id", followerIds);
+
+      if (profilesError) throw profilesError;
+
+      setFollowers(profilesData || []);
     } catch (error) {
       console.error("Error fetching followers:", error);
     } finally {
