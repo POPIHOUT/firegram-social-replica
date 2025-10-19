@@ -68,7 +68,28 @@ const PostCard = ({ post, onUpdate }: PostCardProps) => {
       }
     };
 
+    const checkIfSaved = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        const { data, error } = await supabase
+          .from("saved")
+          .select("id")
+          .eq("user_id", user.id)
+          .eq("post_id", post.id)
+          .maybeSingle();
+
+        if (!error && data) {
+          setSaved(true);
+        }
+      } catch (error) {
+        console.error("Error checking saved status:", error);
+      }
+    };
+
     checkIfLiked();
+    checkIfSaved();
   }, [post.id]);
 
   const nextImage = () => {
@@ -139,6 +160,63 @@ const PostCard = ({ post, onUpdate }: PostCardProps) => {
       toast({
         title: "Error",
         description: error.message || "Failed to like post",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleSave = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast({
+          title: "Login required",
+          description: "You must be logged in to save posts",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (saved) {
+        // Unsave
+        const { error } = await supabase
+          .from("saved")
+          .delete()
+          .eq("user_id", user.id)
+          .eq("post_id", post.id);
+        
+        if (error) throw error;
+        
+        setSaved(false);
+        toast({
+          title: "Removed from saved",
+          description: "Post removed from your saved items",
+        });
+      } else {
+        // Save
+        const { error } = await supabase
+          .from("saved")
+          .insert({ user_id: user.id, post_id: post.id });
+
+        if (error) {
+          if (error.code === '23505') {
+            setSaved(true);
+            return;
+          }
+          throw error;
+        }
+        
+        setSaved(true);
+        toast({
+          title: "Saved",
+          description: "Post saved to your profile",
+        });
+      }
+    } catch (error: any) {
+      console.error("Error saving post:", error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to save post",
         variant: "destructive",
       });
     }
@@ -229,7 +307,7 @@ const PostCard = ({ post, onUpdate }: PostCardProps) => {
               <MessageCircle size={24} />
             </button>
           </div>
-          <button onClick={() => setSaved(!saved)} className="transition-transform active:scale-90">
+          <button onClick={handleSave} className="transition-transform active:scale-90">
             <Bookmark size={24} className={saved ? "fill-foreground" : ""} />
           </button>
         </div>
