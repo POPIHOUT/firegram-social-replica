@@ -687,6 +687,30 @@ const Admin = () => {
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-6">
+            <div className="space-y-3 p-4 rounded-lg bg-orange-500/5 border border-orange-500/20">
+              <div className="flex items-center gap-2">
+                <span className="text-2xl">🔥</span>
+                <div>
+                  <Label>Add Flames</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Current: {selectedUser?.flames || 0} flames
+                  </p>
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <Input
+                  type="number"
+                  placeholder="Amount"
+                  value={flamesAmount}
+                  onChange={(e) => setFlamesAmount(e.target.value)}
+                  className="flex-1"
+                />
+                <Button onClick={handleAddFlames} disabled={!flamesAmount}>
+                  Add
+                </Button>
+              </div>
+            </div>
+
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
                 <Label htmlFor="admin-role">Admin</Label>
@@ -740,7 +764,10 @@ const Admin = () => {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setRolesDialogOpen(false)}>
+            <Button variant="outline" onClick={() => {
+              setRolesDialogOpen(false);
+              setFlamesAmount("");
+            }}>
               Close
             </Button>
           </DialogFooter>
