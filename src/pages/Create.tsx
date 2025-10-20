@@ -36,8 +36,8 @@ const Create = () => {
 
     if (uploadType === "video" && files.length > 1) {
       toast({
-        title: "Príliš veľa súborov",
-        description: "Môžete nahrať len jedno video",
+        title: "Too many files",
+        description: "You can only upload one video",
         variant: "destructive",
       });
       return;
@@ -51,10 +51,10 @@ const Create = () => {
       
       if (!isValidType) {
         toast({
-          title: "Neplatný typ súboru",
+          title: "Invalid file type",
           description: uploadType === "images" 
-            ? `${file.name} nie je obrázok`
-            : `${file.name} nie je video`,
+            ? `${file.name} is not an image`
+            : `${file.name} is not a video`,
           variant: "destructive",
         });
       }
@@ -68,10 +68,10 @@ const Create = () => {
     const oversizedFiles = validFiles.filter(file => file.size > maxSize);
     if (oversizedFiles.length > 0) {
       toast({
-        title: "Súbor je príliš veľký",
+        title: "File is too large",
         description: uploadType === "images"
-          ? "Každý obrázok musí byť pod 15MB"
-          : "Video musí byť pod 100MB",
+          ? "Each image must be under 15MB"
+          : "Video must be under 100MB",
         variant: "destructive",
       });
       return;
@@ -153,10 +153,10 @@ const Create = () => {
     
     if (selectedFiles.length === 0) {
       toast({
-        title: "Žiadne súbory",
+        title: "No files",
         description: uploadType === "images" 
-          ? "Vyberte prosím aspoň jeden obrázok"
-          : "Vyberte prosím video",
+          ? "Please select at least one image"
+          : "Please select a video",
         variant: "destructive",
       });
       return;
@@ -180,8 +180,8 @@ const Create = () => {
         if (error) throw error;
 
         toast({
-          title: "Post vytvorený!",
-          description: `Váš post s ${imageUrls.length} ${imageUrls.length === 1 ? 'obrázkom' : 'obrázkami'} bol vytvorený 🔥`,
+          title: "Post created!",
+          description: `Your post with ${imageUrls.length} ${imageUrls.length === 1 ? 'image' : 'images'} has been created 🔥`,
         });
       } else {
         const videoUrl = await uploadVideo(user.id);
@@ -195,8 +195,8 @@ const Create = () => {
         if (error) throw error;
 
         toast({
-          title: "Video vytvorené!",
-          description: "Vaše video bolo úspešne nahrané 🔥",
+          title: "Video created!",
+          description: "Your video has been uploaded successfully 🔥",
         });
       }
 
@@ -204,7 +204,7 @@ const Create = () => {
       navigate("/feed");
     } catch (error: any) {
       toast({
-        title: "Chyba",
+        title: "Error",
         description: error.message,
         variant: "destructive",
       });
@@ -218,7 +218,7 @@ const Create = () => {
       <Navigation />
       <main className="max-w-2xl mx-auto pt-16 sm:pt-20 px-3 sm:px-4 pb-20 sm:pb-24">
         <Card className="p-4 sm:p-6 border-border bg-card">
-          <h1 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6 fire-text">Vytvoriť obsah</h1>
+          <h1 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6 fire-text">Create Content</h1>
           
           <Tabs value={uploadType} onValueChange={(v) => {
             setUploadType(v as "images" | "video");
@@ -229,7 +229,7 @@ const Create = () => {
             <TabsList className="grid w-full grid-cols-2 mb-4 sm:mb-6">
               <TabsTrigger value="images" className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm">
                 <ImageIcon className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                Obrázky
+                Images
               </TabsTrigger>
               <TabsTrigger value="video" className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm">
                 <VideoIcon className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
@@ -316,12 +316,12 @@ const Create = () => {
               {loading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Nahrávam...
+                  Uploading...
                 </>
               ) : (
                 <>
                   <ImageIcon className="mr-2 h-4 w-4" />
-                  Vytvoriť post
+                  Create Post
                 </>
               )}
             </Button>
@@ -332,10 +332,10 @@ const Create = () => {
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <label className="block text-sm font-medium">Nahrať video</label>
+                <label className="block text-sm font-medium">Upload Video</label>
                 {selectedFiles.length > 0 && (
                   <span className="text-xs text-muted-foreground">
-                    Video vybrané
+                    Video selected
                   </span>
                 )}
               </div>
@@ -354,7 +354,7 @@ const Create = () => {
                 >
                   <Upload className="text-muted-foreground" size={24} />
                   <span className="text-muted-foreground font-medium">
-                    Kliknite pre výber videa
+                    Click to select video
                   </span>
                 </label>
               </div>
@@ -384,9 +384,9 @@ const Create = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-2">Popis</label>
+              <label className="block text-sm font-medium mb-2">Caption</label>
               <Textarea
-                placeholder="Napíšte popis..."
+                placeholder="Write a caption..."
                 value={caption}
                 onChange={(e) => setCaption(e.target.value)}
                 className="min-h-[100px] bg-muted border-border focus:border-primary resize-none"
@@ -401,12 +401,12 @@ const Create = () => {
               {loading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Nahrávam...
+                  Uploading...
                 </>
               ) : (
                 <>
                   <VideoIcon className="mr-2 h-4 w-4" />
-                  Vytvoriť video
+                  Create Video
                 </>
               )}
             </Button>

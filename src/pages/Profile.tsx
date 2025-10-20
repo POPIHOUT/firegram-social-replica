@@ -374,16 +374,16 @@ const Profile = () => {
               </button>
               {isOwnProfile && (
                 <button 
-                  className={`flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm py-3 sm:py-4 whitespace-nowrap touch-manipulation transition-colors ${
-                    activeTab === "saved" 
-                      ? "border-b-2 border-primary font-semibold" 
-                      : "text-muted-foreground border-b-2 border-transparent"
-                  }`}
-                  onClick={() => setActiveTab("saved")}
-                >
-                  <Bookmark size={14} className="sm:w-4 sm:h-4" />
-                  ULOŽENÉ
-                </button>
+                className={`flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm py-3 sm:py-4 whitespace-nowrap touch-manipulation transition-colors ${
+                  activeTab === "saved" 
+                    ? "border-b-2 border-primary font-semibold" 
+                    : "text-muted-foreground border-b-2 border-transparent"
+                }`}
+                onClick={() => setActiveTab("saved")}
+              >
+                <Bookmark size={14} className="sm:w-4 sm:h-4" />
+                SAVED
+              </button>
               )}
             </div>
 

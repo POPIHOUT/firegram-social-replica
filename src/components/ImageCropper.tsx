@@ -110,7 +110,7 @@ export const ImageCropper = ({ image, onCropComplete, onCancel }: ImageCropperPr
       <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/80 to-transparent">
         <div className="max-w-md mx-auto space-y-4">
           <div className="space-y-2">
-            <label className="text-sm text-white font-medium">Priblíženie</label>
+            <label className="text-sm text-white font-medium">Zoom</label>
             <Slider
               value={[zoom]}
               min={1}
@@ -128,14 +128,14 @@ export const ImageCropper = ({ image, onCropComplete, onCancel }: ImageCropperPr
               className="flex-1 bg-white/10 border-white/20 text-white hover:bg-white/20"
             >
               <X className="w-4 h-4 mr-2" />
-              Zrušiť
+              Cancel
             </Button>
             <Button
               onClick={handleCropConfirm}
               className="flex-1 bg-white text-black hover:bg-white/90"
             >
               <Check className="w-4 h-4 mr-2" />
-              Potvrdiť
+              Confirm
             </Button>
           </div>
         </div>

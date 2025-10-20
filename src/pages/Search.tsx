@@ -58,8 +58,8 @@ const Search = () => {
     } catch (error) {
       console.error("Error searching profiles:", error);
       toast({
-        title: "Chyba",
-        description: "Nepodarilo sa vyhľadať používateľov",
+        title: "Error",
+        description: "Failed to search users",
         variant: "destructive",
       });
     } finally {
@@ -89,8 +89,8 @@ const Search = () => {
     } catch (error) {
       console.error("Error starting conversation:", error);
       toast({
-        title: "Chyba",
-        description: "Nepodarilo sa začať konverzáciu",
+        title: "Error",
+        description: "Failed to start conversation",
         variant: "destructive",
       });
     }
@@ -100,13 +100,13 @@ const Search = () => {
     <div className="min-h-screen pb-safe">
       <Navigation />
       <main className="max-w-2xl mx-auto pt-16 sm:pt-20 px-3 sm:px-4 pb-20 sm:pb-24">
-        <h1 className="text-2xl sm:text-3xl font-bold mb-4 sm:mb-6 fire-text">Hľadať používateľov</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold mb-4 sm:mb-6 fire-text">Search Users</h1>
 
         <div className="relative mb-4 sm:mb-6">
           <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4 sm:h-5 sm:w-5" />
           <Input
             type="text"
-            placeholder="Hľadať podľa mena..."
+            placeholder="Search by name..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-9 sm:pl-10 h-10 sm:h-11 text-sm sm:text-base"
@@ -121,7 +121,7 @@ const Search = () => {
 
         {!loading && searchQuery && profiles.length === 0 && (
           <div className="text-center py-8 text-muted-foreground">
-            Žiadni používatelia nenájdení
+            No users found
           </div>
         )}
 

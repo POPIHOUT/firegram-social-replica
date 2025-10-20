@@ -135,28 +135,28 @@ const Messages = () => {
       <Navigation />
       <main className="max-w-2xl mx-auto pt-16 sm:pt-20 px-3 sm:px-4 pb-20 sm:pb-24">
         <div className="flex items-center justify-between mb-4 sm:mb-6">
-          <h1 className="text-2xl sm:text-3xl font-bold fire-text">Správy</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold fire-text">Messages</h1>
           <Button
             onClick={() => navigate("/search")}
             className="flex items-center gap-1.5 text-xs sm:text-sm h-8 sm:h-9"
           >
             <MessageSquarePlus size={16} className="sm:w-5 sm:h-5" />
-            <span className="hidden xs:inline">Nová</span>
+            <span className="hidden xs:inline">New</span>
           </Button>
         </div>
 
         {conversations.length === 0 ? (
           <div className="text-center py-12 sm:py-20 px-4">
-            <p className="text-muted-foreground text-base sm:text-lg">Žiadne správy</p>
+            <p className="text-muted-foreground text-base sm:text-lg">No messages</p>
             <p className="text-xs sm:text-sm text-muted-foreground mt-2">
-              Začnite konverzáciu vyhľadaním používateľov 💬
+              Start a conversation by searching for users 💬
             </p>
             <Button
               onClick={() => navigate("/search")}
               className="mt-4 text-xs sm:text-sm h-8 sm:h-9"
               variant="outline"
             >
-              Vyhľadať používateľov
+              Search Users
             </Button>
           </div>
         ) : (

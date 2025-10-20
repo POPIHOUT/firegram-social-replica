@@ -23,19 +23,19 @@ export const BannedSuspendedScreen = ({ type, reason, suspendedUntil }: BannedSu
           
           <div className="space-y-2">
             <h1 className="text-2xl font-bold">
-              {isBanned ? "Váš účet bol zablokovaný" : "Váš účet bol suspendovaný"}
+              {isBanned ? "Your Account Has Been Banned" : "Your Account Has Been Suspended"}
             </h1>
             
             {isBanned ? (
               <p className="text-muted-foreground">
-                Váš účet bol natrvalo zablokovaný z dôvodu porušenia podmienok používania.
+                Your account has been permanently banned for violating our terms of service.
               </p>
             ) : (
               <p className="text-muted-foreground">
-                Váš účet je dočasne suspendovaný.
+                Your account is temporarily suspended.
                 {suspendedUntil && (
                   <span className="block mt-2">
-                    Suspendácia končí: {new Date(suspendedUntil).toLocaleString('sk-SK')}
+                    Suspension ends: {new Date(suspendedUntil).toLocaleString('en-US')}
                   </span>
                 )}
               </p>
@@ -46,7 +46,7 @@ export const BannedSuspendedScreen = ({ type, reason, suspendedUntil }: BannedSu
             <div className="w-full p-4 bg-muted rounded-lg space-y-2">
               <div className="flex items-center gap-2 text-sm font-semibold">
                 <AlertCircle className="w-4 h-4" />
-                Důvod:
+                Reason:
               </div>
               <p className="text-sm text-muted-foreground">{reason}</p>
             </div>
@@ -57,11 +57,11 @@ export const BannedSuspendedScreen = ({ type, reason, suspendedUntil }: BannedSu
               className="w-full"
               onClick={() => window.open("https://discord.gg/7w3xaMm6gg", "_blank")}
             >
-              Odvolať sa na Discorde
+              Appeal on Discord
             </Button>
             
             <p className="text-xs text-muted-foreground">
-              Ak si myslíte, že ide o omyl, môžete sa odvolať prostredníctvom nášho Discord servera.
+              If you think this is a mistake, you can appeal through our Discord server.
             </p>
           </div>
         </div>

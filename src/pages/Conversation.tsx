@@ -123,8 +123,8 @@ const Conversation = () => {
     } catch (error) {
       console.error("Error fetching messages:", error);
       toast({
-        title: "Chyba",
-        description: "Nepodarilo sa načítať správy",
+        title: "Error",
+        description: "Failed to load messages",
         variant: "destructive",
       });
     } finally {
@@ -184,8 +184,8 @@ const Conversation = () => {
     } catch (error) {
       console.error("Error sending image:", error);
       toast({
-        title: "Chyba",
-        description: "Nepodarilo sa odoslať obrázok",
+        title: "Error",
+        description: "Failed to send image",
         variant: "destructive",
       });
     } finally {
@@ -219,8 +219,8 @@ const Conversation = () => {
     } catch (error) {
       console.error("Error sending message:", error);
       toast({
-        title: "Chyba",
-        description: "Nepodarilo sa odoslať správu",
+        title: "Error",
+        description: "Failed to send message",
         variant: "destructive",
       });
     } finally {
@@ -328,7 +328,7 @@ const Conversation = () => {
           <Input
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
-            placeholder="Napíšte správu..."
+            placeholder="Write a message..."
             disabled={sending}
             className="flex-1"
           />

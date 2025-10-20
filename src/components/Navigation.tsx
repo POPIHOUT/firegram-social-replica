@@ -8,8 +8,8 @@ const Navigation = () => {
   const navItems = [
     { path: "/feed", icon: Home, label: "Feed" },
     { path: "/reels", icon: Film, label: "Reels" },
-    { path: "/create", icon: PlusSquare, label: "Vytvoriť" },
-    { path: "/profile", icon: User, label: "Profil" },
+    { path: "/create", icon: PlusSquare, label: "Create" },
+    { path: "/profile", icon: User, label: "Profile" },
   ];
 
   return (

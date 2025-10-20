@@ -47,8 +47,8 @@ const EditProfileDialog = ({ open, onOpenChange, profile, onUpdate }: EditProfil
     // Check file type
     if (!file.type.startsWith('image/')) {
       toast({
-        title: "Neplatný typ súboru",
-        description: "Vyberte prosím obrázok",
+        title: "Invalid file type",
+        description: "Please select an image",
         variant: "destructive",
       });
       return;
@@ -57,8 +57,8 @@ const EditProfileDialog = ({ open, onOpenChange, profile, onUpdate }: EditProfil
     // Check file size (max 15MB)
     if (file.size > 15 * 1024 * 1024) {
       toast({
-        title: "Súbor je príliš veľký",
-        description: "Avatar musí byť pod 15MB",
+        title: "File is too large",
+        description: "Avatar must be under 15MB",
         variant: "destructive",
       });
       return;
@@ -178,9 +178,9 @@ const EditProfileDialog = ({ open, onOpenChange, profile, onUpdate }: EditProfil
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="sm:max-w-[425px] bg-card border-border max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="fire-text">Upraviť profil</DialogTitle>
+            <DialogTitle className="fire-text">Edit Profile</DialogTitle>
             <DialogDescription>
-              Upravte svoj profil. Kliknite na uložiť po dokončení.
+              Edit your profile. Click save when done.
             </DialogDescription>
           </DialogHeader>
         <div className="space-y-4 py-4">
@@ -205,13 +205,13 @@ const EditProfileDialog = ({ open, onOpenChange, profile, onUpdate }: EditProfil
                 className="flex items-center gap-2 px-4 py-2 bg-muted border border-border rounded-lg hover:border-primary hover:bg-muted/80 transition-all cursor-pointer text-sm"
               >
                 <Upload size={16} />
-                <span>Nahrať avatar</span>
+                <span>Upload Avatar</span>
               </label>
             </div>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="username">Užívateľské meno</Label>
+            <Label htmlFor="username">Username</Label>
             <Input
               id="username"
               value={username}
@@ -220,7 +220,7 @@ const EditProfileDialog = ({ open, onOpenChange, profile, onUpdate }: EditProfil
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="fullName">Celé meno</Label>
+            <Label htmlFor="fullName">Full Name</Label>
             <Input
               id="fullName"
               value={fullName}
@@ -245,7 +245,7 @@ const EditProfileDialog = ({ open, onOpenChange, profile, onUpdate }: EditProfil
             onClick={() => onOpenChange(false)}
             className="flex-1"
           >
-            Zrušiť
+            Cancel
           </Button>
           <Button
             onClick={handleSave}
@@ -255,10 +255,10 @@ const EditProfileDialog = ({ open, onOpenChange, profile, onUpdate }: EditProfil
             {loading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Ukladám...
+                Saving...
               </>
             ) : (
-              "Uložiť zmeny"
+              "Save Changes"
             )}
           </Button>
         </div>
