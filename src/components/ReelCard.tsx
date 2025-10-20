@@ -292,30 +292,30 @@ const ReelCard = ({ reel, profile, isActive, onUpdate, videoRef }: ReelCardProps
         </div>
       )}
 
-      <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 to-transparent pointer-events-none">
+      <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 via-black/40 to-transparent pointer-events-none z-10">
         <div className="flex items-start justify-between pointer-events-auto">
           <div className="flex-1 space-y-2">
             <div className="flex items-center gap-2">
-            <Avatar 
-              className={`h-10 w-10 border-2 border-white ${!isAd ? 'cursor-pointer' : ''}`}
-              onClick={!isAd ? () => navigate(`/profile/${reel.user_id}`) : undefined}
-            >
-              <AvatarImage src={profile.avatar_url || undefined} />
-              <AvatarFallback className="bg-primary text-primary-foreground">
-                {profile.username[0].toUpperCase()}
-              </AvatarFallback>
-            </Avatar>
-            <div className="flex items-center gap-1">
-              <span 
-                className={`font-semibold text-white ${!isAd ? 'cursor-pointer hover:opacity-70' : ''}`}
+              <Avatar 
+                className={`h-10 w-10 border-2 border-white ${!isAd ? 'cursor-pointer' : ''}`}
                 onClick={!isAd ? () => navigate(`/profile/${reel.user_id}`) : undefined}
               >
-                {profile.username}
-              </span>
-              {profile.is_verified && (
-                <Check size={16} className="text-white" />
-              )}
-            </div>
+                <AvatarImage src={profile.avatar_url || undefined} />
+                <AvatarFallback className="bg-primary text-primary-foreground">
+                  {profile.username[0].toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+              <div className="flex items-center gap-1">
+                <span 
+                  className={`font-semibold text-white ${!isAd ? 'cursor-pointer hover:opacity-70' : ''}`}
+                  onClick={!isAd ? () => navigate(`/profile/${reel.user_id}`) : undefined}
+                >
+                  {profile.username}
+                </span>
+                {profile.is_verified && (
+                  <Check size={16} className="text-white" />
+                )}
+              </div>
             </div>
             {reel.caption && (
               <p className="text-sm text-white/90">{reel.caption}</p>
