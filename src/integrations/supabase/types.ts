@@ -312,6 +312,7 @@ export type Database = {
           is_premium: boolean | null
           is_support: boolean | null
           is_verified: boolean | null
+          premium_until: string | null
           show_custom_background: boolean | null
           show_own_fire_effect: boolean | null
           suspended: boolean | null
@@ -334,6 +335,7 @@ export type Database = {
           is_premium?: boolean | null
           is_support?: boolean | null
           is_verified?: boolean | null
+          premium_until?: string | null
           show_custom_background?: boolean | null
           show_own_fire_effect?: boolean | null
           suspended?: boolean | null
@@ -356,6 +358,7 @@ export type Database = {
           is_premium?: boolean | null
           is_support?: boolean | null
           is_verified?: boolean | null
+          premium_until?: string | null
           show_custom_background?: boolean | null
           show_own_fire_effect?: boolean | null
           suspended?: boolean | null
@@ -511,6 +514,10 @@ export type Database = {
         Returns: string
       }
       delete_expired_stories: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
+      expire_premium_subscriptions: {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }

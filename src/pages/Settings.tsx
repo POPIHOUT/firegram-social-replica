@@ -23,6 +23,7 @@ const Settings = () => {
   const [uploadingBackground, setUploadingBackground] = useState(false);
   const [customBackgroundUrl, setCustomBackgroundUrl] = useState<string>("");
   const [showCustomBackground, setShowCustomBackground] = useState(true);
+  const [premiumUntil, setPremiumUntil] = useState<string | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -36,7 +37,7 @@ const Settings = () => {
 
     const { data: profile } = await supabase
       .from("profiles")
-      .select("flames, is_premium, show_own_fire_effect, custom_background_url, show_custom_background")
+      .select("flames, is_premium, show_own_fire_effect, custom_background_url, show_custom_background, premium_until")
       .eq("id", user.id)
       .single();
 
@@ -46,6 +47,7 @@ const Settings = () => {
       setShowOwnFireEffect(profile.show_own_fire_effect ?? true);
       setCustomBackgroundUrl(profile.custom_background_url || "");
       setShowCustomBackground(profile.show_custom_background ?? true);
+      setPremiumUntil(profile.premium_until);
     }
   };
 
@@ -293,6 +295,11 @@ const Settings = () => {
                     <div>
                       <p className="font-semibold text-orange-500">Premium Active</p>
                       <p className="text-sm text-muted-foreground">Exclusive fire effect on your profile</p>
+                      {premiumUntil && (
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Expires: {new Date(premiumUntil).toLocaleDateString()}
+                        </p>
+                      )}
                     </div>
                   </div>
 
@@ -378,6 +385,7 @@ const Settings = () => {
                       <span className="font-semibold">Your Flames: {userFlames}</span>
                     </div>
                     <span className="text-sm text-muted-foreground">Need: 1000 🔥</span>
+                    <span className="text-xs text-muted-foreground">(Valid for 1 month)</span>
                   </div>
                   <Button
                     onClick={handlePurchasePremium}
