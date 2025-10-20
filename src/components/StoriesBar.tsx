@@ -141,26 +141,42 @@ const StoriesBar = () => {
   return (
     <>
       <div className="flex gap-4 overflow-x-auto pb-4 px-2 scrollbar-hide border-b border-border">
-        {/* Add story button */}
+        {/* Add story button - always visible with current user's profile */}
         <div className="flex flex-col items-center gap-2 flex-shrink-0">
           <button
-            onClick={() => hasOwnStory && currentUserId ? handleStoryClick(currentUserId) : setAddDialogOpen(true)}
+            onClick={() => setAddDialogOpen(true)}
             className="relative"
           >
-            <Avatar className={`h-16 w-16 border-2 ${hasOwnStory ? 'border-primary' : 'border-muted'}`}>
+            <Avatar className="h-16 w-16 border-2 border-muted">
               <AvatarImage src={currentUserProfile?.avatar_url || undefined} />
               <AvatarFallback className="bg-muted">
                 {currentUserProfile?.username?.[0]?.toUpperCase() || 'Y'}
               </AvatarFallback>
             </Avatar>
-            {!hasOwnStory && (
-              <div className="absolute bottom-0 right-0 bg-primary rounded-full p-1">
-                <Plus size={12} className="text-primary-foreground" />
-              </div>
-            )}
+            <div className="absolute bottom-0 right-0 bg-primary rounded-full p-1">
+              <Plus size={12} className="text-primary-foreground" />
+            </div>
           </button>
-          <p className="text-xs text-center w-16 truncate">Your story</p>
+          <p className="text-xs text-center w-16 truncate">Add story</p>
         </div>
+
+        {/* Current user's stories - shown separately if they exist */}
+        {hasOwnStory && currentUserId && (
+          <div className="flex flex-col items-center gap-2 flex-shrink-0">
+            <button
+              onClick={() => handleStoryClick(currentUserId)}
+              className="relative"
+            >
+              <Avatar className="h-16 w-16 border-2 border-primary">
+                <AvatarImage src={currentUserProfile?.avatar_url || undefined} />
+                <AvatarFallback className="bg-muted">
+                  {currentUserProfile?.username?.[0]?.toUpperCase() || 'Y'}
+                </AvatarFallback>
+              </Avatar>
+            </button>
+            <p className="text-xs text-center w-16 truncate">Your story</p>
+          </div>
+        )}
 
         {/* Stories from others */}
         {storyGroups.filter(g => g.user_id !== currentUserId).map((group) => (
