@@ -15,8 +15,8 @@ const AvatarWithFrame = ({ avatarUrl, frameUrl, size = "lg", className = "" }: A
 
   return (
     <div className={`relative ${sizeClasses[size]} ${className}`}>
-      {/* Avatar */}
-      <div className="absolute inset-0 rounded-full overflow-hidden border-4 border-card">
+      {/* Avatar - positioned with padding to account for frame */}
+      <div className="absolute inset-[15%] rounded-full overflow-hidden z-10">
         <img
           src={avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${Date.now()}`}
           alt="Avatar"
@@ -26,7 +26,7 @@ const AvatarWithFrame = ({ avatarUrl, frameUrl, size = "lg", className = "" }: A
       
       {/* Frame overlay */}
       {frameUrl && (
-        <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute inset-0 pointer-events-none z-20">
           <img
             src={frameUrl}
             alt="Frame"
