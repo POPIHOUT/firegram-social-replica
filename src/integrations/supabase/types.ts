@@ -308,6 +308,7 @@ export type Database = {
           full_name: string | null
           id: string
           is_admin: boolean | null
+          is_premium: boolean | null
           is_support: boolean | null
           is_verified: boolean | null
           suspended: boolean | null
@@ -326,6 +327,7 @@ export type Database = {
           full_name?: string | null
           id: string
           is_admin?: boolean | null
+          is_premium?: boolean | null
           is_support?: boolean | null
           is_verified?: boolean | null
           suspended?: boolean | null
@@ -344,6 +346,7 @@ export type Database = {
           full_name?: string | null
           id?: string
           is_admin?: boolean | null
+          is_premium?: boolean | null
           is_support?: boolean | null
           is_verified?: boolean | null
           suspended?: boolean | null
@@ -512,6 +515,10 @@ export type Database = {
       is_conversation_participant: {
         Args: { _conversation_id: string; _user_id: string }
         Returns: boolean
+      }
+      purchase_premium: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
       }
     }
     Enums: {

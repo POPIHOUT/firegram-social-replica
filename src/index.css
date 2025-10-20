@@ -153,3 +153,14 @@ All colors MUST be HSL.
     -webkit-touch-callout: none;
   }
 }
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0) scale(1);
+    opacity: 0.6;
+  }
+  50% {
+    transform: translateY(-100vh) scale(1.5);
+    opacity: 0;
+  }
+}

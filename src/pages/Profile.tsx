@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Shield, Grid, Film, Loader2, LogOut, Heart, MessageCircle, UserPlus, UserMinus, Flame, Check, Bookmark, Settings } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import firegramLogo from "@/assets/firegram-logo.png";
 
 interface Profile {
   id: string;
@@ -20,6 +21,7 @@ interface Profile {
   avatar_url: string;
   is_admin: boolean;
   is_verified: boolean;
+  is_premium?: boolean;
 }
 
 interface Post {
@@ -59,6 +61,7 @@ const Profile = () => {
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [followersDialogOpen, setFollowersDialogOpen] = useState(false);
   const [followingDialogOpen, setFollowingDialogOpen] = useState(false);
+  const [showFireEffect, setShowFireEffect] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -88,6 +91,12 @@ const Profile = () => {
 
       if (profileError) throw profileError;
       setProfile(profileData);
+
+      // Show fire effect if premium and not own profile
+      if (profileData.is_premium && profileId !== currentUserId) {
+        setShowFireEffect(true);
+        setTimeout(() => setShowFireEffect(false), 5000);
+      }
 
       // Fetch posts with count
       const { data: postsData, error: postsError, count: postsTotal } = await supabase
@@ -248,6 +257,27 @@ const Profile = () => {
   return (
     <div className="min-h-screen pb-safe">
       <Navigation />
+      
+      {/* Fire Effect Overlay */}
+      {showFireEffect && (
+        <div className="fixed inset-0 z-50 pointer-events-none">
+          <div className="absolute inset-0 bg-gradient-to-t from-orange-500/20 via-red-500/10 to-transparent animate-pulse" />
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(251,146,60,0.3),transparent_70%)] animate-pulse" 
+               style={{ animationDuration: '2s' }} />
+          {[...Array(20)].map((_, i) => (
+            <div
+              key={i}
+              className="absolute bottom-0 w-2 h-16 bg-gradient-to-t from-orange-500 via-red-500 to-transparent rounded-full animate-[float_2s_ease-in-out_infinite]"
+              style={{
+                left: `${Math.random() * 100}%`,
+                animationDelay: `${Math.random() * 2}s`,
+                opacity: 0.6 + Math.random() * 0.4,
+              }}
+            />
+          ))}
+        </div>
+      )}
+
       <main className="max-w-4xl mx-auto pt-16 sm:pt-20 px-3 sm:px-4 pb-20 sm:pb-24">
         <div className="space-y-4 sm:space-y-8">
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-8">
@@ -259,10 +289,22 @@ const Profile = () => {
             </Avatar>
 
             <div className="flex-1 w-full space-y-3 sm:space-y-4">
-              <div className="flex items-center justify-center sm:justify-start gap-2">
+              <div className="flex items-center justify-center sm:justify-start gap-2 flex-wrap">
                 <h1 className="text-xl sm:text-2xl font-bold">{profile.username}</h1>
                 {profile.is_verified && (
                   <Check size={18} className="text-primary sm:w-5 sm:h-5" />
+                )}
+                {profile.is_premium && (
+                  <div className="relative group">
+                    <img 
+                      src={firegramLogo} 
+                      alt="Premium" 
+                      className="w-6 h-6 sm:w-7 sm:h-7 animate-pulse" 
+                    />
+                    <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-black/90 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                      Premium Member
+                    </div>
+                  </div>
                 )}
                 {profile.is_admin && (
                   <Badge variant="secondary" className="flex items-center gap-1 px-2 py-0.5 sm:py-1 text-xs">
