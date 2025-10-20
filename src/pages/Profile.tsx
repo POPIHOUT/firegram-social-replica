@@ -96,8 +96,9 @@ const Profile = () => {
       setProfile(profileData);
 
       // Show fire effect for premium profiles
+      // Show to others always, show to self unless explicitly disabled
       const shouldShowFire = profileData.is_premium && (
-        profileId !== currentUserId || profileData.show_own_fire_effect
+        profileId !== currentUserId || (profileData.show_own_fire_effect !== false)
       );
       
       if (shouldShowFire) {
