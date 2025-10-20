@@ -462,34 +462,6 @@ const Settings = () => {
                     </div>
                   )}
 
-                  {ownedFrames && ownedFrames.length > 0 && (
-                    <div className="space-y-2">
-                      <Label>Avatar Frame</Label>
-                      <Select value={selectedFrameId || "none"} onValueChange={(value) => handleSelectFrame(value === "none" ? "" : value)}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select a frame" />
-                        </SelectTrigger>
-                        <SelectContent className="bg-card border-border">
-                          <SelectItem value="none">None</SelectItem>
-                          {ownedFrames.map((frame) => (
-                            frame && frame.id ? (
-                              <SelectItem key={frame.id} value={frame.id}>
-                                <div className="flex items-center gap-2">
-                                  <div className="w-6 h-6 rounded-full overflow-hidden">
-                                    <img src={frame.image_url} alt={frame.name} className="w-full h-full object-cover" />
-                                  </div>
-                                  {frame.name}
-                                </div>
-                              </SelectItem>
-                            ) : null
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <p className="text-xs text-muted-foreground">
-                        Choose which frame appears around your avatar
-                      </p>
-                    </div>
-                  )}
 
                   <div className="space-y-4 p-4 bg-muted rounded-lg">
                     <div className="flex items-center justify-between">
@@ -652,6 +624,39 @@ const Settings = () => {
               </form>
             </CardContent>
           </Card>
+
+          {isPremium && ownedFrames && ownedFrames.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Avatar Frame</CardTitle>
+                <CardDescription>
+                  Equip a frame for your profile avatar
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Select value={selectedFrameId || "none"} onValueChange={(value) => handleSelectFrame(value === "none" ? "" : value)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a frame" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-card border-border">
+                    <SelectItem value="none">None</SelectItem>
+                    {ownedFrames.map((frame) => (
+                      frame && frame.id ? (
+                        <SelectItem key={frame.id} value={frame.id}>
+                          <div className="flex items-center gap-2">
+                            <div className="w-6 h-6 rounded-full overflow-hidden">
+                              <img src={frame.image_url} alt={frame.name} className="w-full h-full object-cover" />
+                            </div>
+                            {frame.name}
+                          </div>
+                        </SelectItem>
+                      ) : null
+                    ))}
+                  </SelectContent>
+                </Select>
+              </CardContent>
+            </Card>
+          )}
 
           <Card>
             <CardHeader>
