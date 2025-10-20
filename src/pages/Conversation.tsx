@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Loader2, ArrowLeft, Send } from "lucide-react";
+import { Loader2, ArrowLeft, Send, Image as ImageIcon, BadgeCheck } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface Message {
@@ -18,6 +18,7 @@ interface OtherUser {
   id: string;
   username: string;
   avatar_url: string | null;
+  is_verified: boolean;
 }
 
 const Conversation = () => {
@@ -28,6 +29,8 @@ const Conversation = () => {
   const [sending, setSending] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [otherUser, setOtherUser] = useState<OtherUser | null>(null);
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -95,7 +98,7 @@ const Conversation = () => {
 
       const { data: profile } = await supabase
         .from("profiles")
-        .select("id, username, avatar_url")
+        .select("id, username, avatar_url, is_verified")
         .eq("id", participants[0].user_id)
         .single();
 
@@ -126,6 +129,67 @@ const Conversation = () => {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setSelectedImage(file);
+      sendMessageWithImage(file);
+    }
+  };
+
+  const sendMessageWithImage = async (imageFile: File) => {
+    if (!currentUserId || !conversationId) return;
+
+    setSending(true);
+    try {
+      // Upload image to storage
+      const fileExt = imageFile.name.split('.').pop();
+      const fileName = `${Math.random()}.${fileExt}`;
+      const filePath = `${currentUserId}/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('posts')
+        .upload(filePath, imageFile);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('posts')
+        .getPublicUrl(filePath);
+
+      // Send message with image URL
+      const { error: messageError } = await supabase
+        .from("messages")
+        .insert({
+          conversation_id: conversationId,
+          sender_id: currentUserId,
+          content: publicUrl,
+        });
+
+      if (messageError) throw messageError;
+
+      // Update conversation timestamp
+      await supabase
+        .from("conversations")
+        .update({ updated_at: new Date().toISOString() })
+        .eq("id", conversationId);
+
+      setSelectedImage(null);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    } catch (error) {
+      console.error("Error sending image:", error);
+      toast({
+        title: "Chyba",
+        description: "Nepodarilo sa odoslať obrázok",
+        variant: "destructive",
+      });
+    } finally {
+      setSending(false);
     }
   };
 
@@ -192,7 +256,12 @@ const Conversation = () => {
                   {otherUser.username[0].toUpperCase()}
                 </AvatarFallback>
               </Avatar>
-              <p className="font-semibold">{otherUser.username}</p>
+              <div className="flex items-center gap-1">
+                <p className="font-semibold">{otherUser.username}</p>
+                {otherUser.is_verified && (
+                  <BadgeCheck className="h-4 w-4 text-primary fill-primary" />
+                )}
+              </div>
             </>
           )}
         </div>
@@ -215,7 +284,15 @@ const Conversation = () => {
                     : "bg-card"
                 }`}
               >
-                <p className="text-sm break-words">{message.content}</p>
+                {message.content.startsWith('http') && (message.content.includes('.jpg') || message.content.includes('.png') || message.content.includes('.jpeg') || message.content.includes('.webp')) ? (
+                  <img 
+                    src={message.content} 
+                    alt="Sent image" 
+                    className="rounded-lg max-w-full h-auto mb-2"
+                  />
+                ) : (
+                  <p className="text-sm break-words">{message.content}</p>
+                )}
                 <span className="text-xs opacity-70 mt-1 block">
                   {new Date(message.created_at).toLocaleTimeString([], {
                     hour: "2-digit",
@@ -232,6 +309,22 @@ const Conversation = () => {
       {/* Input */}
       <div className="border-t p-4 bg-card">
         <form onSubmit={sendMessage} className="max-w-2xl mx-auto flex gap-2">
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            onChange={handleImageSelect}
+            className="hidden"
+          />
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={sending}
+          >
+            <ImageIcon className="h-5 w-5" />
+          </Button>
           <Input
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}

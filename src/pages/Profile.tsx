@@ -470,80 +470,69 @@ const Profile = () => {
                   <p className="text-muted-foreground">No saved items</p>
                 </div>
               ) : (
-                <div className="space-y-8">
-                  {savedPosts.length > 0 && (
-                    <div>
-                      <h3 className="text-sm font-semibold mb-2">Saved Posts</h3>
-                      <div className="grid grid-cols-3 gap-1">
-                        {savedPosts.map((post) => {
-                          const displayImage = post.images && post.images.length > 0 
-                            ? post.images[0] 
-                            : post.image_url;
-                          const allImages = post.images && post.images.length > 0 
-                            ? post.images 
-                            : [post.image_url];
-                          
-                          return (
-                            <div 
-                              key={post.id} 
-                              className="relative aspect-square group cursor-pointer"
-                              onClick={() => {
-                                setSelectedImages(allImages);
-                                setSelectedImageIndex(0);
-                                setImageViewerOpen(true);
-                              }}
-                            >
-                              <img
-                                src={displayImage}
-                                alt="Post"
-                                className="w-full h-full object-cover"
-                              />
-                              <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-6 text-white">
-                                <div className="flex items-center gap-2">
-                                  <Heart className="fill-white" size={20} />
-                                  <span className="font-semibold">{post.likes_count}</span>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                  <MessageCircle className="fill-white" size={20} />
-                                  <span className="font-semibold">{post.comments_count}</span>
-                                </div>
-                              </div>
+                <div>
+                  <h3 className="text-sm font-semibold mb-4">Saved Posts</h3>
+                  <div className="grid grid-cols-3 gap-1">
+                    {savedPosts.map((post) => {
+                      const displayImage = post.images && post.images.length > 0 
+                        ? post.images[0] 
+                        : post.image_url;
+                      const allImages = post.images && post.images.length > 0 
+                        ? post.images 
+                        : [post.image_url];
+                      
+                      return (
+                        <div 
+                          key={post.id} 
+                          className="relative aspect-square group cursor-pointer"
+                          onClick={() => {
+                            setSelectedImages(allImages);
+                            setSelectedImageIndex(0);
+                            setImageViewerOpen(true);
+                          }}
+                        >
+                          <img
+                            src={displayImage}
+                            alt="Post"
+                            className="w-full h-full object-cover"
+                          />
+                          <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-6 text-white">
+                            <div className="flex items-center gap-2">
+                              <Heart className="fill-white" size={20} />
+                              <span className="font-semibold">{post.likes_count}</span>
                             </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  )}
-                  {savedReels.length > 0 && (
-                    <div>
-                      <h3 className="text-sm font-semibold mb-2">Saved Reels</h3>
-                      <div className="grid grid-cols-3 gap-1">
-                        {savedReels.map((reel) => (
-                          <div 
-                            key={reel.id} 
-                            className="relative aspect-[9/16] group cursor-pointer bg-black"
-                            onClick={() => navigate('/reels', { state: { initialReelId: reel.id } })}
-                          >
-                            <video
-                              src={reel.video_url}
-                              className="w-full h-full object-cover"
-                            />
-                            <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white">
-                              <div className="flex items-center gap-2">
-                                <Heart className="fill-white" size={20} />
-                                <span className="font-semibold">{reel.likes_count}</span>
-                              </div>
-                            </div>
-                            <div className="absolute top-2 right-2">
-                              <div className="bg-black/70 rounded-full p-1">
-                                <Film size={16} className="text-white" />
-                              </div>
+                            <div className="flex items-center gap-2">
+                              <MessageCircle className="fill-white" size={20} />
+                              <span className="font-semibold">{post.comments_count}</span>
                             </div>
                           </div>
-                        ))}
+                        </div>
+                      );
+                    })}
+                    {savedReels.map((reel) => (
+                      <div 
+                        key={reel.id} 
+                        className="relative aspect-square group cursor-pointer bg-black"
+                        onClick={() => navigate('/reels', { state: { initialReelId: reel.id } })}
+                      >
+                        <video
+                          src={reel.video_url}
+                          className="w-full h-full object-cover"
+                        />
+                        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white">
+                          <div className="flex items-center gap-2">
+                            <Flame className="fill-white" size={20} />
+                            <span className="font-semibold">{reel.likes_count}</span>
+                          </div>
+                        </div>
+                        <div className="absolute top-2 right-2">
+                          <div className="bg-black/70 rounded-full p-1">
+                            <Film size={16} className="text-white" />
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  )}
+                    ))}
+                  </div>
                 </div>
               )
             )}
