@@ -107,18 +107,19 @@ const EditProfileDialog = ({ open, onOpenChange, profile, onUpdate }: EditProfil
     const { data, error } = await supabase.storage
       .from('avatars')
       .upload(fileName, avatarFile, {
-        cacheControl: '3600',
+        cacheControl: '0',
         upsert: true
       });
 
     if (error) throw error;
 
-    // Get public URL
+    // Get public URL and append version param to bust cache
     const { data: { publicUrl } } = supabase.storage
       .from('avatars')
       .getPublicUrl(fileName);
 
-    return publicUrl;
+    const versionedUrl = `${publicUrl}?v=${Date.now()}`;
+    return versionedUrl;
   };
 
   const handleSave = async () => {
