@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import Navigation from "@/components/Navigation";
 import PostCard from "@/components/PostCard";
 import VideoPostCard from "@/components/VideoPostCard";
+import StoriesBar from "@/components/StoriesBar";
 import { Loader2 } from "lucide-react";
 
 interface Post {
@@ -123,7 +124,8 @@ const Feed = () => {
     <div className="min-h-screen pb-safe">
       <Navigation />
       <main className="max-w-2xl mx-auto pt-16 sm:pt-20 px-2 sm:px-4 pb-20 sm:pb-24">
-        <div className="space-y-4 sm:space-y-6">
+        <StoriesBar />
+        <div className="space-y-4 sm:space-y-6 mt-4">
           {feedItems.length === 0 ? (
             <div className="text-center py-12 sm:py-20 px-4">
               <p className="text-muted-foreground text-base sm:text-lg">No content yet</p>

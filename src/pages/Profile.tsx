@@ -9,7 +9,7 @@ import FollowingDialog from "@/components/FollowingDialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Shield, Grid, Film, Loader2, LogOut, Heart, MessageCircle, UserPlus, UserMinus, Flame, Check, Bookmark } from "lucide-react";
+import { Shield, Grid, Film, Loader2, LogOut, Heart, MessageCircle, UserPlus, UserMinus, Flame, Check, Bookmark, Settings } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface Profile {
@@ -307,6 +307,14 @@ const Profile = () => {
                       onClick={() => setEditDialogOpen(true)}
                     >
                       Edit profile
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={() => navigate("/settings")}
+                      className="h-8 w-8 sm:h-9 sm:w-9"
+                    >
+                      <Settings size={16} className="sm:w-5 sm:h-5" />
                     </Button>
                     <Button
                       variant="outline"
