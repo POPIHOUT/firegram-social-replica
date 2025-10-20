@@ -668,6 +668,10 @@ export type Database = {
         Args: { effect_uuid: string }
         Returns: undefined
       }
+      purchase_frame: {
+        Args: { frame_uuid: string }
+        Returns: undefined
+      }
       purchase_premium: {
         Args: Record<PropertyKey, never>
         Returns: undefined

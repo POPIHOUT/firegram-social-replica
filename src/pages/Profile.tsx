@@ -13,6 +13,7 @@ import { Shield, Grid, Film, Loader2, LogOut, Heart, MessageCircle, UserPlus, Us
 import { useToast } from "@/hooks/use-toast";
 import firegramLogo from "@/assets/firegram-logo.png";
 import ProfileEffect from "@/components/ProfileEffect";
+import AvatarWithFrame from "@/components/AvatarWithFrame";
 
 interface Profile {
   id: string;
@@ -69,6 +70,7 @@ const Profile = () => {
   const [showFireEffect, setShowFireEffect] = useState(false);
   const [fireInBackground, setFireInBackground] = useState(false);
   const [selectedEffect, setSelectedEffect] = useState<{type: string, icon: string} | null>(null);
+  const [selectedFrameUrl, setSelectedFrameUrl] = useState<string | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -117,6 +119,23 @@ const Profile = () => {
         }
       } else {
         setSelectedEffect(null);
+      }
+
+      // Fetch selected frame if user has one selected
+      if (profileData.selected_frame_id) {
+        const { data: frameData } = await supabase
+          .from("frames")
+          .select("*")
+          .eq("id", profileData.selected_frame_id)
+          .single();
+        
+        if (frameData) {
+          setSelectedFrameUrl(frameData.image_url);
+        } else {
+          setSelectedFrameUrl(null);
+        }
+      } else {
+        setSelectedFrameUrl(null);
       }
 
       // Show fire effect for premium profiles only if they don't have a custom effect equipped
@@ -352,12 +371,12 @@ const Profile = () => {
       <main className="max-w-4xl mx-auto pt-16 sm:pt-20 px-3 sm:px-4 pb-20 sm:pb-24">
         <div className="space-y-4 sm:space-y-8">
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-8">
-            <Avatar className="w-20 h-20 sm:w-32 sm:h-32 border-2 sm:border-4 border-primary/20 mx-auto sm:mx-0">
-              <AvatarImage src={profile.avatar_url} />
-              <AvatarFallback className="bg-muted text-2xl sm:text-3xl">
-                {profile.username.charAt(0).toUpperCase()}
-              </AvatarFallback>
-            </Avatar>
+            <AvatarWithFrame 
+              avatarUrl={profile.avatar_url}
+              frameUrl={selectedFrameUrl || undefined}
+              size="xl"
+              className="mx-auto sm:mx-0"
+            />
 
             <div className="flex-1 w-full space-y-3 sm:space-y-4">
               <div className="flex items-center justify-center sm:justify-start gap-2 flex-wrap">
