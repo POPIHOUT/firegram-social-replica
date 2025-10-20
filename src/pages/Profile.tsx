@@ -103,12 +103,14 @@ const Profile = () => {
       if (profileError) throw profileError;
       setProfile(profileData);
 
-      // Set selected effect if any
-      if (profileData.effects) {
+      // Set selected effect only if profile has premium
+      if (profileData.is_premium && profileData.effects) {
         setSelectedEffect({
           type: profileData.effects.effect_type,
           icon: profileData.effects.icon
         });
+      } else {
+        setSelectedEffect(null);
       }
 
       // Show fire effect for premium profiles
