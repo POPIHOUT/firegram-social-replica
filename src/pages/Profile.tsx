@@ -27,10 +27,6 @@ interface Profile {
   custom_background_url?: string;
   show_custom_background?: boolean;
   selected_effect_id?: string;
-  effects?: {
-    effect_type: string;
-    icon: string;
-  };
 }
 
 interface Post {
@@ -96,26 +92,36 @@ const Profile = () => {
     try {
       const { data: profileData, error: profileError } = await supabase
         .from("profiles")
-        .select("*, effects(*)")
+        .select("*")
         .eq("id", profileId)
         .single();
 
       if (profileError) throw profileError;
       setProfile(profileData);
 
-      // Set selected effect only if profile has premium
-      if (profileData.is_premium && profileData.effects) {
-        setSelectedEffect({
-          type: profileData.effects.effect_type,
-          icon: profileData.effects.icon
-        });
+      // Fetch selected effect if premium and has one selected
+      if (profileData.is_premium && profileData.selected_effect_id) {
+        const { data: effectData } = await supabase
+          .from("effects")
+          .select("*")
+          .eq("id", profileData.selected_effect_id)
+          .single();
+        
+        if (effectData) {
+          setSelectedEffect({
+            type: effectData.effect_type,
+            icon: effectData.icon
+          });
+        } else {
+          setSelectedEffect(null);
+        }
       } else {
         setSelectedEffect(null);
       }
 
       // Show fire effect for premium profiles only if they don't have a custom effect equipped
       // Show to others always, show to self unless explicitly disabled
-      const hasCustomEffect = profileData.is_premium && profileData.effects;
+      const hasCustomEffect = profileData.is_premium && profileData.selected_effect_id;
       const shouldShowFire = profileData.is_premium && !hasCustomEffect && (
         profileId !== currentUserId || (profileData.show_own_fire_effect !== false)
       );
