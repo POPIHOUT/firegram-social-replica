@@ -154,13 +154,44 @@ const Settings = () => {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    // Check if it's a video and validate duration
+    if (file.type.startsWith('video/')) {
+      const video = document.createElement('video');
+      video.preload = 'metadata';
+      
+      const checkDuration = new Promise<boolean>((resolve) => {
+        video.onloadedmetadata = () => {
+          window.URL.revokeObjectURL(video.src);
+          const duration = video.duration;
+          resolve(duration <= 180); // 3 minutes = 180 seconds
+        };
+        video.src = URL.createObjectURL(file);
+      });
+
+      const isValidDuration = await checkDuration;
+      if (!isValidDuration) {
+        toast({
+          title: "Video too long",
+          description: "Video must be maximum 3 minutes",
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+
     setUploadingBackground(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
       const fileExt = file.name.split('.').pop();
-      const fileName = `${user.id}-${Date.now()}.${fileExt}`;
+      const fileName = `${user.id}/background-${Date.now()}.${fileExt}`;
+
+      // Delete old background if exists
+      if (customBackgroundUrl) {
+        const oldPath = customBackgroundUrl.split('/').slice(-2).join('/');
+        await supabase.storage.from("avatars").remove([oldPath]);
+      }
 
       const { error: uploadError } = await supabase.storage
         .from("avatars")
@@ -182,7 +213,7 @@ const Settings = () => {
       setCustomBackgroundUrl(publicUrl);
       toast({
         title: "Background updated",
-        description: "Your custom background has been set",
+        description: file.type.startsWith('video/') ? "Your custom video background has been set" : "Your custom background has been set",
       });
     } catch (error: any) {
       toast({
@@ -238,8 +269,8 @@ const Settings = () => {
                   <div className="space-y-4 p-4 bg-muted rounded-lg">
                     <div className="flex items-center justify-between">
                       <div>
-                        <Label htmlFor="fire-effect">Show fire effect on my profile</Label>
-                        <p className="text-xs text-muted-foreground">Display the fire animation when viewing your own profile</p>
+                        <Label htmlFor="fire-effect">Show fire effect to myself</Label>
+                        <p className="text-xs text-muted-foreground">Only you can toggle this - others always see your fire effect</p>
                       </div>
                       <Switch
                         id="fire-effect"
@@ -250,21 +281,31 @@ const Settings = () => {
 
                     <div className="space-y-2">
                       <Label htmlFor="background-upload">Custom Background</Label>
-                      <p className="text-xs text-muted-foreground mb-2">Upload a custom background image for your profile</p>
+                      <p className="text-xs text-muted-foreground mb-2">Upload image or video (max 3 min) for your profile background</p>
                       {customBackgroundUrl && (
                         <div className="relative w-full h-32 mb-2 rounded-lg overflow-hidden">
-                          <img 
-                            src={customBackgroundUrl} 
-                            alt="Custom background" 
-                            className="w-full h-full object-cover"
-                          />
+                          {customBackgroundUrl.includes('.mp4') || customBackgroundUrl.includes('.webm') || customBackgroundUrl.includes('.mov') ? (
+                            <video 
+                              src={customBackgroundUrl} 
+                              className="w-full h-full object-cover"
+                              autoPlay
+                              loop
+                              muted
+                            />
+                          ) : (
+                            <img 
+                              src={customBackgroundUrl} 
+                              alt="Custom background" 
+                              className="w-full h-full object-cover"
+                            />
+                          )}
                         </div>
                       )}
                       <div className="flex gap-2">
                         <Input
                           id="background-upload"
                           type="file"
-                          accept="image/*"
+                          accept="image/*,video/*"
                           onChange={handleBackgroundUpload}
                           disabled={uploadingBackground}
                           className="flex-1"

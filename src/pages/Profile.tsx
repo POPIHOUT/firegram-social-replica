@@ -271,10 +271,26 @@ const Profile = () => {
       
       {/* Custom background for premium profiles */}
       {profile?.custom_background_url && (
-        <div 
-          className="fixed inset-0 z-0 bg-cover bg-center opacity-20"
-          style={{ backgroundImage: `url(${profile.custom_background_url})` }}
-        />
+        <>
+          {profile.custom_background_url.includes('.mp4') || 
+           profile.custom_background_url.includes('.webm') || 
+           profile.custom_background_url.includes('.mov') ? (
+            <video
+              className="fixed inset-0 z-0 w-full h-full object-cover opacity-20"
+              autoPlay
+              loop
+              muted
+              playsInline
+            >
+              <source src={profile.custom_background_url} />
+            </video>
+          ) : (
+            <div 
+              className="fixed inset-0 z-0 bg-cover bg-center opacity-20"
+              style={{ backgroundImage: `url(${profile.custom_background_url})` }}
+            />
+          )}
+        </>
       )}
       
       {/* Fire Effect Overlay */}
