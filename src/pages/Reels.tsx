@@ -14,6 +14,7 @@ interface Reel {
   views_count: number;
   user_id: string;
   created_at: string;
+  type?: "reel" | "ad";
 }
 
 interface Profile {
@@ -28,12 +29,13 @@ const Reels = () => {
   const [profiles, setProfiles] = useState<Record<string, Profile>>({});
   const [currentIndex, setCurrentIndex] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
+  const videoRefs = useRef<Record<number, HTMLVideoElement | null>>({});
   const navigate = useNavigate();
   const location = useLocation();
 
   useEffect(() => {
     checkAuth();
-    fetchReels();
+    fetchReelsWithAds();
   }, []);
 
   useEffect(() => {
@@ -44,12 +46,27 @@ const Reels = () => {
       const scrollTop = container.scrollTop;
       const clientHeight = container.clientHeight;
       const newIndex = Math.round(scrollTop / clientHeight);
-      setCurrentIndex(newIndex);
+      
+      if (newIndex !== currentIndex) {
+        // Pause previous video
+        const prevVideo = videoRefs.current[currentIndex];
+        if (prevVideo) {
+          prevVideo.pause();
+        }
+        
+        // Play new video
+        const newVideo = videoRefs.current[newIndex];
+        if (newVideo) {
+          newVideo.play();
+        }
+        
+        setCurrentIndex(newIndex);
+      }
     };
 
     container.addEventListener("scroll", handleScroll);
     return () => container.removeEventListener("scroll", handleScroll);
-  }, []);
+  }, [currentIndex]);
 
   const checkAuth = async () => {
     const { data: { session } } = await supabase.auth.getSession();
@@ -58,19 +75,67 @@ const Reels = () => {
     }
   };
 
-  const fetchReels = async () => {
+  const fetchReelsWithAds = async () => {
     try {
-      const { data: reelsData, error } = await supabase
+      // Fetch reels
+      const { data: reelsData, error: reelsError } = await supabase
         .from("reels")
         .select("*")
         .order("created_at", { ascending: false });
 
-      if (error) throw error;
+      if (reelsError) throw reelsError;
+
+      // Fetch active advertisements
+      const { data: adsData, error: adsError } = await supabase
+        .from("advertisements")
+        .select("*")
+        .eq("active", true)
+        .gt("expires_at", new Date().toISOString())
+        .order("created_at", { ascending: false });
+
+      if (adsError) throw adsError;
 
       if (reelsData && reelsData.length > 0) {
-        setReels(reelsData);
+        // Mark reels as type "reel"
+        const markedReels = reelsData.map(r => ({ ...r, type: "reel" as const }));
+        
+        // Mark ads as type "ad" and format them like reels
+        const markedAds = (adsData || []).map(ad => ({
+          id: ad.id,
+          video_url: ad.type === "video" ? ad.media_url : "",
+          thumbnail_url: ad.thumbnail_url,
+          caption: ad.caption,
+          likes_count: 0,
+          views_count: 0,
+          user_id: ad.user_id,
+          created_at: ad.created_at,
+          type: "ad" as const,
+          image_url: ad.type === "image" ? ad.media_url : null,
+        }));
 
-        const userIds = [...new Set(reelsData.map(reel => reel.user_id))];
+        // Insert ads every 2 reels
+        const mixedContent: Reel[] = [];
+        let adIndex = 0;
+        
+        for (let i = 0; i < markedReels.length; i++) {
+          mixedContent.push(markedReels[i]);
+          
+          // After every 2nd reel, insert an ad
+          if ((i + 1) % 2 === 0 && adIndex < markedAds.length) {
+            mixedContent.push(markedAds[adIndex] as any);
+            adIndex++;
+            
+            // Loop through ads if we have more slots than ads
+            if (adIndex >= markedAds.length) {
+              adIndex = 0;
+            }
+          }
+        }
+
+        setReels(mixedContent);
+
+        // Fetch profiles for all users
+        const userIds = [...new Set(mixedContent.map(item => item.user_id))];
         const { data: profilesData } = await supabase
           .from("profiles")
           .select("id, username, avatar_url, is_verified")
@@ -91,7 +156,7 @@ const Reels = () => {
         // Scroll to initial reel if specified
         const state = location.state as { initialReelId?: string } | null;
         if (state?.initialReelId) {
-          const index = reelsData.findIndex(r => r.id === state.initialReelId);
+          const index = mixedContent.findIndex(r => r.id === state.initialReelId);
           if (index !== -1) {
             setCurrentIndex(index);
             setTimeout(() => {
@@ -155,6 +220,7 @@ const Reels = () => {
             reel={reel}
             profile={profiles[reel.user_id] || { username: "User", avatar_url: null, is_verified: false }}
             isActive={index === currentIndex}
+            videoRef={(el) => { videoRefs.current[index] = el; }}
           />
         ))}
       </div>

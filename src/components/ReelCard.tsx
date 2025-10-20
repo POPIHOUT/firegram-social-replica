@@ -17,6 +17,8 @@ interface ReelCardProps {
     views_count: number;
     user_id: string;
     created_at: string;
+    type?: "reel" | "ad";
+    image_url?: string | null;
   };
   profile: {
     username: string;
@@ -25,18 +27,20 @@ interface ReelCardProps {
   };
   isActive: boolean;
   onUpdate?: () => void;
+  videoRef?: (el: HTMLVideoElement | null) => void;
 }
 
-const ReelCard = ({ reel, profile, isActive, onUpdate }: ReelCardProps) => {
+const ReelCard = ({ reel, profile, isActive, onUpdate, videoRef }: ReelCardProps) => {
   const [isLiked, setIsLiked] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
   const [likesCount, setLikesCount] = useState(reel.likes_count);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [commentsOpen, setCommentsOpen] = useState(false);
-  const videoRef = useRef<HTMLVideoElement>(null);
+  const internalVideoRef = useRef<HTMLVideoElement>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const isAd = reel.type === "ad";
 
   useEffect(() => {
     checkAuth();
@@ -45,16 +49,17 @@ const ReelCard = ({ reel, profile, isActive, onUpdate }: ReelCardProps) => {
   }, []);
 
   useEffect(() => {
-    if (videoRef.current) {
-      if (isActive) {
-        videoRef.current.play();
+    const video = internalVideoRef.current;
+    if (video) {
+      if (isActive && !isAd) {
+        video.play();
         setIsPlaying(true);
       } else {
-        videoRef.current.pause();
+        video.pause();
         setIsPlaying(false);
       }
     }
-  }, [isActive]);
+  }, [isActive, isAd]);
 
   const checkAuth = async () => {
     const { data: { user } } = await supabase.auth.getUser();
@@ -183,12 +188,14 @@ const ReelCard = ({ reel, profile, isActive, onUpdate }: ReelCardProps) => {
   };
 
   const togglePlay = () => {
-    if (videoRef.current) {
+    if (isAd) return; // Don't allow play/pause for ads
+    
+    if (internalVideoRef.current) {
       if (isPlaying) {
-        videoRef.current.pause();
+        internalVideoRef.current.pause();
         setIsPlaying(false);
       } else {
-        videoRef.current.play();
+        internalVideoRef.current.play();
         setIsPlaying(true);
       }
     }
@@ -196,17 +203,34 @@ const ReelCard = ({ reel, profile, isActive, onUpdate }: ReelCardProps) => {
 
   return (
     <div className="relative h-screen w-full snap-start snap-always bg-black">
-      <video
-        ref={videoRef}
-        src={reel.video_url}
-        loop
-        playsInline
-        className="h-full w-full object-contain"
-        onClick={togglePlay}
-        poster={reel.thumbnail_url || undefined}
-      />
+      {isAd && reel.image_url ? (
+        <img
+          src={reel.image_url}
+          alt="Advertisement"
+          className="h-full w-full object-contain"
+        />
+      ) : (
+        <video
+          ref={(el) => {
+            internalVideoRef.current = el;
+            if (videoRef) videoRef(el);
+          }}
+          src={reel.video_url}
+          loop
+          playsInline
+          className="h-full w-full object-contain"
+          onClick={togglePlay}
+          poster={reel.thumbnail_url || undefined}
+        />
+      )}
+      
+      {isAd && (
+        <div className="absolute top-4 right-4 bg-orange-500/90 px-3 py-1 rounded-full">
+          <span className="text-xs font-bold text-white">AD</span>
+        </div>
+      )}
 
-      {!isPlaying && (
+      {!isPlaying && !isAd && (
         <div className="absolute inset-0 flex items-center justify-center">
           <Button
             size="icon"
@@ -249,48 +273,52 @@ const ReelCard = ({ reel, profile, isActive, onUpdate }: ReelCardProps) => {
             )}
           </div>
 
-          <div className="flex flex-col items-center gap-4 ml-4">
-            <Button
-              size="icon"
-              variant="ghost"
-              onClick={handleLike}
-              className="h-12 w-12 rounded-full hover:bg-white/20"
-            >
-              <Flame
-                className={`h-7 w-7 transition-colors ${
-                  isLiked ? "fill-orange-500 text-orange-500" : "text-white"
-                }`}
-              />
-            </Button>
-            <span className="text-xs text-white font-semibold">{likesCount}</span>
+          {!isAd && (
+            <div className="flex flex-col items-center gap-4 ml-4">
+              <Button
+                size="icon"
+                variant="ghost"
+                onClick={handleLike}
+                className="h-12 w-12 rounded-full hover:bg-white/20"
+              >
+                <Flame
+                  className={`h-7 w-7 transition-colors ${
+                    isLiked ? "fill-orange-500 text-orange-500" : "text-white"
+                  }`}
+                />
+              </Button>
+              <span className="text-xs text-white font-semibold">{likesCount}</span>
 
-            <Button
-              size="icon"
-              variant="ghost"
-              onClick={() => setCommentsOpen(true)}
-              className="h-12 w-12 rounded-full hover:bg-white/20"
-            >
-              <MessageCircle className="h-7 w-7 text-white" />
-            </Button>
+              <Button
+                size="icon"
+                variant="ghost"
+                onClick={() => setCommentsOpen(true)}
+                className="h-12 w-12 rounded-full hover:bg-white/20"
+              >
+                <MessageCircle className="h-7 w-7 text-white" />
+              </Button>
 
-            <Button
-              size="icon"
-              variant="ghost"
-              onClick={handleSave}
-              className="h-12 w-12 rounded-full hover:bg-white/20"
-            >
-              <Bookmark className={`h-7 w-7 ${isSaved ? "fill-white text-white" : "text-white"}`} />
-            </Button>
-          </div>
+              <Button
+                size="icon"
+                variant="ghost"
+                onClick={handleSave}
+                className="h-12 w-12 rounded-full hover:bg-white/20"
+              >
+                <Bookmark className={`h-7 w-7 ${isSaved ? "fill-white text-white" : "text-white"}`} />
+              </Button>
+            </div>
+          )}
         </div>
       </div>
 
-      <CommentsDialog
-        open={commentsOpen}
-        onOpenChange={setCommentsOpen}
-        reelId={reel.id}
-        onCommentAdded={() => onUpdate?.()}
-      />
+      {!isAd && (
+        <CommentsDialog
+          open={commentsOpen}
+          onOpenChange={setCommentsOpen}
+          reelId={reel.id}
+          onCommentAdded={() => onUpdate?.()}
+        />
+      )}
     </div>
   );
 };

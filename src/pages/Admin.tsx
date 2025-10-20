@@ -75,6 +75,8 @@ const Admin = () => {
   const [rolesDialogOpen, setRolesDialogOpen] = useState(false);
   const [flamesDialogOpen, setFlamesDialogOpen] = useState(false);
   const [flamesAmount, setFlamesAmount] = useState("");
+  const [followersDialogOpen, setFollowersDialogOpen] = useState(false);
+  const [followersAmount, setFollowersAmount] = useState("");
   const [stats, setStats] = useState({ users: 0, posts: 0, reels: 0 });
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -148,6 +150,28 @@ const Admin = () => {
       setSelectedUser({ ...selectedUser, flames: newAmount });
       setFlamesAmount("");
       await fetchData();
+    } catch (error: any) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    }
+  };
+
+  const handleGiveFakeFollowers = async () => {
+    if (!selectedUser || !followersAmount || isNaN(parseInt(followersAmount))) {
+      toast({ title: "Invalid amount", description: "Please enter a valid number", variant: "destructive" });
+      return;
+    }
+
+    try {
+      // This is a troll feature - we don't actually create follower relationships
+      // Just show a success message
+      toast({ 
+        title: "Followers Added (Troll)", 
+        description: `Gave ${followersAmount} fake followers to ${selectedUser.username} 😈`,
+        duration: 5000,
+      });
+      
+      setFollowersAmount("");
+      setFollowersDialogOpen(false);
     } catch (error: any) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
     }
@@ -490,6 +514,19 @@ const Admin = () => {
                           >
                             <span className="text-sm mr-1">🔥</span>
                             <span className="hidden sm:inline">Flames</span>
+                          </Button>
+
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="text-xs h-8 flex-1 sm:flex-initial bg-purple-500/10 border-purple-500/20 hover:bg-purple-500/20"
+                            onClick={() => {
+                              setSelectedUser(user);
+                              setFollowersDialogOpen(true);
+                            }}
+                          >
+                            <span className="text-sm mr-1">👥</span>
+                            <span className="hidden sm:inline">Followers</span>
                           </Button>
 
                           <Button
@@ -843,6 +880,64 @@ const Admin = () => {
               className="bg-orange-500 hover:bg-orange-600"
             >
               Add
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={followersDialogOpen} onOpenChange={(open) => {
+        setFollowersDialogOpen(open);
+        if (!open) setFollowersAmount("");
+      }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Give Fake Followers 👥</DialogTitle>
+            <DialogDescription>
+              Troll feature - give fake followers to {selectedUser?.username}
+              <br />
+              <span className="text-xs text-muted-foreground">(Won't appear in follower list, just for fun 😈)</span>
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="p-4 rounded-lg bg-purple-500/10 border border-purple-500/20">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium">Troll Mode Active:</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-2xl">😈</span>
+                  <span className="text-xl font-bold">Unlimited</span>
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <Label htmlFor="followers-amount">Amount</Label>
+              <Input
+                id="followers-amount"
+                type="number"
+                placeholder="Enter amount..."
+                value={followersAmount}
+                onChange={(e) => setFollowersAmount(e.target.value)}
+                min="0"
+                className="mt-2"
+              />
+            </div>
+          </div>
+          <DialogFooter className="gap-2">
+            <Button 
+              variant="outline" 
+              onClick={() => {
+                setFollowersDialogOpen(false);
+                setFollowersAmount("");
+              }}
+            >
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleGiveFakeFollowers}
+              disabled={!followersAmount}
+              className="bg-purple-500 hover:bg-purple-600"
+            >
+              Give Fake Followers 😈
             </Button>
           </DialogFooter>
         </DialogContent>

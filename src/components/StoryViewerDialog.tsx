@@ -15,6 +15,7 @@ interface Story {
   created_at: string;
   expires_at: string;
   views_count: number;
+  isAd?: boolean;
 }
 
 interface StoryGroup {
@@ -46,6 +47,9 @@ const StoryViewerDialog = ({
   const [progress, setProgress] = useState(0);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [isPaused, setIsPaused] = useState(false);
+  const [advertisements, setAdvertisements] = useState<any[]>([]);
+  const [showingAd, setShowingAd] = useState(false);
+  const [currentAd, setCurrentAd] = useState<any | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const progressInterval = useRef<NodeJS.Timeout | null>(null);
   const navigate = useNavigate();
@@ -53,7 +57,25 @@ const StoryViewerDialog = ({
 
   useEffect(() => {
     checkAuth();
+    fetchAdvertisements();
   }, []);
+
+  const fetchAdvertisements = async () => {
+    try {
+      const { data: adsData, error } = await supabase
+        .from("advertisements")
+        .select("*")
+        .eq("active", true)
+        .gt("expires_at", new Date().toISOString())
+        .order("created_at", { ascending: false });
+
+      if (!error && adsData) {
+        setAdvertisements(adsData);
+      }
+    } catch (error) {
+      console.error("Error fetching ads:", error);
+    }
+  };
 
   useEffect(() => {
     const index = storyGroups.findIndex(g => g.user_id === userId);
@@ -89,8 +111,9 @@ const StoryViewerDialog = ({
     stopProgress();
     setProgress(0);
 
-    const duration = currentStory?.media_type === 'video' ? 
-      (videoRef.current?.duration || 15) * 1000 : 5000;
+    const duration = showingAd ? 5000 : 
+      (currentStory?.media_type === 'video' ? 
+      (videoRef.current?.duration || 15) * 1000 : 5000);
 
     const increment = 100 / (duration / 50);
     
@@ -115,7 +138,7 @@ const StoryViewerDialog = ({
   };
 
   const markAsViewed = async () => {
-    if (!currentStory || !currentUserId || isOwnStory) return;
+    if (!currentStory || !currentUserId || isOwnStory || showingAd) return;
 
     try {
       // Use the simplified version with viewer_id (required by TypeScript, set by trigger)
@@ -136,6 +159,18 @@ const StoryViewerDialog = ({
   };
 
   const nextStory = () => {
+    // Show ad after completing a story
+    if (!showingAd && advertisements.length > 0 && currentStoryIndex === currentGroup.stories.length - 1) {
+      const randomAd = advertisements[Math.floor(Math.random() * advertisements.length)];
+      setCurrentAd(randomAd);
+      setShowingAd(true);
+      setProgress(0);
+      return;
+    }
+
+    setShowingAd(false);
+    setCurrentAd(null);
+
     if (currentStoryIndex < currentGroup.stories.length - 1) {
       setCurrentStoryIndex(prev => prev + 1);
     } else if (currentGroupIndex < storyGroups.length - 1) {
@@ -201,21 +236,38 @@ const StoryViewerDialog = ({
         <div className="relative h-full w-full">
           {/* Progress bars */}
           <div className="absolute top-0 left-0 right-0 z-20 flex gap-1 p-2">
-            {currentGroup.stories.map((_, index) => (
-              <div key={index} className="flex-1 h-1 bg-white/30 rounded-full overflow-hidden">
+            {showingAd ? (
+              <div className="flex-1 h-1 bg-white/30 rounded-full overflow-hidden">
                 <div
                   className="h-full bg-white transition-all duration-100"
-                  style={{
-                    width: index < currentStoryIndex ? '100%' : 
-                           index === currentStoryIndex ? `${progress}%` : '0%'
-                  }}
+                  style={{ width: `${progress}%` }}
                 />
               </div>
-            ))}
+            ) : (
+              currentGroup.stories.map((_, index) => (
+                <div key={index} className="flex-1 h-1 bg-white/30 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-white transition-all duration-100"
+                    style={{
+                      width: index < currentStoryIndex ? '100%' : 
+                             index === currentStoryIndex ? `${progress}%` : '0%'
+                    }}
+                  />
+                </div>
+              ))
+            )}
           </div>
 
+          {/* AD Badge */}
+          {showingAd && (
+            <div className="absolute top-4 right-4 z-20 bg-orange-500/90 px-3 py-1 rounded-full">
+              <span className="text-xs font-bold text-white">AD</span>
+            </div>
+          )}
+
           {/* Header */}
-          <div className="absolute top-4 left-0 right-0 z-20 flex items-center justify-between px-4">
+          {!showingAd && (
+            <div className="absolute top-4 left-0 right-0 z-20 flex items-center justify-between px-4">
             <div className="flex items-center gap-2">
               <Avatar 
                 className="h-10 w-10 border-2 border-white cursor-pointer"
@@ -259,6 +311,7 @@ const StoryViewerDialog = ({
               </Button>
             </div>
           </div>
+          )}
 
           {/* Story content */}
           <div 
@@ -268,23 +321,44 @@ const StoryViewerDialog = ({
             onTouchStart={() => setIsPaused(true)}
             onTouchEnd={() => setIsPaused(false)}
           >
-            {currentStory.media_type === 'video' ? (
-              <video
-                ref={videoRef}
-                src={currentStory.media_url}
-                className="max-h-full max-w-full object-contain"
-                autoPlay
-                muted
-                onEnded={nextStory}
-                onLoadedMetadata={() => startProgress()}
-              />
-            ) : (
-              <img
-                src={currentStory.media_url}
-                alt="Story"
-                className="max-h-full max-w-full object-contain"
-              />
-            )}
+            {showingAd && currentAd ? (
+              currentAd.type === 'video' ? (
+                <video
+                  ref={videoRef}
+                  src={currentAd.media_url}
+                  className="max-h-full max-w-full object-contain"
+                  autoPlay
+                  muted
+                  onEnded={nextStory}
+                  onLoadedMetadata={() => startProgress()}
+                  poster={currentAd.thumbnail_url || undefined}
+                />
+              ) : (
+                <img
+                  src={currentAd.media_url}
+                  alt="Advertisement"
+                  className="max-h-full max-w-full object-contain"
+                />
+              )
+            ) : currentStory ? (
+              currentStory.media_type === 'video' ? (
+                <video
+                  ref={videoRef}
+                  src={currentStory.media_url}
+                  className="max-h-full max-w-full object-contain"
+                  autoPlay
+                  muted
+                  onEnded={nextStory}
+                  onLoadedMetadata={() => startProgress()}
+                />
+              ) : (
+                <img
+                  src={currentStory.media_url}
+                  alt="Story"
+                  className="max-h-full max-w-full object-contain"
+                />
+              )
+            ) : null}
           </div>
 
           {/* Navigation */}
