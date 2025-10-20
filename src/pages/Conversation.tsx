@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Loader2, ArrowLeft, Send, Image as ImageIcon, BadgeCheck } from "lucide-react";
+import { Loader2, ArrowLeft, Send, Image as ImageIcon, Check } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface Message {
@@ -259,7 +259,7 @@ const Conversation = () => {
               <div className="flex items-center gap-1">
                 <p className="font-semibold">{otherUser.username}</p>
                 {otherUser.is_verified && (
-                  <BadgeCheck className="h-4 w-4 text-primary fill-primary" />
+                  <Check className="h-4 w-4 text-primary" />
                 )}
               </div>
             </>

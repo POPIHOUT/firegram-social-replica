@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Heart, MessageCircle, Play, BadgeCheck } from "lucide-react";
+import { Heart, MessageCircle, Play, Check } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card } from "@/components/ui/card";
@@ -121,7 +121,7 @@ const VideoPostCard = ({ reel, onUpdate }: VideoPostCardProps) => {
               {reel.profiles.username}
             </p>
             {reel.profiles.is_verified && (
-              <BadgeCheck size={16} className="text-primary fill-primary" />
+              <Check size={16} className="text-primary" />
             )}
             <p className="text-xs text-muted-foreground">
               {new Date(reel.created_at).toLocaleDateString()}

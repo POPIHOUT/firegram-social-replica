@@ -262,7 +262,7 @@ const Profile = () => {
               <div className="flex items-center justify-center sm:justify-start gap-2">
                 <h1 className="text-xl sm:text-2xl font-bold">{profile.username}</h1>
                 {profile.is_verified && (
-                  <Check size={18} className="text-primary fill-primary sm:w-5 sm:h-5" />
+                  <Check size={18} className="text-primary sm:w-5 sm:h-5" />
                 )}
                 {profile.is_admin && (
                   <Badge variant="secondary" className="flex items-center gap-1 px-2 py-0.5 sm:py-1 text-xs">
