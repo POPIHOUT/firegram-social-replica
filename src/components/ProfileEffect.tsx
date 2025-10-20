@@ -86,7 +86,10 @@ const ProfileEffect = ({ effectType, icon }: ProfileEffectProps) => {
           className={`absolute transition-all ${getParticleStyles(effectType)} ${getAnimationClass(effectType)}`}
           style={{
             left: `${particle.left}%`,
-            bottom: '-20px',
+            ...( ['stars', 'lightning', 'emojis'].includes(effectType)
+              ? { top: `${Math.random() * 80 + 5}%` }
+              : { bottom: '-20px' }
+            ),
             animationDelay: `${particle.delay}s`,
             animationDuration: `${particle.duration}s`,
             opacity: 0.8 + Math.random() * 0.2,
