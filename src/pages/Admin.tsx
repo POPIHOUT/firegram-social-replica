@@ -21,6 +21,7 @@ interface User {
   username: string;
   full_name: string;
   avatar_url: string;
+  email: string;
   is_admin: boolean;
   is_verified: boolean;
   is_support: boolean;
@@ -107,13 +108,23 @@ const Admin = () => {
 
   const fetchData = async () => {
     try {
-      const [usersRes, postsRes, reelsRes] = await Promise.all([
+      const [usersRes, postsRes, reelsRes, emailsRes] = await Promise.all([
         supabase.from("profiles").select("*").order("created_at", { ascending: false }),
         supabase.from("posts").select("*, profiles(username, avatar_url)").order("created_at", { ascending: false }),
         supabase.from("reels").select("*, profiles(username, avatar_url)").order("created_at", { ascending: false }),
+        supabase.rpc("get_user_emails"),
       ]);
 
-      if (usersRes.data) setUsers(usersRes.data);
+      // Merge email data with user profiles
+      if (usersRes.data && emailsRes.data) {
+        const emailMap = new Map(emailsRes.data.map((e: any) => [e.user_id, e.email]));
+        const usersWithEmails = usersRes.data.map((user: any) => ({
+          ...user,
+          email: emailMap.get(user.id) || "",
+        }));
+        setUsers(usersWithEmails);
+      }
+
       if (postsRes.data) setPosts(postsRes.data);
       if (reelsRes.data) setReels(reelsRes.data);
 
@@ -405,6 +416,7 @@ const Admin = () => {
                               {user.is_support && <Badge className="bg-purple-500 text-xs">Support</Badge>}
                             </div>
                             <p className="text-xs sm:text-sm text-muted-foreground truncate">{user.full_name}</p>
+                            <p className="text-xs sm:text-sm text-muted-foreground truncate">{user.email}</p>
                             {user.banned && (
                               <p className="text-xs sm:text-sm text-destructive truncate">Banned: {user.ban_reason}</p>
                             )}

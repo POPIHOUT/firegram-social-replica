@@ -455,6 +455,13 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      get_user_emails: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          email: string
+          user_id: string
+        }[]
+      }
       is_conversation_participant: {
         Args: { _conversation_id: string; _user_id: string }
         Returns: boolean
