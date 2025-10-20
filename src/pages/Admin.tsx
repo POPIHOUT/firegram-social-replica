@@ -121,9 +121,11 @@ const Admin = () => {
       if (error) throw error;
 
       toast({ title: "Flames Added", description: `Added ${flamesAmount} flames to ${selectedUser.username}` });
+      
+      // Update selectedUser with new flames amount
+      setSelectedUser({ ...selectedUser, flames: newAmount });
       setFlamesAmount("");
-      setFlamesDialogOpen(false);
-      fetchData();
+      await fetchData();
     } catch (error: any) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
     }
@@ -141,9 +143,11 @@ const Admin = () => {
       if (error) throw error;
 
       toast({ title: "Flames Removed", description: `Removed ${flamesAmount} flames from ${selectedUser.username}` });
+      
+      // Update selectedUser with new flames amount
+      setSelectedUser({ ...selectedUser, flames: newAmount });
       setFlamesAmount("");
-      setFlamesDialogOpen(false);
-      fetchData();
+      await fetchData();
     } catch (error: any) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
     }
