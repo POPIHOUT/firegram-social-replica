@@ -37,7 +37,9 @@ const ReelCard = ({ reel, profile, isActive, onUpdate, videoRef }: ReelCardProps
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [commentsOpen, setCommentsOpen] = useState(false);
+  const [adTimer, setAdTimer] = useState(5);
   const internalVideoRef = useRef<HTMLVideoElement>(null);
+  const adTimerRef = useRef<NodeJS.Timeout | null>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
   const isAd = reel.type === "ad";
@@ -59,6 +61,42 @@ const ReelCard = ({ reel, profile, isActive, onUpdate, videoRef }: ReelCardProps
         setIsPlaying(false);
       }
     }
+
+    // Start ad timer if this is an ad and it's active
+    if (isActive && isAd) {
+      setAdTimer(5);
+      adTimerRef.current = setInterval(() => {
+        setAdTimer((prev) => {
+          if (prev <= 1) {
+            if (adTimerRef.current) {
+              clearInterval(adTimerRef.current);
+            }
+            // Trigger scroll to next item after timer ends
+            const container = document.querySelector('.snap-y');
+            if (container) {
+              const currentScroll = container.scrollTop;
+              const height = container.clientHeight;
+              container.scrollTo({
+                top: currentScroll + height,
+                behavior: 'smooth'
+              });
+            }
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    } else {
+      if (adTimerRef.current) {
+        clearInterval(adTimerRef.current);
+      }
+    }
+
+    return () => {
+      if (adTimerRef.current) {
+        clearInterval(adTimerRef.current);
+      }
+    };
   }, [isActive, isAd]);
 
   const checkAuth = async () => {
@@ -204,12 +242,14 @@ const ReelCard = ({ reel, profile, isActive, onUpdate, videoRef }: ReelCardProps
   return (
     <div className="relative h-screen w-full snap-start snap-always bg-black">
       {isAd && reel.image_url ? (
+        // Image Advertisement
         <img
           src={reel.image_url}
           alt="Advertisement"
           className="h-full w-full object-contain"
         />
       ) : (
+        // Regular video or video ad
         <video
           ref={(el) => {
             internalVideoRef.current = el;
@@ -219,37 +259,46 @@ const ReelCard = ({ reel, profile, isActive, onUpdate, videoRef }: ReelCardProps
           loop
           playsInline
           className="h-full w-full object-contain"
-          onClick={togglePlay}
+          onClick={isAd ? undefined : togglePlay}
           poster={reel.thumbnail_url || undefined}
         />
       )}
       
       {isAd && (
-        <div className="absolute top-4 right-4 bg-orange-500/90 px-3 py-1 rounded-full">
-          <span className="text-xs font-bold text-white">AD</span>
-        </div>
+        <>
+          <div className="absolute top-20 right-4 z-50 bg-orange-500 px-4 py-2 rounded-full shadow-lg">
+            <span className="text-sm font-bold text-white">AD</span>
+          </div>
+          {adTimer > 0 && (
+            <div className="absolute bottom-24 left-1/2 -translate-x-1/2 z-50 bg-black/60 px-4 py-2 rounded-full">
+              <span className="text-white text-sm font-semibold">Skip in {adTimer}s</span>
+            </div>
+          )}
+        </>
       )}
 
       {!isPlaying && !isAd && (
-        <div className="absolute inset-0 flex items-center justify-center">
-          <Button
-            size="icon"
-            variant="ghost"
-            className="h-16 w-16 rounded-full bg-black/40 hover:bg-black/60"
-            onClick={togglePlay}
-          >
-            <Play className="h-8 w-8 text-white fill-white" />
-          </Button>
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <div className="pointer-events-auto">
+            <Button
+              size="icon"
+              variant="ghost"
+              className="h-16 w-16 rounded-full bg-black/40 hover:bg-black/60"
+              onClick={togglePlay}
+            >
+              <Play className="h-8 w-8 text-white fill-white" />
+            </Button>
+          </div>
         </div>
       )}
 
-      <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 to-transparent">
-        <div className="flex items-start justify-between">
+      <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 to-transparent pointer-events-none">
+        <div className="flex items-start justify-between pointer-events-auto">
           <div className="flex-1 space-y-2">
             <div className="flex items-center gap-2">
             <Avatar 
-              className="h-10 w-10 border-2 border-white cursor-pointer"
-              onClick={() => navigate(`/profile/${reel.user_id}`)}
+              className={`h-10 w-10 border-2 border-white ${!isAd ? 'cursor-pointer' : ''}`}
+              onClick={!isAd ? () => navigate(`/profile/${reel.user_id}`) : undefined}
             >
               <AvatarImage src={profile.avatar_url || undefined} />
               <AvatarFallback className="bg-primary text-primary-foreground">
@@ -258,8 +307,8 @@ const ReelCard = ({ reel, profile, isActive, onUpdate, videoRef }: ReelCardProps
             </Avatar>
             <div className="flex items-center gap-1">
               <span 
-                className="font-semibold text-white cursor-pointer hover:opacity-70"
-                onClick={() => navigate(`/profile/${reel.user_id}`)}
+                className={`font-semibold text-white ${!isAd ? 'cursor-pointer hover:opacity-70' : ''}`}
+                onClick={!isAd ? () => navigate(`/profile/${reel.user_id}`) : undefined}
               >
                 {profile.username}
               </span>

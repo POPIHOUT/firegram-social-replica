@@ -42,6 +42,14 @@ const Reels = () => {
     const container = containerRef.current;
     if (!container) return;
 
+    // Disable scroll during ads
+    const currentReel = reels[currentIndex];
+    if (currentReel?.type === "ad") {
+      container.style.overflow = "hidden";
+    } else {
+      container.style.overflow = "scroll";
+    }
+
     const handleScroll = () => {
       const scrollTop = container.scrollTop;
       const clientHeight = container.clientHeight;
@@ -65,8 +73,11 @@ const Reels = () => {
     };
 
     container.addEventListener("scroll", handleScroll);
-    return () => container.removeEventListener("scroll", handleScroll);
-  }, [currentIndex]);
+    return () => {
+      container.removeEventListener("scroll", handleScroll);
+      container.style.overflow = "scroll";
+    };
+  }, [currentIndex, reels]);
 
   const checkAuth = async () => {
     const { data: { session } } = await supabase.auth.getSession();
@@ -102,7 +113,7 @@ const Reels = () => {
         // Mark ads as type "ad" and format them like reels
         const markedAds = (adsData || []).map(ad => ({
           id: ad.id,
-          video_url: ad.type === "video" ? ad.media_url : "",
+          video_url: ad.type === "video" ? ad.media_url : ad.media_url, // Use media_url for both
           thumbnail_url: ad.thumbnail_url,
           caption: ad.caption,
           likes_count: 0,
