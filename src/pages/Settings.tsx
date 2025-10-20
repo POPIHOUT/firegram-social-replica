@@ -402,12 +402,12 @@ const Settings = () => {
                   {ownedEffects && ownedEffects.length > 0 && (
                     <div className="space-y-2">
                       <Label>Profile Effect</Label>
-                      <Select value={selectedEffectId || ""} onValueChange={handleSelectEffect}>
+                      <Select value={selectedEffectId || "none"} onValueChange={(value) => handleSelectEffect(value === "none" ? "" : value)}>
                         <SelectTrigger>
                           <SelectValue placeholder="Select an effect" />
                         </SelectTrigger>
                         <SelectContent className="bg-card border-border">
-                          <SelectItem value="">None</SelectItem>
+                          <SelectItem value="none">None</SelectItem>
                           {ownedEffects.map((effect) => (
                             effect && effect.id ? (
                               <SelectItem key={effect.id} value={effect.id}>
