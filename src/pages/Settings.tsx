@@ -28,6 +28,8 @@ const Settings = () => {
   const [ownedEffects, setOwnedEffects] = useState<any[]>([]);
   const [selectedEffectId, setSelectedEffectId] = useState<string | null>(null);
   const [cancellingPremium, setCancellingPremium] = useState(false);
+  const [ownedFrames, setOwnedFrames] = useState<any[]>([]);
+  const [selectedFrameId, setSelectedFrameId] = useState<string | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -41,7 +43,7 @@ const Settings = () => {
 
     const { data: profile } = await supabase
       .from("profiles")
-      .select("flames, is_premium, show_own_fire_effect, custom_background_url, show_custom_background, premium_until, selected_effect_id")
+      .select("flames, is_premium, show_own_fire_effect, custom_background_url, show_custom_background, premium_until, selected_effect_id, selected_frame_id")
       .eq("id", user.id)
       .single();
 
@@ -53,6 +55,7 @@ const Settings = () => {
       setShowCustomBackground(profile.show_custom_background ?? true);
       setPremiumUntil(profile.premium_until);
       setSelectedEffectId(profile.selected_effect_id);
+      setSelectedFrameId(profile.selected_frame_id);
       
       // Fetch owned effects if premium
       if (profile.is_premium) {
@@ -63,6 +66,16 @@ const Settings = () => {
         
         if (effectsData) {
           setOwnedEffects(effectsData.map((e: any) => e.effects));
+        }
+
+        // Fetch owned frames
+        const { data: framesData } = await supabase
+          .from("user_frames")
+          .select("frame_id, frames(*)")
+          .eq("user_id", user.id);
+        
+        if (framesData) {
+          setOwnedFrames(framesData.map((f: any) => f.frames));
         }
       }
     }
@@ -306,6 +319,32 @@ const Settings = () => {
     }
   };
 
+  const handleSelectFrame = async (frameId: string) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { error } = await supabase
+        .from("profiles")
+        .update({ selected_frame_id: frameId || null })
+        .eq("id", user.id);
+
+      if (error) throw error;
+
+      setSelectedFrameId(frameId || null);
+      toast({
+        title: frameId ? "Frame Selected" : "Frame Removed",
+        description: frameId ? "Your avatar frame has been updated" : "Avatar frame removed",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleCancelPremium = async () => {
     if (!confirm("Are you sure? You won't get your flames back!")) return;
 
@@ -419,6 +458,35 @@ const Settings = () => {
                       </Select>
                       <p className="text-xs text-muted-foreground">
                         Choose which effect appears on your profile
+                      </p>
+                    </div>
+                  )}
+
+                  {ownedFrames && ownedFrames.length > 0 && (
+                    <div className="space-y-2">
+                      <Label>Avatar Frame</Label>
+                      <Select value={selectedFrameId || "none"} onValueChange={(value) => handleSelectFrame(value === "none" ? "" : value)}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a frame" />
+                        </SelectTrigger>
+                        <SelectContent className="bg-card border-border">
+                          <SelectItem value="none">None</SelectItem>
+                          {ownedFrames.map((frame) => (
+                            frame && frame.id ? (
+                              <SelectItem key={frame.id} value={frame.id}>
+                                <div className="flex items-center gap-2">
+                                  <div className="w-6 h-6 rounded-full overflow-hidden">
+                                    <img src={frame.image_url} alt={frame.name} className="w-full h-full object-cover" />
+                                  </div>
+                                  {frame.name}
+                                </div>
+                              </SelectItem>
+                            ) : null
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <p className="text-xs text-muted-foreground">
+                        Choose which frame appears around your avatar
                       </p>
                     </div>
                   )}
