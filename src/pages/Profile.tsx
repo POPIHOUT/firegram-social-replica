@@ -278,7 +278,8 @@ const Profile = () => {
            profile.custom_background_url.includes('.webm') || 
            profile.custom_background_url.includes('.mov') ? (
             <video
-              className="fixed inset-0 z-0 w-full h-full object-cover opacity-20"
+              className="fixed inset-0 w-full h-full object-cover opacity-20 pointer-events-none"
+              style={{ zIndex: -1 }}
               autoPlay
               loop
               muted
@@ -288,8 +289,8 @@ const Profile = () => {
             </video>
           ) : (
             <div 
-              className="fixed inset-0 z-0 bg-cover bg-center opacity-20"
-              style={{ backgroundImage: `url(${profile.custom_background_url})` }}
+              className="fixed inset-0 bg-cover bg-center opacity-20 pointer-events-none"
+              style={{ backgroundImage: `url(${profile.custom_background_url})`, zIndex: -1 }}
             />
           )}
         </>
