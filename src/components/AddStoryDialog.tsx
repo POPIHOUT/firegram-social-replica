@@ -51,8 +51,8 @@ const AddStoryDialog = ({ open, onOpenChange, onStoryAdded }: AddStoryDialogProp
       if (!user) throw new Error("Not authenticated");
 
       const fileExt = file.name.split('.').pop();
-      const fileName = `${user.id}-${Date.now()}.${fileExt}`;
-      const filePath = `${fileName}`;
+      const fileName = `${user.id}/${Date.now()}.${fileExt}`;
+      const filePath = fileName;
 
       // Upload to reels bucket (reusing for stories)
       const { error: uploadError } = await supabase.storage
