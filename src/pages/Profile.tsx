@@ -259,10 +259,10 @@ const Profile = () => {
             </Avatar>
 
             <div className="flex-1 w-full space-y-3 sm:space-y-4">
-              <div className="flex flex-col sm:flex-row items-center sm:items-center gap-2 sm:gap-3">
+              <div className="flex items-center justify-center sm:justify-start gap-2">
                 <h1 className="text-xl sm:text-2xl font-bold">{profile.username}</h1>
                 {profile.is_verified && (
-                  <Check size={18} className="text-primary sm:w-5 sm:h-5" />
+                  <Check size={18} className="text-primary fill-primary sm:w-5 sm:h-5" />
                 )}
                 {profile.is_admin && (
                   <Badge variant="secondary" className="flex items-center gap-1 px-2 py-0.5 sm:py-1 text-xs">
@@ -340,13 +340,13 @@ const Profile = () => {
             </div>
           </div>
 
-          <div className="border-t border-border pt-4 sm:pt-8">
-            <div className="flex justify-center gap-6 sm:gap-12 mb-4 sm:mb-6 overflow-x-auto">
+          <div className="border-t border-border">
+            <div className="flex justify-center gap-6 sm:gap-12 overflow-x-auto pb-px">
               <button 
-                className={`flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm font-semibold pt-2 -mt-4 sm:-mt-8 whitespace-nowrap touch-manipulation ${
+                className={`flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm font-semibold py-3 sm:py-4 whitespace-nowrap touch-manipulation transition-colors ${
                   activeTab === "posts" 
-                    ? "border-t-2 border-primary" 
-                    : "text-muted-foreground"
+                    ? "border-b-2 border-primary" 
+                    : "text-muted-foreground border-b-2 border-transparent"
                 }`}
                 onClick={() => setActiveTab("posts")}
               >
@@ -354,10 +354,10 @@ const Profile = () => {
                 POSTS
               </button>
               <button 
-                className={`flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm pt-2 -mt-4 sm:-mt-8 whitespace-nowrap touch-manipulation ${
+                className={`flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm py-3 sm:py-4 whitespace-nowrap touch-manipulation transition-colors ${
                   activeTab === "reels" 
-                    ? "border-t-2 border-primary font-semibold" 
-                    : "text-muted-foreground"
+                    ? "border-b-2 border-primary font-semibold" 
+                    : "text-muted-foreground border-b-2 border-transparent"
                 }`}
                 onClick={() => setActiveTab("reels")}
               >
@@ -366,10 +366,10 @@ const Profile = () => {
               </button>
               {isOwnProfile && (
                 <button 
-                  className={`flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm pt-2 -mt-4 sm:-mt-8 whitespace-nowrap touch-manipulation ${
+                  className={`flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm py-3 sm:py-4 whitespace-nowrap touch-manipulation transition-colors ${
                     activeTab === "saved" 
-                      ? "border-t-2 border-primary font-semibold" 
-                      : "text-muted-foreground"
+                      ? "border-b-2 border-primary font-semibold" 
+                      : "text-muted-foreground border-b-2 border-transparent"
                   }`}
                   onClick={() => setActiveTab("saved")}
                 >

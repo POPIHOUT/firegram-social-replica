@@ -331,124 +331,127 @@ const Admin = () => {
   }
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen pb-safe">
       <Navigation />
-      <main className="max-w-7xl mx-auto pt-20 px-4 pb-24">
-        <div className="space-y-6">
-          <div className="flex items-center gap-3">
-            <Shield className="w-8 h-8 text-primary" />
-            <h1 className="text-3xl font-bold">Admin Panel</h1>
+      <main className="max-w-7xl mx-auto pt-16 sm:pt-20 px-3 sm:px-4 pb-20 sm:pb-24">
+        <div className="space-y-4 sm:space-y-6">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <Shield className="w-6 h-6 sm:w-8 sm:h-8 text-primary" />
+            <h1 className="text-2xl sm:text-3xl font-bold">Admin Panel</h1>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
             <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Users</CardTitle>
-                <Users className="h-4 w-4 text-muted-foreground" />
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-4 sm:p-6">
+                <CardTitle className="text-xs sm:text-sm font-medium">Total Users</CardTitle>
+                <Users className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
               </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{stats.users}</div>
+              <CardContent className="p-4 pt-0 sm:p-6 sm:pt-0">
+                <div className="text-xl sm:text-2xl font-bold">{stats.users}</div>
               </CardContent>
             </Card>
 
             <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Posts</CardTitle>
-                <FileText className="h-4 w-4 text-muted-foreground" />
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-4 sm:p-6">
+                <CardTitle className="text-xs sm:text-sm font-medium">Total Posts</CardTitle>
+                <FileText className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
               </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{stats.posts}</div>
+              <CardContent className="p-4 pt-0 sm:p-6 sm:pt-0">
+                <div className="text-xl sm:text-2xl font-bold">{stats.posts}</div>
               </CardContent>
             </Card>
 
             <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Reels</CardTitle>
-                <Film className="h-4 w-4 text-muted-foreground" />
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-4 sm:p-6">
+                <CardTitle className="text-xs sm:text-sm font-medium">Total Reels</CardTitle>
+                <Film className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
               </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{stats.reels}</div>
+              <CardContent className="p-4 pt-0 sm:p-6 sm:pt-0">
+                <div className="text-xl sm:text-2xl font-bold">{stats.reels}</div>
               </CardContent>
             </Card>
           </div>
 
           <Tabs defaultValue="users" className="w-full">
-            <TabsList>
-              <TabsTrigger value="users">Users</TabsTrigger>
-              <TabsTrigger value="posts">Posts</TabsTrigger>
-              <TabsTrigger value="reels">Reels</TabsTrigger>
+            <TabsList className="w-full grid grid-cols-3 h-9 sm:h-10">
+              <TabsTrigger value="users" className="text-xs sm:text-sm">Users</TabsTrigger>
+              <TabsTrigger value="posts" className="text-xs sm:text-sm">Posts</TabsTrigger>
+              <TabsTrigger value="reels" className="text-xs sm:text-sm">Reels</TabsTrigger>
             </TabsList>
 
-            <TabsContent value="users" className="space-y-4">
+            <TabsContent value="users" className="space-y-3 sm:space-y-4">
               <Input
                 placeholder="Search users..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="max-w-sm"
+                className="w-full sm:max-w-sm text-sm"
               />
 
-              <div className="grid gap-4">
+              <div className="grid gap-3 sm:gap-4">
                 {filteredUsers.map((user) => (
                   <Card key={user.id}>
-                    <CardContent className="p-6">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-4">
-                          <Avatar className="w-12 h-12">
+                    <CardContent className="p-3 sm:p-6">
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-0 sm:justify-between">
+                        <div className="flex items-center gap-3 sm:gap-4">
+                          <Avatar className="w-10 h-10 sm:w-12 sm:h-12 flex-shrink-0">
                             <AvatarImage src={user.avatar_url} />
                             <AvatarFallback>{user.username.charAt(0).toUpperCase()}</AvatarFallback>
                           </Avatar>
-                          <div>
-                            <div className="flex items-center gap-2">
-                              <p className="font-semibold">{user.username}</p>
-                              {user.is_admin && <Badge variant="secondary">Admin</Badge>}
-                              {user.is_verified && <Badge variant="default">Verified</Badge>}
-                              {user.is_support && <Badge className="bg-purple-500">Support</Badge>}
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+                              <p className="font-semibold text-sm sm:text-base truncate">{user.username}</p>
+                              {user.is_admin && <Badge variant="secondary" className="text-xs">Admin</Badge>}
+                              {user.is_verified && <Badge variant="default" className="text-xs">Verified</Badge>}
+                              {user.is_support && <Badge className="bg-purple-500 text-xs">Support</Badge>}
                             </div>
-                            <p className="text-sm text-muted-foreground">{user.full_name}</p>
+                            <p className="text-xs sm:text-sm text-muted-foreground truncate">{user.full_name}</p>
                             {user.banned && (
-                              <p className="text-sm text-destructive">Banned: {user.ban_reason}</p>
+                              <p className="text-xs sm:text-sm text-destructive truncate">Banned: {user.ban_reason}</p>
                             )}
                             {user.suspended && (
-                              <p className="text-sm text-orange-500">
+                              <p className="text-xs sm:text-sm text-orange-500 truncate">
                                 Suspended until {user.suspended_until && new Date(user.suspended_until).toLocaleDateString()}
                               </p>
                             )}
                           </div>
                         </div>
 
-                        <div className="flex gap-2">
+                        <div className="flex gap-1.5 sm:gap-2 flex-wrap sm:flex-nowrap">
                           <Button
                             variant="outline"
                             size="sm"
+                            className="text-xs h-8 flex-1 sm:flex-initial"
                             onClick={() => {
                               setSelectedUser(user);
                               setRolesDialogOpen(true);
                             }}
                           >
-                            <Settings className="w-4 h-4 mr-2" />
-                            Roles
+                            <Settings className="w-3 h-3 sm:w-4 sm:h-4 sm:mr-2" />
+                            <span className="hidden sm:inline">Roles</span>
                           </Button>
 
                           {user.banned ? (
                             <Button
                               variant="outline"
                               size="sm"
+                              className="text-xs h-8 flex-1 sm:flex-initial"
                               onClick={() => handleUnbanUser(user.id)}
                             >
-                              <CheckCircle className="w-4 h-4 mr-2" />
-                              Unban
+                              <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4 sm:mr-2" />
+                              <span className="hidden sm:inline">Unban</span>
                             </Button>
                           ) : (
                             <Button
                               variant="destructive"
                               size="sm"
+                              className="text-xs h-8 flex-1 sm:flex-initial"
                               onClick={() => {
                                 setSelectedUser(user);
                                 setBanDialogOpen(true);
                               }}
                             >
-                              <Ban className="w-4 h-4 mr-2" />
-                              Ban
+                              <Ban className="w-3 h-3 sm:w-4 sm:h-4 sm:mr-2" />
+                              <span className="hidden sm:inline">Ban</span>
                             </Button>
                           )}
 
@@ -456,22 +459,24 @@ const Admin = () => {
                             <Button
                               variant="outline"
                               size="sm"
+                              className="text-xs h-8 flex-1 sm:flex-initial"
                               onClick={() => handleUnsuspendUser(user.id)}
                             >
-                              <CheckCircle className="w-4 h-4 mr-2" />
-                              Unsuspend
+                              <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4 sm:mr-2" />
+                              <span className="hidden sm:inline">Unsuspend</span>
                             </Button>
                           ) : (
                             <Button
                               variant="outline"
                               size="sm"
+                              className="text-xs h-8 flex-1 sm:flex-initial"
                               onClick={() => {
                                 setSelectedUser(user);
                                 setSuspendDialogOpen(true);
                               }}
                             >
-                              <Clock className="w-4 h-4 mr-2" />
-                              Suspend
+                              <Clock className="w-3 h-3 sm:w-4 sm:h-4 sm:mr-2" />
+                              <span className="hidden sm:inline">Suspend</span>
                             </Button>
                           )}
                         </div>
@@ -482,38 +487,39 @@ const Admin = () => {
               </div>
             </TabsContent>
 
-            <TabsContent value="posts" className="space-y-4">
-              <div className="grid gap-4">
+            <TabsContent value="posts" className="space-y-3 sm:space-y-4">
+              <div className="grid gap-3 sm:gap-4">
                 {posts.map((post) => (
                   <Card key={post.id}>
-                    <CardContent className="p-6">
-                      <div className="flex gap-4">
+                    <CardContent className="p-3 sm:p-6">
+                      <div className="flex gap-3 sm:gap-4">
                         <img
                           src={post.image_url}
                           alt="Post"
-                          className="w-24 h-24 object-cover rounded"
+                          className="w-16 h-16 sm:w-24 sm:h-24 object-cover rounded flex-shrink-0"
                         />
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-2">
-                            <Avatar className="w-6 h-6">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1 sm:mb-2">
+                            <Avatar className="w-5 h-5 sm:w-6 sm:h-6">
                               <AvatarImage src={post.profiles.avatar_url} />
                               <AvatarFallback>{post.profiles.username.charAt(0)}</AvatarFallback>
                             </Avatar>
-                            <span className="font-semibold">{post.profiles.username}</span>
+                            <span className="font-semibold text-xs sm:text-sm truncate">{post.profiles.username}</span>
                           </div>
-                          <p className="text-sm mb-2">{post.caption}</p>
-                          <div className="flex gap-4 text-sm text-muted-foreground">
+                          <p className="text-xs sm:text-sm mb-1 sm:mb-2 line-clamp-2">{post.caption}</p>
+                          <div className="flex gap-2 sm:gap-4 text-xs sm:text-sm text-muted-foreground flex-wrap">
                             <span>{post.likes_count} likes</span>
                             <span>{post.comments_count} comments</span>
-                            <span>{formatDistanceToNow(new Date(post.created_at))} ago</span>
+                            <span className="hidden sm:inline">{formatDistanceToNow(new Date(post.created_at))} ago</span>
                           </div>
                         </div>
                         <Button
                           variant="destructive"
                           size="sm"
+                          className="h-8 w-8 sm:h-9 sm:w-9 p-0 flex-shrink-0"
                           onClick={() => handleDeletePost(post.id)}
                         >
-                          <Trash2 className="w-4 h-4" />
+                          <Trash2 className="w-3 h-3 sm:w-4 sm:h-4" />
                         </Button>
                       </div>
                     </CardContent>
@@ -522,37 +528,38 @@ const Admin = () => {
               </div>
             </TabsContent>
 
-            <TabsContent value="reels" className="space-y-4">
-              <div className="grid gap-4">
+            <TabsContent value="reels" className="space-y-3 sm:space-y-4">
+              <div className="grid gap-3 sm:gap-4">
                 {reels.map((reel) => (
                   <Card key={reel.id}>
-                    <CardContent className="p-6">
-                      <div className="flex gap-4">
+                    <CardContent className="p-3 sm:p-6">
+                      <div className="flex gap-3 sm:gap-4">
                         <video
                           src={reel.video_url}
-                          className="w-24 h-24 object-cover rounded"
+                          className="w-16 h-16 sm:w-24 sm:h-24 object-cover rounded flex-shrink-0"
                         />
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-2">
-                            <Avatar className="w-6 h-6">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1 sm:mb-2">
+                            <Avatar className="w-5 h-5 sm:w-6 sm:h-6">
                               <AvatarImage src={reel.profiles.avatar_url} />
                               <AvatarFallback>{reel.profiles.username.charAt(0)}</AvatarFallback>
                             </Avatar>
-                            <span className="font-semibold">{reel.profiles.username}</span>
+                            <span className="font-semibold text-xs sm:text-sm truncate">{reel.profiles.username}</span>
                           </div>
-                          <p className="text-sm mb-2">{reel.caption}</p>
-                          <div className="flex gap-4 text-sm text-muted-foreground">
+                          <p className="text-xs sm:text-sm mb-1 sm:mb-2 line-clamp-2">{reel.caption}</p>
+                          <div className="flex gap-2 sm:gap-4 text-xs sm:text-sm text-muted-foreground flex-wrap">
                             <span>{reel.likes_count} likes</span>
                             <span>{reel.views_count} views</span>
-                            <span>{formatDistanceToNow(new Date(reel.created_at))} ago</span>
+                            <span className="hidden sm:inline">{formatDistanceToNow(new Date(reel.created_at))} ago</span>
                           </div>
                         </div>
                         <Button
                           variant="destructive"
                           size="sm"
+                          className="h-8 w-8 sm:h-9 sm:w-9 p-0 flex-shrink-0"
                           onClick={() => handleDeleteReel(reel.id)}
                         >
-                          <Trash2 className="w-4 h-4" />
+                          <Trash2 className="w-3 h-3 sm:w-4 sm:h-4" />
                         </Button>
                       </div>
                     </CardContent>
