@@ -22,6 +22,7 @@ const Settings = () => {
   const [showOwnFireEffect, setShowOwnFireEffect] = useState(true);
   const [uploadingBackground, setUploadingBackground] = useState(false);
   const [customBackgroundUrl, setCustomBackgroundUrl] = useState<string>("");
+  const [showCustomBackground, setShowCustomBackground] = useState(true);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -35,7 +36,7 @@ const Settings = () => {
 
     const { data: profile } = await supabase
       .from("profiles")
-      .select("flames, is_premium, show_own_fire_effect, custom_background_url")
+      .select("flames, is_premium, show_own_fire_effect, custom_background_url, show_custom_background")
       .eq("id", user.id)
       .single();
 
@@ -44,6 +45,7 @@ const Settings = () => {
       setIsPremium(profile.is_premium);
       setShowOwnFireEffect(profile.show_own_fire_effect ?? true);
       setCustomBackgroundUrl(profile.custom_background_url || "");
+      setShowCustomBackground(profile.show_custom_background ?? true);
     }
   };
 
@@ -140,6 +142,34 @@ const Settings = () => {
         description: checked 
           ? "You will now see the fire effect on your profile" 
           : "Fire effect hidden from your view",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleToggleCustomBackground = async (checked: boolean) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { error } = await supabase
+        .from("profiles")
+        .update({ show_custom_background: checked })
+        .eq("id", user.id);
+
+      if (error) throw error;
+
+      setShowCustomBackground(checked);
+      toast({
+        title: checked ? "Custom background enabled" : "Custom background disabled",
+        description: checked 
+          ? "Your custom background is now visible" 
+          : "Custom background hidden",
       });
     } catch (error: any) {
       toast({
@@ -280,6 +310,18 @@ const Settings = () => {
                     </div>
 
                     <div className="space-y-2">
+                      <div className="flex items-center justify-between mb-2">
+                        <div>
+                          <Label htmlFor="custom-bg">Show custom background</Label>
+                          <p className="text-xs text-muted-foreground">Everyone can see your custom background when enabled</p>
+                        </div>
+                        <Switch
+                          id="custom-bg"
+                          checked={showCustomBackground}
+                          onCheckedChange={handleToggleCustomBackground}
+                        />
+                      </div>
+                      
                       <Label htmlFor="background-upload">Custom Background</Label>
                       <p className="text-xs text-muted-foreground mb-2">Upload image or video (max 3 min) for your profile background</p>
                       {customBackgroundUrl && (

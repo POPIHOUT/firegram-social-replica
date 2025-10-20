@@ -12,7 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
-import { Shield, Users, FileText, Film, Ban, Clock, Trash2, CheckCircle, XCircle, Loader2, Settings } from "lucide-react";
+import { Shield, Users, FileText, Film, Ban, Clock, Trash2, CheckCircle, XCircle, Loader2, Settings, Megaphone } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { formatDistanceToNow } from "date-fns";
 
@@ -26,6 +26,7 @@ interface User {
   is_admin: boolean;
   is_verified: boolean;
   is_support: boolean;
+  is_premium: boolean;
   banned: boolean;
   suspended: boolean;
   suspended_until: string | null;
@@ -60,11 +61,28 @@ interface Reel {
   };
 }
 
+interface Advertisement {
+  id: string;
+  user_id: string;
+  media_url: string;
+  type: string;
+  caption: string;
+  thumbnail_url: string | null;
+  expires_at: string;
+  active: boolean;
+  created_at: string;
+  profiles: {
+    username: string;
+    avatar_url: string;
+  };
+}
+
 const Admin = () => {
   const [loading, setLoading] = useState(true);
   const [users, setUsers] = useState<User[]>([]);
   const [posts, setPosts] = useState<Post[]>([]);
   const [reels, setReels] = useState<Reel[]>([]);
+  const [advertisements, setAdvertisements] = useState<Advertisement[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [banDialogOpen, setBanDialogOpen] = useState(false);
@@ -77,7 +95,7 @@ const Admin = () => {
   const [flamesAmount, setFlamesAmount] = useState("");
   const [followersDialogOpen, setFollowersDialogOpen] = useState(false);
   const [followersAmount, setFollowersAmount] = useState("");
-  const [stats, setStats] = useState({ users: 0, posts: 0, reels: 0 });
+  const [stats, setStats] = useState({ users: 0, posts: 0, reels: 0, ads: 0 });
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -179,10 +197,11 @@ const Admin = () => {
 
   const fetchData = async () => {
     try {
-      const [usersRes, postsRes, reelsRes, emailsRes] = await Promise.all([
+      const [usersRes, postsRes, reelsRes, adsRes, emailsRes] = await Promise.all([
         supabase.from("profiles").select("*").order("created_at", { ascending: false }),
         supabase.from("posts").select("*, profiles(username, avatar_url)").order("created_at", { ascending: false }),
         supabase.from("reels").select("*, profiles(username, avatar_url)").order("created_at", { ascending: false }),
+        supabase.from("advertisements").select("*, profiles(username, avatar_url)").order("created_at", { ascending: false }),
         supabase.rpc("get_user_emails"),
       ]);
 
@@ -198,11 +217,13 @@ const Admin = () => {
 
       if (postsRes.data) setPosts(postsRes.data);
       if (reelsRes.data) setReels(reelsRes.data);
+      if (adsRes.data) setAdvertisements(adsRes.data);
 
       setStats({
         users: usersRes.data?.length || 0,
         posts: postsRes.data?.length || 0,
         reels: reelsRes.data?.length || 0,
+        ads: adsRes.data?.length || 0,
       });
     } catch (error) {
       console.error("Error fetching data:", error);
@@ -368,7 +389,7 @@ const Admin = () => {
     }
   };
 
-  const handleUpdateRoles = async (userId: string, roles: { is_admin?: boolean; is_verified?: boolean; is_support?: boolean }) => {
+  const handleUpdateRoles = async (userId: string, roles: { is_admin?: boolean; is_verified?: boolean; is_support?: boolean; is_premium?: boolean }) => {
     try {
       const { error } = await supabase
         .from("profiles")
@@ -389,6 +410,53 @@ const Admin = () => {
       if (updatedUser) {
         setSelectedUser(updatedUser);
       }
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleToggleAd = async (adId: string, active: boolean) => {
+    try {
+      const { error } = await supabase
+        .from("advertisements")
+        .update({ active: !active })
+        .eq("id", adId);
+
+      if (error) throw error;
+
+      toast({
+        title: active ? "Ad Deactivated" : "Ad Activated",
+        description: `Advertisement has been ${active ? "deactivated" : "activated"}`,
+      });
+
+      fetchData();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDeleteAd = async (adId: string) => {
+    if (!confirm("Are you sure you want to delete this advertisement?")) return;
+
+    try {
+      const { error } = await supabase.from("advertisements").delete().eq("id", adId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Ad Deleted",
+        description: "Advertisement has been deleted successfully",
+      });
+
+      fetchData();
     } catch (error: any) {
       toast({
         title: "Error",
@@ -422,7 +490,7 @@ const Admin = () => {
             <h1 className="text-2xl sm:text-3xl font-bold">Admin Panel</h1>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-4 sm:p-6">
                 <CardTitle className="text-xs sm:text-sm font-medium">Total Users</CardTitle>
@@ -452,13 +520,24 @@ const Admin = () => {
                 <div className="text-xl sm:text-2xl font-bold">{stats.reels}</div>
               </CardContent>
             </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-4 sm:p-6">
+                <CardTitle className="text-xs sm:text-sm font-medium">Total Ads</CardTitle>
+                <Megaphone className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent className="p-4 pt-0 sm:p-6 sm:pt-0">
+                <div className="text-xl sm:text-2xl font-bold">{stats.ads}</div>
+              </CardContent>
+            </Card>
           </div>
 
           <Tabs defaultValue="users" className="w-full">
-            <TabsList className="w-full grid grid-cols-3 h-9 sm:h-10">
+            <TabsList className="w-full grid grid-cols-4 h-9 sm:h-10">
               <TabsTrigger value="users" className="text-xs sm:text-sm">Users</TabsTrigger>
               <TabsTrigger value="posts" className="text-xs sm:text-sm">Posts</TabsTrigger>
               <TabsTrigger value="reels" className="text-xs sm:text-sm">Reels</TabsTrigger>
+              <TabsTrigger value="ads" className="text-xs sm:text-sm">Ads</TabsTrigger>
             </TabsList>
 
             <TabsContent value="users" className="space-y-3 sm:space-y-4">
@@ -485,6 +564,7 @@ const Admin = () => {
                               {user.is_admin && <Badge variant="secondary" className="text-xs">Admin</Badge>}
                               {user.is_verified && <Badge variant="default" className="text-xs">Verified</Badge>}
                               {user.is_support && <Badge className="bg-purple-500 text-xs">Support</Badge>}
+                              {user.is_premium && <Badge className="bg-orange-500 text-xs">Premium</Badge>}
                             </div>
                             <p className="text-xs sm:text-sm text-muted-foreground truncate">{user.full_name}</p>
                             <p className="text-xs sm:text-sm text-muted-foreground truncate">{user.email}</p>
@@ -679,6 +759,66 @@ const Admin = () => {
                 ))}
               </div>
             </TabsContent>
+
+            <TabsContent value="ads" className="space-y-3 sm:space-y-4">
+              <div className="grid gap-3 sm:gap-4">
+                {advertisements.map((ad) => (
+                  <Card key={ad.id}>
+                    <CardContent className="p-3 sm:p-6">
+                      <div className="flex gap-3 sm:gap-4">
+                        {ad.type === 'video' ? (
+                          <video
+                            src={ad.media_url}
+                            className="w-16 h-16 sm:w-24 sm:h-24 object-cover rounded flex-shrink-0"
+                          />
+                        ) : (
+                          <img
+                            src={ad.media_url}
+                            alt="Ad"
+                            className="w-16 h-16 sm:w-24 sm:h-24 object-cover rounded flex-shrink-0"
+                          />
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1 sm:mb-2">
+                            <Avatar className="w-5 h-5 sm:w-6 sm:h-6">
+                              <AvatarImage src={ad.profiles.avatar_url} />
+                              <AvatarFallback>{ad.profiles.username.charAt(0)}</AvatarFallback>
+                            </Avatar>
+                            <span className="font-semibold text-xs sm:text-sm truncate">{ad.profiles.username}</span>
+                            <Badge variant={ad.active ? "default" : "secondary"} className="text-xs">
+                              {ad.active ? "Active" : "Inactive"}
+                            </Badge>
+                          </div>
+                          <p className="text-xs sm:text-sm mb-1 sm:mb-2 line-clamp-2">{ad.caption}</p>
+                          <div className="flex gap-2 sm:gap-4 text-xs sm:text-sm text-muted-foreground flex-wrap">
+                            <span>Expires: {new Date(ad.expires_at).toLocaleDateString()}</span>
+                            <span className="hidden sm:inline">{formatDistanceToNow(new Date(ad.created_at))} ago</span>
+                          </div>
+                        </div>
+                        <div className="flex flex-col gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-8 w-8 sm:h-9 sm:w-9 p-0 flex-shrink-0"
+                            onClick={() => handleToggleAd(ad.id, ad.active)}
+                          >
+                            {ad.active ? <XCircle className="w-3 h-3 sm:w-4 sm:h-4" /> : <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4" />}
+                          </Button>
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            className="h-8 w-8 sm:h-9 sm:w-9 p-0 flex-shrink-0"
+                            onClick={() => handleDeleteAd(ad.id)}
+                          >
+                            <Trash2 className="w-3 h-3 sm:w-4 sm:h-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </TabsContent>
           </Tabs>
         </div>
       </main>
@@ -809,6 +949,23 @@ const Admin = () => {
                 onCheckedChange={(checked) => {
                   if (selectedUser) {
                     handleUpdateRoles(selectedUser.id, { is_support: checked });
+                  }
+                }}
+              />
+            </div>
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <Label htmlFor="premium-role">Premium</Label>
+                <p className="text-sm text-muted-foreground">
+                  FireGram Premium membership
+                </p>
+              </div>
+              <Switch
+                id="premium-role"
+                checked={selectedUser?.is_premium || false}
+                onCheckedChange={(checked) => {
+                  if (selectedUser) {
+                    handleUpdateRoles(selectedUser.id, { is_premium: checked });
                   }
                 }}
               />

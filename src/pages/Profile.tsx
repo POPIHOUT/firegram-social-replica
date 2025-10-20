@@ -24,6 +24,7 @@ interface Profile {
   is_premium?: boolean;
   show_own_fire_effect?: boolean;
   custom_background_url?: string;
+  show_custom_background?: boolean;
 }
 
 interface Post {
@@ -271,7 +272,7 @@ const Profile = () => {
       <Navigation />
       
       {/* Custom background for premium profiles */}
-      {profile?.custom_background_url && (
+      {profile?.custom_background_url && profile?.show_custom_background && (
         <>
           {profile.custom_background_url.includes('.mp4') || 
            profile.custom_background_url.includes('.webm') || 

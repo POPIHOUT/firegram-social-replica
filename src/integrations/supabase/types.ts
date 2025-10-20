@@ -312,6 +312,7 @@ export type Database = {
           is_premium: boolean | null
           is_support: boolean | null
           is_verified: boolean | null
+          show_custom_background: boolean | null
           show_own_fire_effect: boolean | null
           suspended: boolean | null
           suspended_reason: string | null
@@ -333,6 +334,7 @@ export type Database = {
           is_premium?: boolean | null
           is_support?: boolean | null
           is_verified?: boolean | null
+          show_custom_background?: boolean | null
           show_own_fire_effect?: boolean | null
           suspended?: boolean | null
           suspended_reason?: string | null
@@ -354,6 +356,7 @@ export type Database = {
           is_premium?: boolean | null
           is_support?: boolean | null
           is_verified?: boolean | null
+          show_custom_background?: boolean | null
           show_own_fire_effect?: boolean | null
           suspended?: boolean | null
           suspended_reason?: string | null
