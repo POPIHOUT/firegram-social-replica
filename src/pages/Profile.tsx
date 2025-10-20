@@ -113,9 +113,10 @@ const Profile = () => {
         setSelectedEffect(null);
       }
 
-      // Show fire effect for premium profiles
+      // Show fire effect for premium profiles only if they don't have a custom effect equipped
       // Show to others always, show to self unless explicitly disabled
-      const shouldShowFire = profileData.is_premium && (
+      const hasCustomEffect = profileData.is_premium && profileData.effects;
+      const shouldShowFire = profileData.is_premium && !hasCustomEffect && (
         profileId !== currentUserId || (profileData.show_own_fire_effect !== false)
       );
       
