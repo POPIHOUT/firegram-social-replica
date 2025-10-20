@@ -28,6 +28,7 @@ interface StoryGroup {
 const StoriesBar = () => {
   const [storyGroups, setStoryGroups] = useState<StoryGroup[]>([]);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [currentUserProfile, setCurrentUserProfile] = useState<{ avatar_url: string | null; username: string } | null>(null);
   const [hasOwnStory, setHasOwnStory] = useState(false);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [viewerOpen, setViewerOpen] = useState(false);
@@ -43,6 +44,17 @@ const StoriesBar = () => {
     const { data: { user } } = await supabase.auth.getUser();
     if (user) {
       setCurrentUserId(user.id);
+      
+      // Fetch current user's profile
+      const { data: profileData } = await supabase
+        .from("profiles")
+        .select("avatar_url, username")
+        .eq("id", user.id)
+        .single();
+      
+      if (profileData) {
+        setCurrentUserProfile(profileData);
+      }
     }
   };
 
@@ -132,18 +144,20 @@ const StoriesBar = () => {
         {/* Add story button */}
         <div className="flex flex-col items-center gap-2 flex-shrink-0">
           <button
-            onClick={() => setAddDialogOpen(true)}
+            onClick={() => hasOwnStory && currentUserId ? handleStoryClick(currentUserId) : setAddDialogOpen(true)}
             className="relative"
           >
             <Avatar className={`h-16 w-16 border-2 ${hasOwnStory ? 'border-primary' : 'border-muted'}`}>
-              <AvatarImage src={storyGroups.find(g => g.user_id === currentUserId)?.avatar_url || undefined} />
+              <AvatarImage src={currentUserProfile?.avatar_url || undefined} />
               <AvatarFallback className="bg-muted">
-                {storyGroups.find(g => g.user_id === currentUserId)?.username?.[0]?.toUpperCase() || 'Y'}
+                {currentUserProfile?.username?.[0]?.toUpperCase() || 'Y'}
               </AvatarFallback>
             </Avatar>
-            <div className="absolute bottom-0 right-0 bg-primary rounded-full p-1">
-              <Plus size={12} className="text-primary-foreground" />
-            </div>
+            {!hasOwnStory && (
+              <div className="absolute bottom-0 right-0 bg-primary rounded-full p-1">
+                <Plus size={12} className="text-primary-foreground" />
+              </div>
+            )}
           </button>
           <p className="text-xs text-center w-16 truncate">Your story</p>
         </div>
