@@ -186,8 +186,8 @@ const Settings = () => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Check if it's a video and validate duration
-    if (file.type.startsWith('video/')) {
+    // Check if it's a video (but not GIF) and validate duration
+    if (file.type.startsWith('video/') && !file.name.toLowerCase().endsWith('.gif')) {
       const video = document.createElement('video');
       video.preload = 'metadata';
       
@@ -243,9 +243,14 @@ const Settings = () => {
       if (updateError) throw updateError;
 
       setCustomBackgroundUrl(publicUrl);
+      
+      const fileType = file.type.startsWith('video/') || file.name.toLowerCase().endsWith('.gif') 
+        ? 'video/GIF' 
+        : 'image';
+      
       toast({
         title: "Background updated",
-        description: file.type.startsWith('video/') ? "Your custom video background has been set" : "Your custom background has been set",
+        description: `Your custom ${fileType} background has been set`,
       });
     } catch (error: any) {
       toast({
@@ -354,7 +359,7 @@ const Settings = () => {
                         <Input
                           id="background-upload"
                           type="file"
-                          accept="image/*,image/gif,video/*"
+                          accept="image/*,.gif,video/*"
                           onChange={handleBackgroundUpload}
                           disabled={uploadingBackground}
                           className="flex-1"
