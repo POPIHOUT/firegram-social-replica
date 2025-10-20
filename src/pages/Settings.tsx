@@ -399,19 +399,21 @@ const Settings = () => {
                     Visit Effects Shop
                   </Button>
 
-                  {ownedEffects.length > 0 && (
+                  {ownedEffects && ownedEffects.length > 0 && (
                     <div className="space-y-2">
                       <Label>Profile Effect</Label>
                       <Select value={selectedEffectId || ""} onValueChange={handleSelectEffect}>
                         <SelectTrigger>
                           <SelectValue placeholder="Select an effect" />
                         </SelectTrigger>
-                        <SelectContent>
+                        <SelectContent className="bg-card border-border">
                           <SelectItem value="">None</SelectItem>
                           {ownedEffects.map((effect) => (
-                            <SelectItem key={effect.id} value={effect.id}>
-                              {effect.icon} {effect.name}
-                            </SelectItem>
+                            effect && effect.id ? (
+                              <SelectItem key={effect.id} value={effect.id}>
+                                {effect.icon} {effect.name}
+                              </SelectItem>
+                            ) : null
                           ))}
                         </SelectContent>
                       </Select>
@@ -497,13 +499,15 @@ const Settings = () => {
                       </ul>
                     </div>
                   </div>
-                  <div className="flex items-center justify-between p-4 bg-orange-500/10 rounded-lg border border-orange-500/20">
-                    <div className="flex items-center gap-2">
-                      <Flame className="w-5 h-5 text-orange-500" />
-                      <span className="font-semibold">Your Flames: {userFlames}</span>
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between p-4 bg-orange-500/10 rounded-lg border border-orange-500/20">
+                      <div className="flex items-center gap-2">
+                        <Flame className="w-5 h-5 text-orange-500" />
+                        <span className="font-semibold">Your Flames: {userFlames}</span>
+                      </div>
+                      <span className="text-sm text-muted-foreground">Need: 1000 🔥</span>
                     </div>
-                    <span className="text-sm text-muted-foreground">Need: 1000 🔥</span>
-                    <span className="text-xs text-muted-foreground">(Valid for 1 month)</span>
+                    <p className="text-xs text-center text-muted-foreground">(Valid for 1 month)</p>
                   </div>
                   <Button
                     onClick={handlePurchasePremium}
