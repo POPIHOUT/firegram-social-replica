@@ -5,19 +5,72 @@ interface ProfileEffectProps {
   icon: string;
 }
 
+interface Particle {
+  id: number;
+  left: number;
+  top: number;
+  visible: boolean;
+  delay: number;
+}
+
 const ProfileEffect = ({ effectType, icon }: ProfileEffectProps) => {
-  const [particles, setParticles] = useState<Array<{ id: number; left: number; delay: number; duration: number }>>([]);
+  const [particles, setParticles] = useState<Particle[]>([]);
 
   useEffect(() => {
-    // Generate 40 particles with random positions and timings for more lively effect
-    const newParticles = Array.from({ length: 40 }, (_, i) => ({
+    // Initial spawn of particles
+    const initialParticles = Array.from({ length: 15 }, (_, i) => ({
       id: i,
       left: Math.random() * 100,
-      delay: Math.random() * 3,
-      duration: 2 + Math.random() * 3,
+      top: Math.random() * 100,
+      visible: false,
+      delay: Math.random() * 2,
     }));
-    setParticles(newParticles);
+    setParticles(initialParticles);
+
+    // Strike interval - particles appear, strike, and disappear
+    const strikeInterval = setInterval(() => {
+      setParticles(prev => prev.map(p => ({
+        ...p,
+        left: Math.random() * 100,
+        top: Math.random() * 100,
+        visible: true,
+      })));
+
+      // Hide after strike duration
+      setTimeout(() => {
+        setParticles(prev => prev.map(p => ({
+          ...p,
+          visible: false,
+        })));
+      }, getStrikeDuration(effectType));
+    }, getStrikeInterval(effectType));
+
+    return () => clearInterval(strikeInterval);
   }, [effectType]);
+
+  const getStrikeInterval = (type: string) => {
+    switch (type) {
+      case 'lightning': return 800; // Fast strikes
+      case 'stars': return 1500; // Medium twinkle
+      case 'hearts': return 2000; // Slow pulses
+      case 'bubbles': return 2500;
+      case 'confetti': return 1000;
+      case 'emojis': return 1200;
+      default: return 1500;
+    }
+  };
+
+  const getStrikeDuration = (type: string) => {
+    switch (type) {
+      case 'lightning': return 300; // Quick flash
+      case 'stars': return 800;
+      case 'hearts': return 1000;
+      case 'bubbles': return 1200;
+      case 'confetti': return 600;
+      case 'emojis': return 700;
+      default: return 800;
+    }
+  };
 
   const getParticleStyles = (type: string) => {
     switch (type) {
@@ -47,47 +100,22 @@ const ProfileEffect = ({ effectType, icon }: ProfileEffectProps) => {
   };
 
   const getAnimationClass = (type: string) => {
-    // Snow falls with gentle sway
-    if (type === 'snow') {
-      return 'animate-[float_3s_ease-in-out_infinite,sway_2s_ease-in-out_infinite]';
+    switch (type) {
+      case 'lightning':
+        return 'animate-[flash_0.3s_ease-in-out]';
+      case 'stars':
+        return 'animate-[twinkle_0.8s_ease-in-out]';
+      case 'hearts':
+        return 'animate-[pulse_1s_ease-in-out]';
+      case 'bubbles':
+        return 'animate-[bubble_1.2s_ease-in-out]';
+      case 'confetti':
+        return 'animate-[pop_0.6s_ease-out]';
+      case 'emojis':
+        return 'animate-[bounce_0.7s_ease-in-out]';
+      default:
+        return 'animate-[fade-in_0.5s_ease-in-out]';
     }
-    // Leaves fall and rotate
-    if (type === 'leaves') {
-      return 'animate-[float_3.5s_ease-in-out_infinite,spin_3s_linear_infinite]';
-    }
-    // Sakura petals float gently
-    if (type === 'sakura') {
-      return 'animate-[float_4s_ease-in-out_infinite,sway_3s_ease-in-out_infinite]';
-    }
-    // Money falls straight down fast
-    if (type === 'money') {
-      return 'animate-[float_2s_linear_infinite]';
-    }
-    // Confetti falls with spin and wobble
-    if (type === 'confetti') {
-      return 'animate-[float_2.5s_ease-in-out_infinite,spin_1.5s_linear_infinite]';
-    }
-    // Hearts float up with gentle sway
-    if (type === 'hearts') {
-      return 'animate-[float_4s_ease-in-out_infinite_reverse,sway_2.5s_ease-in-out_infinite]';
-    }
-    // Bubbles float up with wobble
-    if (type === 'bubbles') {
-      return 'animate-[float_5s_ease-in-out_infinite_reverse,sway_3s_ease-in-out_infinite]';
-    }
-    // Stars twinkle intensely
-    if (type === 'stars') {
-      return 'animate-[pulse_1s_ease-in-out_infinite,spin_4s_linear_infinite]';
-    }
-    // Lightning flashes rapidly
-    if (type === 'lightning') {
-      return 'animate-[pulse_0.3s_ease-in-out_infinite]';
-    }
-    // Emojis spin and bounce wildly
-    if (type === 'emojis') {
-      return 'animate-[spin_2s_linear_infinite,bounce_1s_ease-in-out_infinite]';
-    }
-    return 'animate-float';
   };
 
   return (
@@ -99,21 +127,16 @@ const ProfileEffect = ({ effectType, icon }: ProfileEffectProps) => {
         return (
           <div
             key={particle.id}
-            className={`absolute transition-all will-change-transform ${getParticleStyles(effectType)} ${getAnimationClass(effectType)}`}
+            className={`absolute transition-all duration-300 ${getParticleStyles(effectType)} ${getAnimationClass(effectType)}`}
             style={{
               left: `${particle.left}%`,
-              ...( ['stars', 'lightning', 'emojis'].includes(effectType)
-                ? { top: `${Math.random() * 80 + 5}%` }
-                : { bottom: '-20px' }
-              ),
-              animationDelay: `${particle.delay}s`,
-              animationDuration: `${particle.duration}s`,
-              opacity: 0.7 + Math.random() * 0.3,
+              top: `${particle.top}%`,
+              opacity: particle.visible ? (0.8 + Math.random() * 0.2) : 0,
               transform: effectType === 'confetti' 
-                ? `rotate(${randomRotation}deg) scale(${randomScale})`
-                : `scale(${randomScale})`,
+                ? `rotate(${randomRotation}deg) scale(${particle.visible ? randomScale : 0})`
+                : `scale(${particle.visible ? randomScale : 0})`,
               filter: ['stars', 'lightning'].includes(effectType) 
-                ? `brightness(${1 + Math.random() * 0.5})`
+                ? `brightness(${particle.visible ? 1.5 + Math.random() * 0.5 : 0})`
                 : 'none',
             }}
           >
