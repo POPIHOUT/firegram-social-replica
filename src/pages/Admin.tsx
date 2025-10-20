@@ -22,6 +22,7 @@ interface User {
   full_name: string;
   avatar_url: string;
   email: string;
+  flames: number;
   is_admin: boolean;
   is_verified: boolean;
   is_support: boolean;
@@ -72,6 +73,7 @@ const Admin = () => {
   const [suspendReason, setSuspendReason] = useState("");
   const [suspendDays, setSuspendDays] = useState(7);
   const [rolesDialogOpen, setRolesDialogOpen] = useState(false);
+  const [flamesAmount, setFlamesAmount] = useState("");
   const [stats, setStats] = useState({ users: 0, posts: 0, reels: 0 });
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -104,6 +106,26 @@ const Admin = () => {
     }
 
     fetchData();
+  };
+
+  const handleAddFlames = async () => {
+    if (!selectedUser || !flamesAmount || isNaN(parseInt(flamesAmount))) {
+      toast({ title: "Invalid amount", description: "Please enter a valid number", variant: "destructive" });
+      return;
+    }
+
+    try {
+      const newAmount = selectedUser.flames + parseInt(flamesAmount);
+      const { error } = await supabase.from("profiles").update({ flames: newAmount }).eq("id", selectedUser.id);
+      if (error) throw error;
+
+      toast({ title: "Flames Added", description: `Added ${flamesAmount} flames to ${selectedUser.username}` });
+      setFlamesAmount("");
+      setRolesDialogOpen(false);
+      fetchData();
+    } catch (error: any) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    }
   };
 
   const fetchData = async () => {
@@ -417,6 +439,9 @@ const Admin = () => {
                             </div>
                             <p className="text-xs sm:text-sm text-muted-foreground truncate">{user.full_name}</p>
                             <p className="text-xs sm:text-sm text-muted-foreground truncate">{user.email}</p>
+                            <p className="text-xs sm:text-sm font-semibold flex items-center gap-1">
+                              <span className="text-lg">🔥</span> {user.flames} flames
+                            </p>
                             {user.banned && (
                               <p className="text-xs sm:text-sm text-destructive truncate">Banned: {user.ban_reason}</p>
                             )}

@@ -14,6 +14,50 @@ export type Database = {
   }
   public: {
     Tables: {
+      advertisements: {
+        Row: {
+          active: boolean
+          caption: string | null
+          created_at: string
+          expires_at: string
+          id: string
+          media_url: string
+          thumbnail_url: string | null
+          type: string
+          user_id: string
+        }
+        Insert: {
+          active?: boolean
+          caption?: string | null
+          created_at?: string
+          expires_at: string
+          id?: string
+          media_url: string
+          thumbnail_url?: string | null
+          type: string
+          user_id: string
+        }
+        Update: {
+          active?: boolean
+          caption?: string | null
+          created_at?: string
+          expires_at?: string
+          id?: string
+          media_url?: string
+          thumbnail_url?: string | null
+          type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "advertisements_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       comments: {
         Row: {
           content: string
@@ -260,6 +304,7 @@ export type Database = {
           banned: boolean | null
           bio: string | null
           created_at: string | null
+          flames: number
           full_name: string | null
           id: string
           is_admin: boolean | null
@@ -277,6 +322,7 @@ export type Database = {
           banned?: boolean | null
           bio?: string | null
           created_at?: string | null
+          flames?: number
           full_name?: string | null
           id: string
           is_admin?: boolean | null
@@ -294,6 +340,7 @@ export type Database = {
           banned?: boolean | null
           bio?: string | null
           created_at?: string | null
+          flames?: number
           full_name?: string | null
           id?: string
           is_admin?: boolean | null
