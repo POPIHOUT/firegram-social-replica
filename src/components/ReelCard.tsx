@@ -54,9 +54,11 @@ const ReelCard = ({ reel, profile, isActive, onUpdate, videoRef }: ReelCardProps
     const video = internalVideoRef.current;
     if (video) {
       if (isActive && !isAd) {
+        video.muted = false;
         video.play();
         setIsPlaying(true);
       } else {
+        video.muted = true;
         video.pause();
         setIsPlaying(false);
       }
