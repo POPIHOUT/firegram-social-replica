@@ -22,6 +22,8 @@ interface Profile {
   is_admin: boolean;
   is_verified: boolean;
   is_premium?: boolean;
+  show_own_fire_effect?: boolean;
+  custom_background_url?: string;
 }
 
 interface Post {
@@ -62,6 +64,7 @@ const Profile = () => {
   const [followersDialogOpen, setFollowersDialogOpen] = useState(false);
   const [followingDialogOpen, setFollowingDialogOpen] = useState(false);
   const [showFireEffect, setShowFireEffect] = useState(false);
+  const [fireInBackground, setFireInBackground] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -92,10 +95,18 @@ const Profile = () => {
       if (profileError) throw profileError;
       setProfile(profileData);
 
-      // Show fire effect if premium and not own profile
-      if (profileData.is_premium && profileId !== currentUserId) {
+      // Show fire effect for premium profiles
+      const shouldShowFire = profileData.is_premium && (
+        profileId !== currentUserId || profileData.show_own_fire_effect
+      );
+      
+      if (shouldShowFire) {
         setShowFireEffect(true);
-        setTimeout(() => setShowFireEffect(false), 5000);
+        setFireInBackground(false);
+        setTimeout(() => {
+          setShowFireEffect(false);
+          setFireInBackground(true);
+        }, 5000);
       }
 
       // Fetch posts with count
@@ -258,9 +269,21 @@ const Profile = () => {
     <div className="min-h-screen pb-safe">
       <Navigation />
       
+      {/* Custom background for premium profiles */}
+      {profile?.custom_background_url && (
+        <div 
+          className="fixed inset-0 z-0 bg-cover bg-center opacity-20"
+          style={{ backgroundImage: `url(${profile.custom_background_url})` }}
+        />
+      )}
+      
       {/* Fire Effect Overlay */}
-      {showFireEffect && (
-        <div className="fixed inset-0 z-50 pointer-events-none">
+      {(showFireEffect || fireInBackground) && (
+        <div 
+          className={`fixed inset-0 pointer-events-none transition-all duration-1000 ${
+            fireInBackground ? 'z-0 opacity-30' : 'z-50 opacity-100'
+          }`}
+        >
           <div className="absolute inset-0 bg-gradient-to-t from-orange-500/20 via-red-500/10 to-transparent animate-pulse" />
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(251,146,60,0.3),transparent_70%)] animate-pulse" 
                style={{ animationDuration: '2s' }} />

@@ -7,7 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, ArrowLeft, Flame, Sparkles } from "lucide-react";
+import { Loader2, ArrowLeft, Flame, Sparkles, Upload } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 import firegramLogo from "@/assets/firegram-logo.png";
 
 const Settings = () => {
@@ -18,6 +19,9 @@ const Settings = () => {
   const [purchasingPremium, setPurchasingPremium] = useState(false);
   const [userFlames, setUserFlames] = useState(0);
   const [isPremium, setIsPremium] = useState(false);
+  const [showOwnFireEffect, setShowOwnFireEffect] = useState(true);
+  const [uploadingBackground, setUploadingBackground] = useState(false);
+  const [customBackgroundUrl, setCustomBackgroundUrl] = useState<string>("");
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -31,13 +35,15 @@ const Settings = () => {
 
     const { data: profile } = await supabase
       .from("profiles")
-      .select("flames, is_premium")
+      .select("flames, is_premium, show_own_fire_effect, custom_background_url")
       .eq("id", user.id)
       .single();
 
     if (profile) {
       setUserFlames(profile.flames);
       setIsPremium(profile.is_premium);
+      setShowOwnFireEffect(profile.show_own_fire_effect ?? true);
+      setCustomBackgroundUrl(profile.custom_background_url || "");
     }
   };
 
@@ -116,6 +122,79 @@ const Settings = () => {
     }
   };
 
+  const handleToggleFireEffect = async (checked: boolean) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { error } = await supabase
+        .from("profiles")
+        .update({ show_own_fire_effect: checked })
+        .eq("id", user.id);
+
+      if (error) throw error;
+
+      setShowOwnFireEffect(checked);
+      toast({
+        title: checked ? "Fire effect enabled" : "Fire effect disabled",
+        description: checked 
+          ? "You will now see the fire effect on your profile" 
+          : "Fire effect hidden from your view",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleBackgroundUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadingBackground(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${user.id}-${Date.now()}.${fileExt}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("avatars")
+        .upload(fileName, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from("avatars")
+        .getPublicUrl(fileName);
+
+      const { error: updateError } = await supabase
+        .from("profiles")
+        .update({ custom_background_url: publicUrl })
+        .eq("id", user.id);
+
+      if (updateError) throw updateError;
+
+      setCustomBackgroundUrl(publicUrl);
+      toast({
+        title: "Background updated",
+        description: "Your custom background has been set",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setUploadingBackground(false);
+    }
+  };
+
   return (
     <div className="min-h-screen pb-safe">
       <Navigation />
@@ -147,11 +226,54 @@ const Settings = () => {
             </CardHeader>
             <CardContent>
               {isPremium ? (
-                <div className="flex items-center gap-3 p-4 bg-orange-500/10 rounded-lg border border-orange-500/20">
-                  <img src={firegramLogo} alt="FireGram" className="w-12 h-12" />
-                  <div>
-                    <p className="font-semibold text-orange-500">Premium Active</p>
-                    <p className="text-sm text-muted-foreground">Exclusive fire effect on your profile</p>
+                <div className="space-y-4">
+                  <div className="flex items-center gap-3 p-4 bg-orange-500/10 rounded-lg border border-orange-500/20">
+                    <img src={firegramLogo} alt="FireGram" className="w-12 h-12" />
+                    <div>
+                      <p className="font-semibold text-orange-500">Premium Active</p>
+                      <p className="text-sm text-muted-foreground">Exclusive fire effect on your profile</p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-4 p-4 bg-muted rounded-lg">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <Label htmlFor="fire-effect">Show fire effect on my profile</Label>
+                        <p className="text-xs text-muted-foreground">Display the fire animation when viewing your own profile</p>
+                      </div>
+                      <Switch
+                        id="fire-effect"
+                        checked={showOwnFireEffect}
+                        onCheckedChange={handleToggleFireEffect}
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="background-upload">Custom Background</Label>
+                      <p className="text-xs text-muted-foreground mb-2">Upload a custom background image for your profile</p>
+                      {customBackgroundUrl && (
+                        <div className="relative w-full h-32 mb-2 rounded-lg overflow-hidden">
+                          <img 
+                            src={customBackgroundUrl} 
+                            alt="Custom background" 
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                      )}
+                      <div className="flex gap-2">
+                        <Input
+                          id="background-upload"
+                          type="file"
+                          accept="image/*"
+                          onChange={handleBackgroundUpload}
+                          disabled={uploadingBackground}
+                          className="flex-1"
+                        />
+                        {uploadingBackground && (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        )}
+                      </div>
+                    </div>
                   </div>
                 </div>
               ) : (

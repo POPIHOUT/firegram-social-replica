@@ -304,6 +304,7 @@ export type Database = {
           banned: boolean | null
           bio: string | null
           created_at: string | null
+          custom_background_url: string | null
           flames: number
           full_name: string | null
           id: string
@@ -311,6 +312,7 @@ export type Database = {
           is_premium: boolean | null
           is_support: boolean | null
           is_verified: boolean | null
+          show_own_fire_effect: boolean | null
           suspended: boolean | null
           suspended_reason: string | null
           suspended_until: string | null
@@ -323,6 +325,7 @@ export type Database = {
           banned?: boolean | null
           bio?: string | null
           created_at?: string | null
+          custom_background_url?: string | null
           flames?: number
           full_name?: string | null
           id: string
@@ -330,6 +333,7 @@ export type Database = {
           is_premium?: boolean | null
           is_support?: boolean | null
           is_verified?: boolean | null
+          show_own_fire_effect?: boolean | null
           suspended?: boolean | null
           suspended_reason?: string | null
           suspended_until?: string | null
@@ -342,6 +346,7 @@ export type Database = {
           banned?: boolean | null
           bio?: string | null
           created_at?: string | null
+          custom_background_url?: string | null
           flames?: number
           full_name?: string | null
           id?: string
@@ -349,6 +354,7 @@ export type Database = {
           is_premium?: boolean | null
           is_support?: boolean | null
           is_verified?: boolean | null
+          show_own_fire_effect?: boolean | null
           suspended?: boolean | null
           suspended_reason?: string | null
           suspended_until?: string | null
