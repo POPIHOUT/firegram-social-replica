@@ -330,7 +330,7 @@ const Settings = () => {
                       </div>
                       
                       <Label htmlFor="background-upload">Custom Background</Label>
-                      <p className="text-xs text-muted-foreground mb-2">Upload image or video (max 3 min) for your profile background</p>
+                      <p className="text-xs text-muted-foreground mb-2">Upload image, GIF or video (max 3 min) for your profile background</p>
                       {customBackgroundUrl && (
                         <div className="relative w-full h-32 mb-2 rounded-lg overflow-hidden">
                           {customBackgroundUrl.includes('.mp4') || customBackgroundUrl.includes('.webm') || customBackgroundUrl.includes('.mov') ? (
@@ -354,7 +354,7 @@ const Settings = () => {
                         <Input
                           id="background-upload"
                           type="file"
-                          accept="image/*,video/*"
+                          accept="image/*,image/gif,video/*"
                           onChange={handleBackgroundUpload}
                           disabled={uploadingBackground}
                           className="flex-1"
