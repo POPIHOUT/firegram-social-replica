@@ -205,6 +205,33 @@ export type Database = {
         }
         Relationships: []
       }
+      frames: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string
+          image_url: string
+          name: string
+          price: number
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          image_url: string
+          name: string
+          price?: number
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          image_url?: string
+          name?: string
+          price?: number
+        }
+        Relationships: []
+      }
       likes: {
         Row: {
           created_at: string | null
@@ -344,6 +371,7 @@ export type Database = {
           is_verified: boolean | null
           premium_until: string | null
           selected_effect_id: string | null
+          selected_frame_id: string | null
           show_custom_background: boolean | null
           show_own_fire_effect: boolean | null
           suspended: boolean | null
@@ -368,6 +396,7 @@ export type Database = {
           is_verified?: boolean | null
           premium_until?: string | null
           selected_effect_id?: string | null
+          selected_frame_id?: string | null
           show_custom_background?: boolean | null
           show_own_fire_effect?: boolean | null
           suspended?: boolean | null
@@ -392,6 +421,7 @@ export type Database = {
           is_verified?: boolean | null
           premium_until?: string | null
           selected_effect_id?: string | null
+          selected_frame_id?: string | null
           show_custom_background?: boolean | null
           show_own_fire_effect?: boolean | null
           suspended?: boolean | null
@@ -406,6 +436,13 @@ export type Database = {
             columns: ["selected_effect_id"]
             isOneToOne: false
             referencedRelation: "effects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profiles_selected_frame_id_fkey"
+            columns: ["selected_frame_id"]
+            isOneToOne: false
+            referencedRelation: "frames"
             referencedColumns: ["id"]
           },
         ]
@@ -573,6 +610,27 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      user_frames: {
+        Row: {
+          frame_id: string
+          id: string
+          purchased_at: string | null
+          user_id: string
+        }
+        Insert: {
+          frame_id: string
+          id?: string
+          purchased_at?: string | null
+          user_id: string
+        }
+        Update: {
+          frame_id?: string
+          id?: string
+          purchased_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
       }
     }
     Views: {
