@@ -73,6 +73,7 @@ const Admin = () => {
   const [suspendReason, setSuspendReason] = useState("");
   const [suspendDays, setSuspendDays] = useState(7);
   const [rolesDialogOpen, setRolesDialogOpen] = useState(false);
+  const [flamesDialogOpen, setFlamesDialogOpen] = useState(false);
   const [flamesAmount, setFlamesAmount] = useState("");
   const [stats, setStats] = useState({ users: 0, posts: 0, reels: 0 });
   const navigate = useNavigate();
@@ -121,7 +122,27 @@ const Admin = () => {
 
       toast({ title: "Flames Added", description: `Added ${flamesAmount} flames to ${selectedUser.username}` });
       setFlamesAmount("");
-      setRolesDialogOpen(false);
+      setFlamesDialogOpen(false);
+      fetchData();
+    } catch (error: any) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    }
+  };
+
+  const handleRemoveFlames = async () => {
+    if (!selectedUser || !flamesAmount || isNaN(parseInt(flamesAmount))) {
+      toast({ title: "Invalid amount", description: "Please enter a valid number", variant: "destructive" });
+      return;
+    }
+
+    try {
+      const newAmount = Math.max(0, selectedUser.flames - parseInt(flamesAmount));
+      const { error } = await supabase.from("profiles").update({ flames: newAmount }).eq("id", selectedUser.id);
+      if (error) throw error;
+
+      toast({ title: "Flames Removed", description: `Removed ${flamesAmount} flames from ${selectedUser.username}` });
+      setFlamesAmount("");
+      setFlamesDialogOpen(false);
       fetchData();
     } catch (error: any) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
@@ -457,6 +478,19 @@ const Admin = () => {
                           <Button
                             variant="outline"
                             size="sm"
+                            className="text-xs h-8 flex-1 sm:flex-initial bg-orange-500/10 border-orange-500/20 hover:bg-orange-500/20"
+                            onClick={() => {
+                              setSelectedUser(user);
+                              setFlamesDialogOpen(true);
+                            }}
+                          >
+                            <span className="text-sm mr-1">🔥</span>
+                            <span className="hidden sm:inline">Flames</span>
+                          </Button>
+
+                          <Button
+                            variant="outline"
+                            size="sm"
                             className="text-xs h-8 flex-1 sm:flex-initial"
                             onClick={() => {
                               setSelectedUser(user);
@@ -687,30 +721,6 @@ const Admin = () => {
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-6">
-            <div className="space-y-3 p-4 rounded-lg bg-orange-500/5 border border-orange-500/20">
-              <div className="flex items-center gap-2">
-                <span className="text-2xl">🔥</span>
-                <div>
-                  <Label>Add Flames</Label>
-                  <p className="text-sm text-muted-foreground">
-                    Current: {selectedUser?.flames || 0} flames
-                  </p>
-                </div>
-              </div>
-              <div className="flex gap-2">
-                <Input
-                  type="number"
-                  placeholder="Amount"
-                  value={flamesAmount}
-                  onChange={(e) => setFlamesAmount(e.target.value)}
-                  className="flex-1"
-                />
-                <Button onClick={handleAddFlames} disabled={!flamesAmount}>
-                  Add
-                </Button>
-              </div>
-            </div>
-
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
                 <Label htmlFor="admin-role">Admin</Label>
@@ -764,11 +774,71 @@ const Admin = () => {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => {
-              setRolesDialogOpen(false);
-              setFlamesAmount("");
-            }}>
+            <Button variant="outline" onClick={() => setRolesDialogOpen(false)}>
               Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={flamesDialogOpen} onOpenChange={(open) => {
+        setFlamesDialogOpen(open);
+        if (!open) setFlamesAmount("");
+      }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Manage Flames 🔥</DialogTitle>
+            <DialogDescription>
+              Add or remove flames for {selectedUser?.username}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="p-4 rounded-lg bg-orange-500/10 border border-orange-500/20">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium">Current Balance:</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-2xl">🔥</span>
+                  <span className="text-xl font-bold">{selectedUser?.flames || 0}</span>
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <Label htmlFor="flames-amount">Amount</Label>
+              <Input
+                id="flames-amount"
+                type="number"
+                placeholder="Enter amount..."
+                value={flamesAmount}
+                onChange={(e) => setFlamesAmount(e.target.value)}
+                min="0"
+                className="mt-2"
+              />
+            </div>
+          </div>
+          <DialogFooter className="gap-2">
+            <Button 
+              variant="outline" 
+              onClick={() => {
+                setFlamesDialogOpen(false);
+                setFlamesAmount("");
+              }}
+            >
+              Cancel
+            </Button>
+            <Button 
+              variant="destructive"
+              onClick={handleRemoveFlames}
+              disabled={!flamesAmount}
+            >
+              Remove
+            </Button>
+            <Button 
+              onClick={handleAddFlames}
+              disabled={!flamesAmount}
+              className="bg-orange-500 hover:bg-orange-600"
+            >
+              Add
             </Button>
           </DialogFooter>
         </DialogContent>
