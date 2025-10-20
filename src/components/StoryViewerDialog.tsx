@@ -118,12 +118,13 @@ const StoryViewerDialog = ({
     if (!currentStory || !currentUserId || isOwnStory) return;
 
     try {
+      // Use the simplified version with viewer_id (required by TypeScript, set by trigger)
       await supabase
         .from("story_views")
-        .insert({
+        .insert([{
           story_id: currentStory.id,
-          viewer_id: currentUserId,
-        });
+          viewer_id: currentUserId, // Required by TypeScript, will be overridden by trigger
+        }]);
 
       await supabase
         .from("stories")

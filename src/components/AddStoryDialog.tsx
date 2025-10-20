@@ -69,15 +69,15 @@ const AddStoryDialog = ({ open, onOpenChange, onStoryAdded }: AddStoryDialogProp
       const expiresAt = new Date();
       expiresAt.setHours(expiresAt.getHours() + Math.min(expiryHours, 24));
 
-      // Create story record
+      // Create story record (user_id is set by trigger)
       const { error: dbError } = await supabase
         .from("stories")
-        .insert({
-          user_id: user.id,
+        .insert([{
+          user_id: user.id, // Required by TypeScript, will be overridden by trigger
           media_url: publicUrl,
           media_type: file.type.startsWith('video/') ? 'video' : 'image',
           expires_at: expiresAt.toISOString(),
-        });
+        }]);
 
       if (dbError) throw dbError;
 
