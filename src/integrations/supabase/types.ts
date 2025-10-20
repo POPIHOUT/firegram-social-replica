@@ -154,6 +154,36 @@ export type Database = {
         }
         Relationships: []
       }
+      effects: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          effect_type: string
+          icon: string | null
+          id: string
+          name: string
+          price: number
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          effect_type: string
+          icon?: string | null
+          id?: string
+          name: string
+          price: number
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          effect_type?: string
+          icon?: string | null
+          id?: string
+          name?: string
+          price?: number
+        }
+        Relationships: []
+      }
       follows: {
         Row: {
           created_at: string
@@ -313,6 +343,7 @@ export type Database = {
           is_support: boolean | null
           is_verified: boolean | null
           premium_until: string | null
+          selected_effect_id: string | null
           show_custom_background: boolean | null
           show_own_fire_effect: boolean | null
           suspended: boolean | null
@@ -336,6 +367,7 @@ export type Database = {
           is_support?: boolean | null
           is_verified?: boolean | null
           premium_until?: string | null
+          selected_effect_id?: string | null
           show_custom_background?: boolean | null
           show_own_fire_effect?: boolean | null
           suspended?: boolean | null
@@ -359,6 +391,7 @@ export type Database = {
           is_support?: boolean | null
           is_verified?: boolean | null
           premium_until?: string | null
+          selected_effect_id?: string | null
           show_custom_background?: boolean | null
           show_own_fire_effect?: boolean | null
           suspended?: boolean | null
@@ -367,7 +400,15 @@ export type Database = {
           updated_at?: string | null
           username?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_selected_effect_id_fkey"
+            columns: ["selected_effect_id"]
+            isOneToOne: false
+            referencedRelation: "effects"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       reels: {
         Row: {
@@ -504,11 +545,44 @@ export type Database = {
           },
         ]
       }
+      user_effects: {
+        Row: {
+          effect_id: string
+          id: string
+          purchased_at: string | null
+          user_id: string
+        }
+        Insert: {
+          effect_id: string
+          id?: string
+          purchased_at?: string | null
+          user_id: string
+        }
+        Update: {
+          effect_id?: string
+          id?: string
+          purchased_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_effects_effect_id_fkey"
+            columns: ["effect_id"]
+            isOneToOne: false
+            referencedRelation: "effects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      cancel_premium: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       create_or_get_conversation: {
         Args: { other_user_id: string }
         Returns: string
@@ -531,6 +605,10 @@ export type Database = {
       is_conversation_participant: {
         Args: { _conversation_id: string; _user_id: string }
         Returns: boolean
+      }
+      purchase_effect: {
+        Args: { effect_uuid: string }
+        Returns: undefined
       }
       purchase_premium: {
         Args: Record<PropertyKey, never>

@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Shield, Grid, Film, Loader2, LogOut, Heart, MessageCircle, UserPlus, UserMinus, Flame, Check, Bookmark, Settings } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import firegramLogo from "@/assets/firegram-logo.png";
+import ProfileEffect from "@/components/ProfileEffect";
 
 interface Profile {
   id: string;
@@ -25,6 +26,11 @@ interface Profile {
   show_own_fire_effect?: boolean;
   custom_background_url?: string;
   show_custom_background?: boolean;
+  selected_effect_id?: string;
+  effects?: {
+    effect_type: string;
+    icon: string;
+  };
 }
 
 interface Post {
@@ -66,6 +72,7 @@ const Profile = () => {
   const [followingDialogOpen, setFollowingDialogOpen] = useState(false);
   const [showFireEffect, setShowFireEffect] = useState(false);
   const [fireInBackground, setFireInBackground] = useState(false);
+  const [selectedEffect, setSelectedEffect] = useState<{type: string, icon: string} | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -89,12 +96,20 @@ const Profile = () => {
     try {
       const { data: profileData, error: profileError } = await supabase
         .from("profiles")
-        .select("*")
+        .select("*, effects(*)")
         .eq("id", profileId)
         .single();
 
       if (profileError) throw profileError;
       setProfile(profileData);
+
+      // Set selected effect if any
+      if (profileData.effects) {
+        setSelectedEffect({
+          type: profileData.effects.effect_type,
+          icon: profileData.effects.icon
+        });
+      }
 
       // Show fire effect for premium profiles
       // Show to others always, show to self unless explicitly disabled
@@ -318,6 +333,11 @@ const Profile = () => {
             />
           ))}
         </div>
+      )}
+
+      {/* Selected Profile Effect */}
+      {selectedEffect && (
+        <ProfileEffect effectType={selectedEffect.type} icon={selectedEffect.icon} />
       )}
 
       <main className="max-w-4xl mx-auto pt-16 sm:pt-20 px-3 sm:px-4 pb-20 sm:pb-24">

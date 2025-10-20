@@ -7,8 +7,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, ArrowLeft, Flame, Sparkles, Upload } from "lucide-react";
+import { Loader2, ArrowLeft, Flame, Sparkles, Upload, ShoppingBag, X } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import firegramLogo from "@/assets/firegram-logo.png";
 
 const Settings = () => {
@@ -24,6 +25,9 @@ const Settings = () => {
   const [customBackgroundUrl, setCustomBackgroundUrl] = useState<string>("");
   const [showCustomBackground, setShowCustomBackground] = useState(true);
   const [premiumUntil, setPremiumUntil] = useState<string | null>(null);
+  const [ownedEffects, setOwnedEffects] = useState<any[]>([]);
+  const [selectedEffectId, setSelectedEffectId] = useState<string | null>(null);
+  const [cancellingPremium, setCancellingPremium] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -37,7 +41,7 @@ const Settings = () => {
 
     const { data: profile } = await supabase
       .from("profiles")
-      .select("flames, is_premium, show_own_fire_effect, custom_background_url, show_custom_background, premium_until")
+      .select("flames, is_premium, show_own_fire_effect, custom_background_url, show_custom_background, premium_until, selected_effect_id")
       .eq("id", user.id)
       .single();
 
@@ -48,6 +52,19 @@ const Settings = () => {
       setCustomBackgroundUrl(profile.custom_background_url || "");
       setShowCustomBackground(profile.show_custom_background ?? true);
       setPremiumUntil(profile.premium_until);
+      setSelectedEffectId(profile.selected_effect_id);
+      
+      // Fetch owned effects if premium
+      if (profile.is_premium) {
+        const { data: effectsData } = await supabase
+          .from("user_effects")
+          .select("effect_id, effects(*)")
+          .eq("user_id", user.id);
+        
+        if (effectsData) {
+          setOwnedEffects(effectsData.map((e: any) => e.effects));
+        }
+      }
     }
   };
 
@@ -263,6 +280,58 @@ const Settings = () => {
     }
   };
 
+  const handleSelectEffect = async (effectId: string) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { error } = await supabase
+        .from("profiles")
+        .update({ selected_effect_id: effectId || null })
+        .eq("id", user.id);
+
+      if (error) throw error;
+
+      setSelectedEffectId(effectId || null);
+      toast({
+        title: effectId ? "Effect Selected" : "Effect Removed",
+        description: effectId ? "Your profile effect has been updated" : "Profile effect removed",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleCancelPremium = async () => {
+    if (!confirm("Are you sure? You won't get your flames back!")) return;
+
+    setCancellingPremium(true);
+    try {
+      const { error } = await supabase.rpc("cancel_premium");
+
+      if (error) throw error;
+
+      toast({
+        title: "Premium Cancelled",
+        description: "Your premium subscription has been cancelled",
+      });
+
+      await fetchUserData();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setCancellingPremium(false);
+    }
+  };
+
   return (
     <div className="min-h-screen pb-safe">
       <Navigation />
@@ -297,7 +366,7 @@ const Settings = () => {
                 <div className="space-y-4">
                   <div className="flex items-center gap-3 p-4 bg-orange-500/10 rounded-lg border border-orange-500/20">
                     <img src={firegramLogo} alt="FireGram" className="w-12 h-12" />
-                    <div>
+                    <div className="flex-1">
                       <p className="font-semibold text-orange-500">Premium Active</p>
                       <p className="text-sm text-muted-foreground">Exclusive fire effect on your profile</p>
                       {premiumUntil && (
@@ -306,7 +375,51 @@ const Settings = () => {
                         </p>
                       )}
                     </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-destructive hover:text-destructive"
+                      onClick={handleCancelPremium}
+                      disabled={cancellingPremium}
+                    >
+                      {cancellingPremium ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <X className="h-4 w-4" />
+                      )}
+                    </Button>
                   </div>
+
+                  <Button
+                    variant="outline"
+                    className="w-full"
+                    onClick={() => navigate("/shop")}
+                  >
+                    <ShoppingBag className="mr-2 h-4 w-4" />
+                    Visit Effects Shop
+                  </Button>
+
+                  {ownedEffects.length > 0 && (
+                    <div className="space-y-2">
+                      <Label>Profile Effect</Label>
+                      <Select value={selectedEffectId || ""} onValueChange={handleSelectEffect}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select an effect" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="">None</SelectItem>
+                          {ownedEffects.map((effect) => (
+                            <SelectItem key={effect.id} value={effect.id}>
+                              {effect.icon} {effect.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <p className="text-xs text-muted-foreground">
+                        Choose which effect appears on your profile
+                      </p>
+                    </div>
+                  )}
 
                   <div className="space-y-4 p-4 bg-muted rounded-lg">
                     <div className="flex items-center justify-between">
