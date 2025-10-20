@@ -375,6 +375,65 @@ export type Database = {
         }
         Relationships: []
       }
+      stories: {
+        Row: {
+          created_at: string
+          expires_at: string
+          id: string
+          media_type: string
+          media_url: string
+          user_id: string
+          views_count: number | null
+        }
+        Insert: {
+          created_at?: string
+          expires_at?: string
+          id?: string
+          media_type: string
+          media_url: string
+          user_id: string
+          views_count?: number | null
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          id?: string
+          media_type?: string
+          media_url?: string
+          user_id?: string
+          views_count?: number | null
+        }
+        Relationships: []
+      }
+      story_views: {
+        Row: {
+          id: string
+          story_id: string
+          viewed_at: string
+          viewer_id: string
+        }
+        Insert: {
+          id?: string
+          story_id: string
+          viewed_at?: string
+          viewer_id: string
+        }
+        Update: {
+          id?: string
+          story_id?: string
+          viewed_at?: string
+          viewer_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_story"
+            columns: ["story_id"]
+            isOneToOne: false
+            referencedRelation: "stories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -383,6 +442,10 @@ export type Database = {
       create_or_get_conversation: {
         Args: { other_user_id: string }
         Returns: string
+      }
+      delete_expired_stories: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
       }
       is_conversation_participant: {
         Args: { _conversation_id: string; _user_id: string }
