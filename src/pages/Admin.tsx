@@ -1017,68 +1017,68 @@ const Admin = () => {
                           </div>
                         </div>
 
-                        <div className="flex gap-1.5 sm:gap-2 flex-wrap sm:flex-nowrap">
+                        <div className="grid grid-cols-3 sm:flex gap-1.5 sm:gap-2">
                           <Button
                             variant="outline"
                             size="sm"
-                            className="text-xs h-8 flex-1 sm:flex-initial bg-orange-500/10 border-orange-500/20 hover:bg-orange-500/20"
+                            className="text-xs h-8 bg-orange-500/10 border-orange-500/20 hover:bg-orange-500/20"
                             onClick={() => {
                               setSelectedUser(user);
                               setFlamesDialogOpen(true);
                             }}
                           >
-                            <span className="text-sm mr-1">🔥</span>
-                            <span className="hidden sm:inline">Flames</span>
+                            <span className="text-sm">🔥</span>
+                            <span className="hidden sm:inline ml-1">Flames</span>
                           </Button>
 
                           <Button
                             variant="outline"
                             size="sm"
-                            className="text-xs h-8 flex-1 sm:flex-initial bg-purple-500/10 border-purple-500/20 hover:bg-purple-500/20"
+                            className="text-xs h-8 bg-purple-500/10 border-purple-500/20 hover:bg-purple-500/20"
                             onClick={() => {
                               setSelectedUser(user);
                               setFollowersDialogOpen(true);
                             }}
                           >
-                            <span className="text-sm mr-1">👥</span>
-                            <span className="hidden sm:inline">Followers</span>
+                            <span className="text-sm">👥</span>
+                            <span className="hidden sm:inline ml-1">Followers</span>
                           </Button>
 
                           <Button
                             variant="outline"
                             size="sm"
-                            className="text-xs h-8 flex-1 sm:flex-initial"
+                            className="text-xs h-8"
                             onClick={() => {
                               setSelectedUser(user);
                               setRolesDialogOpen(true);
                             }}
                           >
-                            <Settings className="w-3 h-3 sm:w-4 sm:h-4 sm:mr-2" />
-                            <span className="hidden sm:inline">Roles</span>
+                            <Settings className="w-3 h-3 sm:w-4 sm:h-4" />
+                            <span className="hidden sm:inline ml-2">Roles</span>
                           </Button>
 
                           {user.banned ? (
                             <Button
                               variant="outline"
                               size="sm"
-                              className="text-xs h-8 flex-1 sm:flex-initial"
+                              className="text-xs h-8"
                               onClick={() => handleUnbanUser(user.id)}
                             >
-                              <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4 sm:mr-2" />
-                              <span className="hidden sm:inline">Unban</span>
+                              <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4" />
+                              <span className="hidden sm:inline ml-2">Unban</span>
                             </Button>
                           ) : (
                             <Button
                               variant="destructive"
                               size="sm"
-                              className="text-xs h-8 flex-1 sm:flex-initial"
+                              className="text-xs h-8"
                               onClick={() => {
                                 setSelectedUser(user);
                                 setBanDialogOpen(true);
                               }}
                             >
-                              <Ban className="w-3 h-3 sm:w-4 sm:h-4 sm:mr-2" />
-                              <span className="hidden sm:inline">Ban</span>
+                              <Ban className="w-3 h-3 sm:w-4 sm:h-4" />
+                              <span className="hidden sm:inline ml-2">Ban</span>
                             </Button>
                           )}
 
@@ -1086,24 +1086,24 @@ const Admin = () => {
                             <Button
                               variant="outline"
                               size="sm"
-                              className="text-xs h-8 flex-1 sm:flex-initial"
+                              className="text-xs h-8"
                               onClick={() => handleUnsuspendUser(user.id)}
                             >
-                              <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4 sm:mr-2" />
-                              <span className="hidden sm:inline">Unsuspend</span>
+                              <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4" />
+                              <span className="hidden sm:inline ml-2">Unsuspend</span>
                             </Button>
                           ) : (
                             <Button
                               variant="outline"
                               size="sm"
-                              className="text-xs h-8 flex-1 sm:flex-initial"
+                              className="text-xs h-8"
                               onClick={() => {
                                 setSelectedUser(user);
                                 setSuspendDialogOpen(true);
                               }}
                             >
-                              <Clock className="w-3 h-3 sm:w-4 sm:h-4 sm:mr-2" />
-                              <span className="hidden sm:inline">Suspend</span>
+                              <Clock className="w-3 h-3 sm:w-4 sm:h-4" />
+                              <span className="hidden sm:inline ml-2">Suspend</span>
                             </Button>
                           )}
                         </div>
