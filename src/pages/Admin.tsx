@@ -846,10 +846,11 @@ const Admin = () => {
       <Button
         variant="outline"
         size="sm"
-        className="fixed top-20 right-4 z-50"
+        className="fixed top-20 right-2 sm:right-4 z-50 text-xs sm:text-sm px-2 sm:px-4"
         onClick={() => setConsoleMode(!consoleMode)}
       >
-        {consoleMode ? "Normal Mode" : "Console Mode"}
+        <span className="hidden sm:inline">{consoleMode ? "Normal Mode" : "Console Mode"}</span>
+        <span className="sm:hidden">{consoleMode ? "Normal" : "Console"}</span>
       </Button>
 
       <main className="max-w-7xl mx-auto pt-16 sm:pt-20 px-3 sm:px-4 pb-20 sm:pb-24">
@@ -940,34 +941,36 @@ const Admin = () => {
           </div>
 
           <Tabs defaultValue="users" className="w-full">
-            <TabsList className="w-full grid grid-cols-9 h-9 sm:h-10">
-              <TabsTrigger value="users" className="text-xs sm:text-sm">Users</TabsTrigger>
-              <TabsTrigger value="posts" className="text-xs sm:text-sm">Posts</TabsTrigger>
-              <TabsTrigger value="reels" className="text-xs sm:text-sm">Reels</TabsTrigger>
-              <TabsTrigger value="ads" className="text-xs sm:text-sm">Ads</TabsTrigger>
-              <TabsTrigger value="purchases" className="text-xs sm:text-sm flex items-center gap-1">
-                <Flame className="w-3 h-3" />
-                <span className="hidden sm:inline">Purchases</span>
-                {stats.pending_purchases > 0 && (
-                  <Badge variant="destructive" className="ml-1 h-4 px-1 text-[10px]">
-                    {stats.pending_purchases}
-                  </Badge>
-                )}
-              </TabsTrigger>
-              <TabsTrigger value="announcements" className="text-xs sm:text-sm flex items-center gap-1">
-                <Megaphone className="w-3 h-3" />
-                <span className="hidden sm:inline">Announce</span>
-              </TabsTrigger>
-              <TabsTrigger value="sac" className="text-xs sm:text-sm">
-                SAC
-              </TabsTrigger>
-              <TabsTrigger value="update-lock" className="text-xs sm:text-sm">
-                Server Lock
-              </TabsTrigger>
-              <TabsTrigger value="update-info" className="text-xs sm:text-sm">
-                Info
-              </TabsTrigger>
-            </TabsList>
+            <div className="w-full overflow-x-auto">
+              <TabsList className="w-full inline-flex sm:grid sm:grid-cols-9 h-auto sm:h-10 flex-nowrap">
+                <TabsTrigger value="users" className="text-xs sm:text-sm whitespace-nowrap px-3 py-2">Users</TabsTrigger>
+                <TabsTrigger value="posts" className="text-xs sm:text-sm whitespace-nowrap px-3 py-2">Posts</TabsTrigger>
+                <TabsTrigger value="reels" className="text-xs sm:text-sm whitespace-nowrap px-3 py-2">Reels</TabsTrigger>
+                <TabsTrigger value="ads" className="text-xs sm:text-sm whitespace-nowrap px-3 py-2">Ads</TabsTrigger>
+                <TabsTrigger value="purchases" className="text-xs sm:text-sm flex items-center gap-1 whitespace-nowrap px-3 py-2">
+                  <Flame className="w-3 h-3" />
+                  <span className="hidden sm:inline">Purchases</span>
+                  {stats.pending_purchases > 0 && (
+                    <Badge variant="destructive" className="ml-1 h-4 px-1 text-[10px]">
+                      {stats.pending_purchases}
+                    </Badge>
+                  )}
+                </TabsTrigger>
+                <TabsTrigger value="announcements" className="text-xs sm:text-sm flex items-center gap-1 whitespace-nowrap px-3 py-2">
+                  <Megaphone className="w-3 h-3" />
+                  <span className="hidden sm:inline">Announce</span>
+                </TabsTrigger>
+                <TabsTrigger value="sac" className="text-xs sm:text-sm whitespace-nowrap px-3 py-2">
+                  SAC
+                </TabsTrigger>
+                <TabsTrigger value="update-lock" className="text-xs sm:text-sm whitespace-nowrap px-3 py-2">
+                  Lock
+                </TabsTrigger>
+                <TabsTrigger value="update-info" className="text-xs sm:text-sm whitespace-nowrap px-3 py-2">
+                  Info
+                </TabsTrigger>
+              </TabsList>
+            </div>
 
             <TabsContent value="users" className="space-y-3 sm:space-y-4">
               <Input
@@ -1343,7 +1346,7 @@ const Admin = () => {
       </main>
 
       <Dialog open={banDialogOpen} onOpenChange={setBanDialogOpen}>
-        <DialogContent>
+        <DialogContent className="max-w-[95vw] sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>Ban User</DialogTitle>
             <DialogDescription>
@@ -1361,11 +1364,11 @@ const Admin = () => {
               />
             </div>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setBanDialogOpen(false)}>
+          <DialogFooter className="flex-col sm:flex-row gap-2">
+            <Button variant="outline" onClick={() => setBanDialogOpen(false)} className="w-full sm:w-auto">
               Cancel
             </Button>
-            <Button variant="destructive" onClick={handleBanUser}>
+            <Button variant="destructive" onClick={handleBanUser} className="w-full sm:w-auto">
               Ban User
             </Button>
           </DialogFooter>
@@ -1373,7 +1376,7 @@ const Admin = () => {
       </Dialog>
 
       <Dialog open={suspendDialogOpen} onOpenChange={setSuspendDialogOpen}>
-        <DialogContent>
+        <DialogContent className="max-w-[95vw] sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>Suspend User</DialogTitle>
             <DialogDescription>
@@ -1401,11 +1404,11 @@ const Admin = () => {
               />
             </div>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setSuspendDialogOpen(false)}>
+          <DialogFooter className="flex-col sm:flex-row gap-2">
+            <Button variant="outline" onClick={() => setSuspendDialogOpen(false)} className="w-full sm:w-auto">
               Cancel
             </Button>
-            <Button onClick={handleSuspendUser}>
+            <Button onClick={handleSuspendUser} className="w-full sm:w-auto">
               Suspend User
             </Button>
           </DialogFooter>
@@ -1413,7 +1416,7 @@ const Admin = () => {
       </Dialog>
 
       <Dialog open={rolesDialogOpen} onOpenChange={setRolesDialogOpen}>
-        <DialogContent>
+        <DialogContent className="max-w-[95vw] sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>Manage User Roles</DialogTitle>
             <DialogDescription>
@@ -1491,7 +1494,7 @@ const Admin = () => {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setRolesDialogOpen(false)}>
+            <Button variant="outline" onClick={() => setRolesDialogOpen(false)} className="w-full sm:w-auto">
               Close
             </Button>
           </DialogFooter>
@@ -1502,7 +1505,7 @@ const Admin = () => {
         setFlamesDialogOpen(open);
         if (!open) setFlamesAmount("");
       }}>
-        <DialogContent>
+        <DialogContent className="max-w-[95vw] sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>Manage Flames 🔥</DialogTitle>
             <DialogDescription>
@@ -1533,13 +1536,14 @@ const Admin = () => {
               />
             </div>
           </div>
-          <DialogFooter className="gap-2">
+          <DialogFooter className="flex-col sm:flex-row gap-2">
             <Button 
               variant="outline" 
               onClick={() => {
                 setFlamesDialogOpen(false);
                 setFlamesAmount("");
               }}
+              className="w-full sm:w-auto"
             >
               Cancel
             </Button>
@@ -1547,13 +1551,14 @@ const Admin = () => {
               variant="destructive"
               onClick={() => handleRemoveFlames()}
               disabled={!flamesAmount}
+              className="w-full sm:w-auto"
             >
               Remove
             </Button>
             <Button 
               onClick={() => handleAddFlames()}
               disabled={!flamesAmount}
-              className="bg-orange-500 hover:bg-orange-600"
+              className="bg-orange-500 hover:bg-orange-600 w-full sm:w-auto"
             >
               Add
             </Button>
@@ -1565,7 +1570,7 @@ const Admin = () => {
         setFollowersDialogOpen(open);
         if (!open) setFollowersAmount("");
       }}>
-        <DialogContent>
+        <DialogContent className="max-w-[95vw] sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>Give Fake Followers 👥</DialogTitle>
             <DialogDescription>
@@ -1598,13 +1603,14 @@ const Admin = () => {
               />
             </div>
           </div>
-          <DialogFooter className="gap-2">
+          <DialogFooter className="flex-col sm:flex-row gap-2">
             <Button 
               variant="outline" 
               onClick={() => {
                 setFollowersDialogOpen(false);
                 setFollowersAmount("");
               }}
+              className="w-full sm:w-auto"
             >
               Cancel
             </Button>
@@ -1612,13 +1618,14 @@ const Admin = () => {
               variant="destructive"
               onClick={() => handleRemoveFakeFollowers()}
               disabled={!followersAmount}
+              className="w-full sm:w-auto"
             >
               Remove 🗑️
             </Button>
             <Button 
               onClick={() => handleGiveFakeFollowers()}
               disabled={!followersAmount}
-              className="bg-purple-500 hover:bg-purple-600"
+              className="bg-purple-500 hover:bg-purple-600 w-full sm:w-auto"
             >
               Give Fake Followers 😈
             </Button>
@@ -1627,7 +1634,7 @@ const Admin = () => {
       </Dialog>
 
       <Dialog open={rejectDialogOpen} onOpenChange={setRejectDialogOpen}>
-        <DialogContent>
+        <DialogContent className="max-w-[95vw] sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>Reject Purchase</DialogTitle>
             <DialogDescription>
@@ -1643,11 +1650,11 @@ const Admin = () => {
               onChange={(e) => setRejectReason(e.target.value)}
             />
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setRejectDialogOpen(false)}>
+          <DialogFooter className="flex-col sm:flex-row gap-2">
+            <Button variant="outline" onClick={() => setRejectDialogOpen(false)} className="w-full sm:w-auto">
               Cancel
             </Button>
-            <Button variant="destructive" onClick={handleRejectPurchase}>
+            <Button variant="destructive" onClick={handleRejectPurchase} className="w-full sm:w-auto">
               Reject Purchase
             </Button>
           </DialogFooter>
