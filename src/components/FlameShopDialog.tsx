@@ -7,6 +7,7 @@ import { Flame } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 interface FlameShopDialogProps {
   open: boolean;
@@ -28,6 +29,60 @@ const FlameShopDialog = ({ open, onOpenChange }: FlameShopDialogProps) => {
   const { toast } = useToast();
   const [customAmount, setCustomAmount] = useState("");
   const [sacCode, setSacCode] = useState("");
+  const [sacValidating, setSacValidating] = useState(false);
+  const [sacValid, setSacValid] = useState<boolean | null>(null);
+  const [sacCreator, setSacCreator] = useState<string | null>(null);
+
+  const validateSacCode = async (code: string) => {
+    if (!code.trim()) {
+      setSacValid(null);
+      setSacCreator(null);
+      return;
+    }
+
+    setSacValidating(true);
+    const { data, error } = await supabase
+      .from("sac_codes")
+      .select(`
+        code,
+        user_id,
+        profiles:user_id (username)
+      `)
+      .eq("code", code.toUpperCase())
+      .eq("active", true)
+      .single();
+
+    setSacValidating(false);
+
+    if (!error && data) {
+      setSacValid(true);
+      setSacCreator((data.profiles as any)?.username || "Unknown");
+      toast({
+        title: "Valid SAC Code!",
+        description: `5% discount applied. Supporting ${(data.profiles as any)?.username}`,
+      });
+    } else {
+      setSacValid(false);
+      setSacCreator(null);
+      toast({
+        title: "Invalid SAC Code",
+        description: "The code you entered is not valid or inactive",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleSacCodeChange = (value: string) => {
+    const upperValue = value.toUpperCase();
+    setSacCode(upperValue);
+    
+    // Debounce validation
+    const timeoutId = setTimeout(() => {
+      validateSacCode(upperValue);
+    }, 500);
+
+    return () => clearTimeout(timeoutId);
+  };
 
   const handlePurchase = (amount: number, price: number) => {
     navigate(`/firepay?amount=${amount}&price=${price}&sac=${encodeURIComponent(sacCode)}`);
@@ -80,13 +135,30 @@ const FlameShopDialog = ({ open, onOpenChange }: FlameShopDialogProps) => {
                 Enter a creator code to get 5% discount and support your favorite creator
               </CardDescription>
             </CardHeader>
-            <CardContent>
-              <Input
-                placeholder="Enter SAC code (optional)"
-                value={sacCode}
-                onChange={(e) => setSacCode(e.target.value.toUpperCase())}
-                className="font-mono"
-              />
+            <CardContent className="space-y-2">
+              <div className="relative">
+                <Input
+                  placeholder="Enter SAC code (optional)"
+                  value={sacCode}
+                  onChange={(e) => handleSacCodeChange(e.target.value)}
+                  className="font-mono"
+                />
+                {sacValidating && (
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground text-xs">
+                    Checking...
+                  </span>
+                )}
+              </div>
+              {sacValid === true && sacCreator && (
+                <p className="text-sm text-green-500">
+                  ✓ Valid! Supporting {sacCreator} • 5% discount applied
+                </p>
+              )}
+              {sacValid === false && (
+                <p className="text-sm text-destructive">
+                  ✗ Invalid or inactive code
+                </p>
+              )}
             </CardContent>
           </Card>
 

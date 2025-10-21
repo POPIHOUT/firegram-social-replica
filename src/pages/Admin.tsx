@@ -89,6 +89,7 @@ interface FlamePurchase {
   card_last4: string;
   card_holder_name: string;
   created_at: string;
+  sac_code?: string | null;
   profiles: {
     username: string;
     avatar_url: string;

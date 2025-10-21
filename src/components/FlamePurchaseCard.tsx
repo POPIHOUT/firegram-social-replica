@@ -15,6 +15,7 @@ interface FlamePurchase {
   card_last4: string;
   card_holder_name: string;
   created_at: string;
+  sac_code?: string | null;
   profiles: {
     username: string;
     avatar_url: string;
@@ -57,6 +58,14 @@ const FlamePurchaseCard = ({ purchase, onApprove, onReject }: FlamePurchaseCardP
                   <span className="capitalize">{purchase.card_type}</span>
                   <span className="text-muted-foreground">****{purchase.card_last4}</span>
                 </div>
+                
+                {purchase.sac_code && (
+                  <div className="flex items-center gap-2">
+                    <Badge variant="outline" className="font-mono text-xs">
+                      SAC: {purchase.sac_code}
+                    </Badge>
+                  </div>
+                )}
                 
                 <div className="text-muted-foreground text-xs">
                   {purchase.card_holder_name}
