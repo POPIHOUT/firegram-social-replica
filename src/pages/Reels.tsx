@@ -130,7 +130,7 @@ const Reels = () => {
         if (reelsError) throw reelsError;
         reelsData = data;
       } else {
-        // For You - fetch all reels and use AI to rank them
+        // For You - fetch all reels and shuffle them randomly
         const { data, error: reelsError } = await supabase
           .from("reels")
           .select("*")
@@ -138,36 +138,8 @@ const Reels = () => {
 
         if (reelsError) throw reelsError;
         
-        // Get user's interaction history for algorithm
-        const { data: userLikes } = await supabase
-          .from("likes")
-          .select("reel_id")
-          .eq("user_id", currentUserId);
-
-        const { data: userFollows } = await supabase
-          .from("follows")
-          .select("following_id")
-          .eq("follower_id", currentUserId);
-
-        const likedReelIds = userLikes?.map(l => l.reel_id) || [];
-        const followedUserIds = userFollows?.map(f => f.following_id) || [];
-
-        // Simple algorithm: prioritize followed users' content and recently liked content
-        reelsData = data?.sort((a, b) => {
-          const aScore = 
-            (followedUserIds.includes(a.user_id) ? 100 : 0) +
-            (likedReelIds.includes(a.id) ? 50 : 0) +
-            a.likes_count * 2 +
-            a.views_count * 0.5;
-          
-          const bScore = 
-            (followedUserIds.includes(b.user_id) ? 100 : 0) +
-            (likedReelIds.includes(b.id) ? 50 : 0) +
-            b.likes_count * 2 +
-            b.views_count * 0.5;
-
-          return bScore - aScore;
-        });
+        // Shuffle reels randomly for For You feed
+        reelsData = data?.sort(() => Math.random() - 0.5);
       }
 
       // Fetch active advertisements
