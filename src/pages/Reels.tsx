@@ -29,6 +29,8 @@ const Reels = () => {
   const [profiles, setProfiles] = useState<Record<string, Profile>>({});
   const [activeReelId, setActiveReelId] = useState<string | null>(null);
   const [isAdActive, setIsAdActive] = useState(false);
+  const [activeTab, setActiveTab] = useState<"foryou" | "friends">("foryou");
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const observerRef = useRef<IntersectionObserver | null>(null);
   const reelRefs = useRef<Record<string, HTMLDivElement | null>>({});
@@ -37,8 +39,13 @@ const Reels = () => {
 
   useEffect(() => {
     checkAuth();
-    fetchReelsWithAds();
   }, []);
+
+  useEffect(() => {
+    if (currentUserId) {
+      fetchReelsWithAds();
+    }
+  }, [activeTab, currentUserId]);
 
   useEffect(() => {
     // Setup IntersectionObserver for autoplay
@@ -92,18 +99,80 @@ const Reels = () => {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) {
       navigate("/auth");
+    } else {
+      setCurrentUserId(session.user.id);
     }
   };
 
   const fetchReelsWithAds = async () => {
+    if (!currentUserId) return;
+    
     try {
-      // Fetch reels
-      const { data: reelsData, error: reelsError } = await supabase
-        .from("reels")
-        .select("*")
-        .order("created_at", { ascending: false });
+      let reelsData;
+      
+      if (activeTab === "friends") {
+        // Fetch reels only from followed users
+        const { data: followedUsers } = await supabase
+          .from("follows")
+          .select("following_id")
+          .eq("follower_id", currentUserId);
 
-      if (reelsError) throw reelsError;
+        if (!followedUsers || followedUsers.length === 0) {
+          setReels([]);
+          setLoading(false);
+          return;
+        }
+
+        const followedIds = followedUsers.map(f => f.following_id);
+        
+        const { data, error: reelsError } = await supabase
+          .from("reels")
+          .select("*")
+          .in("user_id", followedIds)
+          .order("created_at", { ascending: false });
+
+        if (reelsError) throw reelsError;
+        reelsData = data;
+      } else {
+        // For You - fetch all reels and use AI to rank them
+        const { data, error: reelsError } = await supabase
+          .from("reels")
+          .select("*")
+          .order("created_at", { ascending: false });
+
+        if (reelsError) throw reelsError;
+        
+        // Get user's interaction history for algorithm
+        const { data: userLikes } = await supabase
+          .from("likes")
+          .select("reel_id")
+          .eq("user_id", currentUserId);
+
+        const { data: userFollows } = await supabase
+          .from("follows")
+          .select("following_id")
+          .eq("follower_id", currentUserId);
+
+        const likedReelIds = userLikes?.map(l => l.reel_id) || [];
+        const followedUserIds = userFollows?.map(f => f.following_id) || [];
+
+        // Simple algorithm: prioritize followed users' content and recently liked content
+        reelsData = data?.sort((a, b) => {
+          const aScore = 
+            (followedUserIds.includes(a.user_id) ? 100 : 0) +
+            (likedReelIds.includes(a.id) ? 50 : 0) +
+            a.likes_count * 2 +
+            a.views_count * 0.5;
+          
+          const bScore = 
+            (followedUserIds.includes(b.user_id) ? 100 : 0) +
+            (likedReelIds.includes(b.id) ? 50 : 0) +
+            b.likes_count * 2 +
+            b.views_count * 0.5;
+
+          return bScore - aScore;
+        });
+      }
 
       // Fetch active advertisements
       const { data: adsData, error: adsError } = await supabase
@@ -209,10 +278,43 @@ const Reels = () => {
     return (
       <div className="min-h-screen bg-black">
         <Navigation />
-        <main className="flex items-center justify-center h-screen">
+        
+        {/* Tab Navigation */}
+        <div className="fixed top-16 left-0 right-0 z-30 bg-black/80 backdrop-blur-sm border-b border-border">
+          <div className="flex">
+            <button
+              onClick={() => setActiveTab("foryou")}
+              className={`flex-1 py-3 text-sm font-semibold transition-colors ${
+                activeTab === "foryou"
+                  ? "text-white border-b-2 border-primary"
+                  : "text-white/60 hover:text-white/80"
+              }`}
+            >
+              For You
+            </button>
+            <button
+              onClick={() => setActiveTab("friends")}
+              className={`flex-1 py-3 text-sm font-semibold transition-colors ${
+                activeTab === "friends"
+                  ? "text-white border-b-2 border-primary"
+                  : "text-white/60 hover:text-white/80"
+              }`}
+            >
+              Friends
+            </button>
+          </div>
+        </div>
+        
+        <main className="flex items-center justify-center h-screen pt-16">
           <div className="text-center">
-            <h2 className="text-2xl font-bold text-white mb-4">No reels yet</h2>
-            <p className="text-white/60">Be the first to add a reel 🔥</p>
+            <h2 className="text-2xl font-bold text-white mb-4">
+              {activeTab === "friends" ? "No reels from friends" : "No reels yet"}
+            </h2>
+            <p className="text-white/60">
+              {activeTab === "friends" 
+                ? "Follow people to see their reels here 👥" 
+                : "Be the first to add a reel 🔥"}
+            </p>
           </div>
         </main>
       </div>
@@ -222,10 +324,37 @@ const Reels = () => {
   return (
     <div className="min-h-screen bg-black">
       <Navigation />
+      
+      {/* Tab Navigation */}
+      <div className="fixed top-16 left-0 right-0 z-30 bg-black/80 backdrop-blur-sm border-b border-border">
+        <div className="flex">
+          <button
+            onClick={() => setActiveTab("foryou")}
+            className={`flex-1 py-3 text-sm font-semibold transition-colors ${
+              activeTab === "foryou"
+                ? "text-white border-b-2 border-primary"
+                : "text-white/60 hover:text-white/80"
+            }`}
+          >
+            For You
+          </button>
+          <button
+            onClick={() => setActiveTab("friends")}
+            className={`flex-1 py-3 text-sm font-semibold transition-colors ${
+              activeTab === "friends"
+                ? "text-white border-b-2 border-primary"
+                : "text-white/60 hover:text-white/80"
+            }`}
+          >
+            Friends
+          </button>
+        </div>
+      </div>
+
       <div
         ref={containerRef}
-        className="h-screen overflow-y-scroll snap-y snap-mandatory"
-        style={{ 
+        className="h-screen overflow-y-scroll snap-y snap-mandatory pt-16"
+        style={{
           scrollbarWidth: 'none', 
           msOverflowStyle: 'none',
           scrollBehavior: 'smooth',
