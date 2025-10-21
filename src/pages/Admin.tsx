@@ -12,7 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
-import { Shield, Users, FileText, Film, Ban, Clock, Trash2, CheckCircle, XCircle, Loader2, Settings, Megaphone, Flame, DollarSign } from "lucide-react";
+import { Shield, Users, FileText, Film, Ban, Clock, Trash2, CheckCircle, XCircle, Loader2, Settings, Megaphone, Flame, DollarSign, Crown } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { formatDistanceToNow } from "date-fns";
 import FlamePurchaseCard from "@/components/FlamePurchaseCard";
@@ -126,11 +126,13 @@ const Admin = () => {
   const [consoleOutput, setConsoleOutput] = useState<string[]>([]);
   const [announcementMessage, setAnnouncementMessage] = useState("");
   const [sendingAnnouncement, setSendingAnnouncement] = useState(false);
+  const [userRole, setUserRole] = useState<string | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
 
   useEffect(() => {
     checkAdminAccess();
+    fetchUserRole();
   }, []);
 
   const checkAdminAccess = async () => {
@@ -157,6 +159,23 @@ const Admin = () => {
     }
 
     fetchData();
+  };
+
+  const fetchUserRole = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    const { data: roles } = await supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", user.id);
+
+    if (roles && roles.length > 0) {
+      const systemManager = roles.find(r => r.role === 'system_manager');
+      if (systemManager) {
+        setUserRole('System Manager');
+      }
+    }
   };
 
   const handleAddFlames = async (userId?: string, amount?: number) => {
@@ -820,9 +839,17 @@ const Admin = () => {
 
       <main className="max-w-7xl mx-auto pt-16 sm:pt-20 px-3 sm:px-4 pb-20 sm:pb-24">
         <div className="space-y-4 sm:space-y-6">
-          <div className="flex items-center gap-2 sm:gap-3">
-            <Shield className="w-6 h-6 sm:w-8 sm:h-8 text-primary" />
-            <h1 className="text-2xl sm:text-3xl font-bold">Admin Panel</h1>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <Shield className="w-6 h-6 sm:w-8 sm:h-8 text-primary" />
+              <h1 className="text-2xl sm:text-3xl font-bold">Admin Panel</h1>
+            </div>
+            {userRole && (
+              <Badge variant="default" className="flex items-center gap-2 px-3 py-1.5 text-sm">
+                <Crown className="w-4 h-4" />
+                {userRole}
+              </Badge>
+            )}
           </div>
 
           {consoleMode && (
