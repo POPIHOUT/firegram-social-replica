@@ -94,7 +94,9 @@ const FirePay = () => {
         description: "Your purchase is pending admin approval. You'll receive the flames once approved.",
       });
 
-      navigate("/");
+      setTimeout(() => {
+        navigate("/feed");
+      }, 1500);
     } catch (error: any) {
       console.error("Error submitting purchase:", error);
       toast({

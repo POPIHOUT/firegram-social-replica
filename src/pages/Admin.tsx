@@ -117,6 +117,9 @@ const Admin = () => {
   const [selectedPurchase, setSelectedPurchase] = useState<FlamePurchase | null>(null);
   const [rejectReason, setRejectReason] = useState("");
   const [stats, setStats] = useState({ users: 0, posts: 0, reels: 0, ads: 0, pending_purchases: 0 });
+  const [consoleMode, setConsoleMode] = useState(false);
+  const [consoleInput, setConsoleInput] = useState("");
+  const [consoleOutput, setConsoleOutput] = useState<string[]>([]);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -150,21 +153,27 @@ const Admin = () => {
     fetchData();
   };
 
-  const handleAddFlames = async () => {
-    if (!selectedUser || !flamesAmount || isNaN(parseInt(flamesAmount))) {
+  const handleAddFlames = async (userId?: string, amount?: number) => {
+    const targetUserId = userId || selectedUser?.id;
+    const targetAmount = amount || parseInt(flamesAmount);
+    const targetUser = users.find(u => u.id === targetUserId) || selectedUser;
+
+    if (!targetUserId || !targetAmount || isNaN(targetAmount)) {
       toast({ title: "Invalid amount", description: "Please enter a valid number", variant: "destructive" });
       return;
     }
 
     try {
-      const newAmount = selectedUser.flames + parseInt(flamesAmount);
-      const { error } = await supabase.from("profiles").update({ flames: newAmount }).eq("id", selectedUser.id);
+      const currentFlames = targetUser?.flames || 0;
+      const newAmount = currentFlames + targetAmount;
+      const { error } = await supabase.from("profiles").update({ flames: newAmount }).eq("id", targetUserId);
       if (error) throw error;
 
-      toast({ title: "Flames Added", description: `Added ${flamesAmount} flames to ${selectedUser.username}` });
+      toast({ title: "Flames Added", description: `Added ${targetAmount} flames to ${targetUser?.username}` });
       
-      // Update selectedUser with new flames amount
-      setSelectedUser({ ...selectedUser, flames: newAmount });
+      if (selectedUser && selectedUser.id === targetUserId) {
+        setSelectedUser({ ...selectedUser, flames: newAmount });
+      }
       setFlamesAmount("");
       await fetchData();
     } catch (error: any) {
@@ -172,21 +181,27 @@ const Admin = () => {
     }
   };
 
-  const handleRemoveFlames = async () => {
-    if (!selectedUser || !flamesAmount || isNaN(parseInt(flamesAmount))) {
+  const handleRemoveFlames = async (userId?: string, amount?: number) => {
+    const targetUserId = userId || selectedUser?.id;
+    const targetAmount = amount || parseInt(flamesAmount);
+    const targetUser = users.find(u => u.id === targetUserId) || selectedUser;
+
+    if (!targetUserId || !targetAmount || isNaN(targetAmount)) {
       toast({ title: "Invalid amount", description: "Please enter a valid number", variant: "destructive" });
       return;
     }
 
     try {
-      const newAmount = Math.max(0, selectedUser.flames - parseInt(flamesAmount));
-      const { error } = await supabase.from("profiles").update({ flames: newAmount }).eq("id", selectedUser.id);
+      const currentFlames = targetUser?.flames || 0;
+      const newAmount = Math.max(0, currentFlames - targetAmount);
+      const { error } = await supabase.from("profiles").update({ flames: newAmount }).eq("id", targetUserId);
       if (error) throw error;
 
-      toast({ title: "Flames Removed", description: `Removed ${flamesAmount} flames from ${selectedUser.username}` });
+      toast({ title: "Flames Removed", description: `Removed ${targetAmount} flames from ${targetUser?.username}` });
       
-      // Update selectedUser with new flames amount
-      setSelectedUser({ ...selectedUser, flames: newAmount });
+      if (selectedUser && selectedUser.id === targetUserId) {
+        setSelectedUser({ ...selectedUser, flames: newAmount });
+      }
       setFlamesAmount("");
       await fetchData();
     } catch (error: any) {
@@ -194,13 +209,17 @@ const Admin = () => {
     }
   };
 
-  const handleGiveFakeFollowers = async () => {
-    if (!selectedUser || !followersAmount || isNaN(parseInt(followersAmount))) {
+  const handleGiveFakeFollowers = async (userId?: string, amount?: number) => {
+    const targetUserId = userId || selectedUser?.id;
+    const targetAmount = amount || parseInt(followersAmount);
+    const targetUser = users.find(u => u.id === targetUserId) || selectedUser;
+
+    if (!targetUserId || !targetAmount || isNaN(targetAmount)) {
       toast({ title: "Invalid amount", description: "Please enter a valid number", variant: "destructive" });
       return;
     }
 
-    const count = parseInt(followersAmount);
+    const count = targetAmount;
     try {
       // Create fake user profiles and follow relationships
       const fakeUsers = [];
@@ -228,7 +247,7 @@ const Admin = () => {
           .from("follows")
           .insert({
             follower_id: randomId,
-            following_id: selectedUser.id,
+            following_id: targetUserId,
           });
 
         if (followError) {
@@ -240,7 +259,7 @@ const Admin = () => {
 
       toast({ 
         title: "Fake Followers Added", 
-        description: `Successfully added ${fakeUsers.length} fake followers to ${selectedUser.username}`,
+        description: `Successfully added ${fakeUsers.length} fake followers to ${targetUser?.username}`,
         duration: 5000,
       });
       
@@ -294,25 +313,61 @@ const Admin = () => {
     }
   };
 
+  const handleBan = async (userId: string, reason: string) => {
+    try {
+      const { error } = await supabase
+        .from("profiles")
+        .update({ banned: true, ban_reason: reason })
+        .eq("id", userId);
+
+      if (error) throw error;
+
+      const user = users.find(u => u.id === userId);
+      toast({
+        title: "User Banned",
+        description: `${user?.username} has been banned`,
+      });
+
+      await fetchData();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleBanUser = async () => {
     if (!selectedUser || !banReason.trim()) return;
+    await handleBan(selectedUser.id, banReason);
+    setBanDialogOpen(false);
+    setBanReason("");
+  };
+
+  const handleSuspend = async (userId: string, days: number, reason: string) => {
+    const suspendUntil = new Date();
+    suspendUntil.setDate(suspendUntil.getDate() + days);
 
     try {
       const { error } = await supabase
         .from("profiles")
-        .update({ banned: true, ban_reason: banReason })
-        .eq("id", selectedUser.id);
+        .update({
+          suspended: true,
+          suspended_until: suspendUntil.toISOString(),
+          suspended_reason: reason,
+        })
+        .eq("id", userId);
 
       if (error) throw error;
 
+      const user = users.find(u => u.id === userId);
       toast({
-        title: "User Banned",
-        description: `${selectedUser.username} has been banned`,
+        title: "User Suspended",
+        description: `${user?.username} has been suspended for ${days} days`,
       });
 
-      setBanDialogOpen(false);
-      setBanReason("");
-      fetchData();
+      await fetchData();
     } catch (error: any) {
       toast({
         title: "Error",
@@ -324,40 +379,12 @@ const Admin = () => {
 
   const handleSuspendUser = async () => {
     if (!selectedUser || !suspendReason.trim()) return;
-
-    const suspendUntil = new Date();
-    suspendUntil.setDate(suspendUntil.getDate() + suspendDays);
-
-    try {
-      const { error } = await supabase
-        .from("profiles")
-        .update({
-          suspended: true,
-          suspended_until: suspendUntil.toISOString(),
-          suspended_reason: suspendReason,
-        })
-        .eq("id", selectedUser.id);
-
-      if (error) throw error;
-
-      toast({
-        title: "User Suspended",
-        description: `${selectedUser.username} has been suspended for ${suspendDays} days`,
-      });
-
-      setSuspendDialogOpen(false);
-      setSuspendReason("");
-      fetchData();
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
-    }
+    await handleSuspend(selectedUser.id, suspendDays, suspendReason);
+    setSuspendDialogOpen(false);
+    setSuspendReason("");
   };
 
-  const handleUnbanUser = async (userId: string) => {
+  const handleUnban = async (userId: string) => {
     try {
       const { error } = await supabase
         .from("profiles")
@@ -371,7 +398,7 @@ const Admin = () => {
         description: "User has been unbanned successfully",
       });
 
-      fetchData();
+      await fetchData();
     } catch (error: any) {
       toast({
         title: "Error",
@@ -381,7 +408,11 @@ const Admin = () => {
     }
   };
 
-  const handleUnsuspendUser = async (userId: string) => {
+  const handleUnbanUser = async (userId: string) => {
+    await handleUnban(userId);
+  };
+
+  const handleUnsuspend = async (userId: string) => {
     try {
       const { error } = await supabase
         .from("profiles")
@@ -395,7 +426,7 @@ const Admin = () => {
         description: "User has been unsuspended successfully",
       });
 
-      fetchData();
+      await fetchData();
     } catch (error: any) {
       toast({
         title: "Error",
@@ -403,6 +434,10 @@ const Admin = () => {
         variant: "destructive",
       });
     }
+  };
+
+  const handleUnsuspendUser = async (userId: string) => {
+    await handleUnsuspend(userId);
   };
 
   const handleDeletePost = async (postId: string) => {
@@ -580,6 +615,138 @@ const Admin = () => {
     }
   };
 
+  const executeCommand = async (command: string) => {
+    const parts = command.trim().split(" ");
+    const cmd = parts[0].toLowerCase();
+    
+    setConsoleOutput(prev => [...prev, `> ${command}`]);
+
+    try {
+      if (cmd === "/addflames" && parts.length >= 3) {
+        const username = parts[1];
+        const amount = parseInt(parts[2]);
+        const user = users.find(u => u.username === username);
+        if (!user) {
+          setConsoleOutput(prev => [...prev, "Error: User not found"]);
+          return;
+        }
+        await handleAddFlames(user.id, amount);
+        setConsoleOutput(prev => [...prev, `Success: Added ${amount} flames to ${username}`]);
+      } else if (cmd === "/removeflames" && parts.length >= 3) {
+        const username = parts[1];
+        const amount = parseInt(parts[2]);
+        const user = users.find(u => u.username === username);
+        if (!user) {
+          setConsoleOutput(prev => [...prev, "Error: User not found"]);
+          return;
+        }
+        await handleRemoveFlames(user.id, amount);
+        setConsoleOutput(prev => [...prev, `Success: Removed ${amount} flames from ${username}`]);
+      } else if (cmd === "/givefakefollowers" && parts.length >= 3) {
+        const username = parts[1];
+        const amount = parseInt(parts[2]);
+        const user = users.find(u => u.username === username);
+        if (!user) {
+          setConsoleOutput(prev => [...prev, "Error: User not found"]);
+          return;
+        }
+        await handleGiveFakeFollowers(user.id, amount);
+        setConsoleOutput(prev => [...prev, `Success: Added ${amount} fake followers to ${username}`]);
+      } else if (cmd === "/ban" && parts.length >= 3) {
+        const username = parts[1];
+        const reason = parts.slice(2).join(" ");
+        const user = users.find(u => u.username === username);
+        if (!user) {
+          setConsoleOutput(prev => [...prev, "Error: User not found"]);
+          return;
+        }
+        await handleBan(user.id, reason);
+        setConsoleOutput(prev => [...prev, `Success: Banned ${username}`]);
+      } else if (cmd === "/suspend" && parts.length >= 4) {
+        const username = parts[1];
+        const days = parseInt(parts[2]);
+        const reason = parts.slice(3).join(" ");
+        const user = users.find(u => u.username === username);
+        if (!user) {
+          setConsoleOutput(prev => [...prev, "Error: User not found"]);
+          return;
+        }
+        await handleSuspend(user.id, days, reason);
+        setConsoleOutput(prev => [...prev, `Success: Suspended ${username} for ${days} days`]);
+      } else if (cmd === "/unban" && parts.length >= 2) {
+        const username = parts[1];
+        const user = users.find(u => u.username === username);
+        if (!user) {
+          setConsoleOutput(prev => [...prev, "Error: User not found"]);
+          return;
+        }
+        await handleUnban(user.id);
+        setConsoleOutput(prev => [...prev, `Success: Unbanned ${username}`]);
+      } else if (cmd === "/unsuspend" && parts.length >= 2) {
+        const username = parts[1];
+        const user = users.find(u => u.username === username);
+        if (!user) {
+          setConsoleOutput(prev => [...prev, "Error: User not found"]);
+          return;
+        }
+        await handleUnsuspend(user.id);
+        setConsoleOutput(prev => [...prev, `Success: Unsuspended ${username}`]);
+      } else if (cmd === "/deletepost" && parts.length >= 2) {
+        const postId = parts[1];
+        await handleDeletePost(postId);
+        setConsoleOutput(prev => [...prev, `Success: Deleted post ${postId}`]);
+      } else if (cmd === "/deletereel" && parts.length >= 2) {
+        const reelId = parts[1];
+        await handleDeleteReel(reelId);
+        setConsoleOutput(prev => [...prev, `Success: Deleted reel ${reelId}`]);
+      } else if (cmd === "/togglead" && parts.length >= 2) {
+        const adId = parts[1];
+        const ad = advertisements.find(a => a.id === adId);
+        if (!ad) {
+          setConsoleOutput(prev => [...prev, "Error: Advertisement not found"]);
+          return;
+        }
+        await handleToggleAd(adId, ad.active);
+        setConsoleOutput(prev => [...prev, `Success: Toggled advertisement ${adId}`]);
+      } else if (cmd === "/deletead" && parts.length >= 2) {
+        const adId = parts[1];
+        await handleDeleteAd(adId);
+        setConsoleOutput(prev => [...prev, `Success: Deleted advertisement ${adId}`]);
+      } else if (cmd === "/help") {
+        setConsoleOutput(prev => [...prev, 
+          "Available commands:",
+          "/addflames <username> <amount>",
+          "/removeflames <username> <amount>",
+          "/givefakefollowers <username> <amount>",
+          "/ban <username> <reason>",
+          "/suspend <username> <days> <reason>",
+          "/unban <username>",
+          "/unsuspend <username>",
+          "/deletepost <postid>",
+          "/deletereel <reelid>",
+          "/togglead <adid>",
+          "/deletead <adid>",
+          "/clear - Clear console output",
+          "/help - Show this help"
+        ]);
+      } else if (cmd === "/clear") {
+        setConsoleOutput([]);
+      } else {
+        setConsoleOutput(prev => [...prev, "Error: Unknown command. Type /help for available commands"]);
+      }
+    } catch (error: any) {
+      setConsoleOutput(prev => [...prev, `Error: ${error.message}`]);
+    }
+  };
+
+  const handleConsoleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (consoleInput.trim()) {
+      executeCommand(consoleInput);
+      setConsoleInput("");
+    }
+  };
+
   const filteredUsers = users.filter(
     (user) =>
       user.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -597,12 +764,52 @@ const Admin = () => {
   return (
     <div className="min-h-screen pb-safe">
       <Navigation />
+      
+      <Button
+        variant="outline"
+        size="sm"
+        className="fixed top-20 right-4 z-50"
+        onClick={() => setConsoleMode(!consoleMode)}
+      >
+        {consoleMode ? "Normal Mode" : "Console Mode"}
+      </Button>
+
       <main className="max-w-7xl mx-auto pt-16 sm:pt-20 px-3 sm:px-4 pb-20 sm:pb-24">
         <div className="space-y-4 sm:space-y-6">
           <div className="flex items-center gap-2 sm:gap-3">
             <Shield className="w-6 h-6 sm:w-8 sm:h-8 text-primary" />
             <h1 className="text-2xl sm:text-3xl font-bold">Admin Panel</h1>
           </div>
+
+          {consoleMode && (
+            <Card className="bg-black text-green-400 font-mono border-green-500">
+              <CardHeader>
+                <CardTitle className="text-green-400">Console Mode</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="bg-black p-4 rounded border border-green-400 mb-4 h-64 overflow-y-auto">
+                  {consoleOutput.map((line, i) => (
+                    <div key={i} className="text-sm">{line}</div>
+                  ))}
+                </div>
+                <form onSubmit={handleConsoleSubmit} className="flex gap-2">
+                  <Input
+                    value={consoleInput}
+                    onChange={(e) => setConsoleInput(e.target.value)}
+                    placeholder="Type /help for available commands"
+                    className="bg-black border-green-400 text-green-400 placeholder:text-green-400/50"
+                    autoFocus
+                  />
+                  <Button type="submit" variant="outline" className="border-green-400 text-green-400 hover:bg-green-400 hover:text-black">
+                    Execute
+                  </Button>
+                </form>
+              </CardContent>
+            </Card>
+          )}
+
+          {!consoleMode && (
+            <>
 
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
             <Card>
@@ -966,6 +1173,8 @@ const Admin = () => {
               </div>
             </TabsContent>
           </Tabs>
+          </>
+          )}
         </div>
       </main>
 
@@ -1172,13 +1381,13 @@ const Admin = () => {
             </Button>
             <Button 
               variant="destructive"
-              onClick={handleRemoveFlames}
+              onClick={() => handleRemoveFlames()}
               disabled={!flamesAmount}
             >
               Remove
             </Button>
             <Button 
-              onClick={handleAddFlames}
+              onClick={() => handleAddFlames()}
               disabled={!flamesAmount}
               className="bg-orange-500 hover:bg-orange-600"
             >
@@ -1236,7 +1445,7 @@ const Admin = () => {
               Cancel
             </Button>
             <Button 
-              onClick={handleGiveFakeFollowers}
+              onClick={() => handleGiveFakeFollowers()}
               disabled={!followersAmount}
               className="bg-purple-500 hover:bg-purple-600"
             >
