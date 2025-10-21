@@ -27,7 +27,7 @@ export const UpdateLockScreen = ({ reason, lockedUntil, creatorUsername }: Updat
               <Lock className="w-12 h-12 text-destructive" />
             </div>
           </div>
-          <CardTitle className="text-2xl">Update Lock</CardTitle>
+          <CardTitle className="text-2xl">Server Lock</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4 text-center">
           <p className="text-muted-foreground">

@@ -105,7 +105,7 @@ export const UpdateLockManagement = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Lock className="w-5 h-5" />
-            Create Update Lock
+            Create Server Lock
           </CardTitle>
           <CardDescription>
             Lock the app for maintenance. Admins and Support can still access.

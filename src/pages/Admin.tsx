@@ -920,7 +920,7 @@ const Admin = () => {
                 SAC
               </TabsTrigger>
               <TabsTrigger value="update-lock" className="text-xs sm:text-sm">
-                Lock
+                Server Lock
               </TabsTrigger>
               <TabsTrigger value="update-info" className="text-xs sm:text-sm">
                 Info
