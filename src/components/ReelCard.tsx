@@ -80,22 +80,33 @@ const ReelCard = ({ reel, profile, isActive, onUpdate, onAdTimerComplete }: Reel
 
     // Start ad timer if this is an ad and it's active
     if (isActive && isAd) {
-      setAdTimer(5);
-      adTimerRef.current = setInterval(() => {
-        setAdTimer((prev) => {
-          if (prev <= 1) {
-            if (adTimerRef.current) {
-              clearInterval(adTimerRef.current);
+      // Image ads can be skipped immediately, video ads need 3 seconds
+      const timerDuration = reel.image_url ? 0 : 3;
+      setAdTimer(timerDuration);
+      
+      if (timerDuration === 0) {
+        // Notify parent immediately for image ads
+        if (onAdTimerComplete) {
+          onAdTimerComplete();
+        }
+      } else {
+        // Start countdown for video ads
+        adTimerRef.current = setInterval(() => {
+          setAdTimer((prev) => {
+            if (prev <= 1) {
+              if (adTimerRef.current) {
+                clearInterval(adTimerRef.current);
+              }
+              // Notify parent that ad timer is complete
+              if (onAdTimerComplete) {
+                onAdTimerComplete();
+              }
+              return 0;
             }
-            // Notify parent that ad timer is complete
-            if (onAdTimerComplete) {
-              onAdTimerComplete();
-            }
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
+            return prev - 1;
+          });
+        }, 1000);
+      }
     } else {
       if (adTimerRef.current) {
         clearInterval(adTimerRef.current);
