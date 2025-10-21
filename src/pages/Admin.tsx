@@ -245,47 +245,17 @@ const Admin = () => {
       return;
     }
 
-    const count = targetAmount;
     try {
-      // Create fake user profiles and follow relationships
-      const fakeUsers = [];
-      for (let i = 0; i < count; i++) {
-        const randomId = crypto.randomUUID();
-        const randomUsername = `user_${Math.random().toString(36).substring(2, 10)}`;
-        
-        // Create fake profile
-        const { error: profileError } = await supabase
-          .from("profiles")
-          .insert({
-            id: randomId,
-            username: randomUsername,
-            full_name: `Fake User ${i + 1}`,
-            avatar_url: `https://api.dicebear.com/7.x/avataaars/svg?seed=${randomUsername}`,
-          });
+      const { data, error } = await supabase.rpc('give_fake_followers', {
+        target_user_id: targetUserId,
+        follower_count: targetAmount
+      });
 
-        if (profileError) {
-          console.error("Error creating fake profile:", profileError);
-          continue;
-        }
-
-        // Create follow relationship
-        const { error: followError } = await supabase
-          .from("follows")
-          .insert({
-            follower_id: randomId,
-            following_id: targetUserId,
-          });
-
-        if (followError) {
-          console.error("Error creating follow relationship:", followError);
-        }
-
-        fakeUsers.push(randomUsername);
-      }
+      if (error) throw error;
 
       toast({ 
         title: "Fake Followers Added", 
-        description: `Successfully added ${fakeUsers.length} fake followers to ${targetUser?.username}`,
+        description: `Successfully added ${data} fake followers to ${targetUser?.username}`,
         duration: 5000,
       });
       

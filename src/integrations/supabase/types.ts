@@ -983,6 +983,10 @@ export type Database = {
           user_id: string
         }[]
       }
+      give_fake_followers: {
+        Args: { follower_count: number; target_user_id: string }
+        Returns: number
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
