@@ -322,7 +322,7 @@ const Profile = () => {
       )}
       
       {/* Fire Effect Overlay */}
-      {(showFireEffect || fireInBackground) && (
+      {(showFireEffect || fireInBackground) && !selectedEffect && (
         <div 
           className={`fixed inset-0 pointer-events-none transition-all duration-1000 ${
             fireInBackground ? 'z-0 opacity-30' : 'z-50 opacity-100'
@@ -345,18 +345,23 @@ const Profile = () => {
         </div>
       )}
 
+      {/* Custom Effect Overlay */}
+      {selectedEffect && (
+        <ProfileEffect effectType={selectedEffect.type} icon={selectedEffect.icon} scope="screen" />
+      )}
+
 
       <main className="max-w-4xl mx-auto pt-16 sm:pt-20 px-3 sm:px-4 pb-20 sm:pb-24">
         <div className="space-y-4 sm:space-y-8">
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-8">
             <div className="relative mx-auto sm:mx-0">
-              <Avatar className="w-32 h-32 sm:w-40 sm:h-40">
+              <Avatar className="w-32 h-32 sm:w-40 sm:h-40 relative">
                 <AvatarImage src={profile.avatar_url} alt={profile.username} />
                 <AvatarFallback>{profile.username[0]?.toUpperCase()}</AvatarFallback>
+                {selectedEffect && (
+                  <ProfileEffect effectType={selectedEffect.type} icon={selectedEffect.icon} scope="avatar" />
+                )}
               </Avatar>
-              {selectedEffect && (
-                <ProfileEffect effectType={selectedEffect.type} icon={selectedEffect.icon} scope="avatar" />
-              )}
             </div>
 
 

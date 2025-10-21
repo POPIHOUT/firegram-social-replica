@@ -1,9 +1,109 @@
+import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Home, Film, PlusSquare, Search, MessageCircle, User } from "lucide-react";
+import { Home, Film, PlusSquare, Search, MessageCircle, User, Bell } from "lucide-react";
 import firegramLogo from "@/assets/firegram-logo.png";
+import { supabase } from "@/integrations/supabase/client";
+import NotificationsDialog from "./NotificationsDialog";
 
 const Navigation = () => {
   const location = useLocation();
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [notifications, setNotifications] = useState<any[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+
+  useEffect(() => {
+    checkAuth();
+  }, []);
+
+  useEffect(() => {
+    if (currentUserId) {
+      fetchNotifications();
+      
+      // Setup realtime subscription
+      const channel = supabase
+        .channel('notifications-changes')
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'notifications',
+            filter: `user_id=eq.${currentUserId}`
+          },
+          () => {
+            fetchNotifications();
+          }
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
+    }
+  }, [currentUserId]);
+
+  const checkAuth = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      setCurrentUserId(user.id);
+    }
+  };
+
+  const fetchNotifications = async () => {
+    if (!currentUserId) return;
+
+    try {
+      const { data, error } = await supabase
+        .from("notifications")
+        .select("*, from_profile:profiles!notifications_from_user_id_fkey(username, avatar_url, is_verified)")
+        .eq("user_id", currentUserId)
+        .order("created_at", { ascending: false })
+        .limit(50);
+
+      if (error) throw error;
+
+      if (data) {
+        setNotifications(data);
+        setUnreadCount(data.filter(n => !n.read).length);
+      }
+    } catch (error) {
+      console.error("Error fetching notifications:", error);
+    }
+  };
+
+  const handleMarkAsRead = async (notificationId: string) => {
+    try {
+      await supabase
+        .from("notifications")
+        .update({ read: true })
+        .eq("id", notificationId);
+
+      setNotifications(prev =>
+        prev.map(n => n.id === notificationId ? { ...n, read: true } : n)
+      );
+      setUnreadCount(prev => Math.max(0, prev - 1));
+    } catch (error) {
+      console.error("Error marking notification as read:", error);
+    }
+  };
+
+  const handleMarkAllAsRead = async () => {
+    if (!currentUserId) return;
+
+    try {
+      await supabase
+        .from("notifications")
+        .update({ read: true })
+        .eq("user_id", currentUserId)
+        .eq("read", false);
+
+      setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+      setUnreadCount(0);
+    } catch (error) {
+      console.error("Error marking all as read:", error);
+    }
+  };
 
   const navItems = [
     { path: "/feed", icon: Home, label: "Feed" },
@@ -34,6 +134,19 @@ const Navigation = () => {
             >
               <Search size={22} className="sm:w-6 sm:h-6" />
             </Link>
+            
+            <button
+              onClick={() => setNotificationsOpen(true)}
+              className="relative transition-colors touch-manipulation text-muted-foreground hover:text-foreground active:text-primary"
+            >
+              <Bell size={22} className="sm:w-6 sm:h-6" />
+              {unreadCount > 0 && (
+                <span className="absolute -top-1 -right-1 bg-destructive text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
+                  {unreadCount > 9 ? '9+' : unreadCount}
+                </span>
+              )}
+            </button>
+            
             <Link
               to="/messages"
               className={`transition-colors touch-manipulation ${
@@ -73,6 +186,14 @@ const Navigation = () => {
           </div>
         </div>
       </nav>
+      
+      <NotificationsDialog
+        open={notificationsOpen}
+        onOpenChange={setNotificationsOpen}
+        notifications={notifications}
+        onMarkAsRead={handleMarkAsRead}
+        onMarkAllAsRead={handleMarkAllAsRead}
+      />
     </>
   );
 };

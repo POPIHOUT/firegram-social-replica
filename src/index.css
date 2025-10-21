@@ -165,6 +165,46 @@ All colors MUST be HSL.
   }
 }
 
+@keyframes fall {
+  0% {
+    transform: translateY(-100px) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(100vh) rotate(360deg);
+    opacity: 0;
+  }
+}
+
+@keyframes twinkle {
+  0%, 100% {
+    opacity: 0.6;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.2);
+  }
+}
+
+@keyframes flash {
+  0%, 50%, 100% {
+    opacity: 0.6;
+  }
+  25%, 75% {
+    opacity: 1;
+  }
+}
+
+@keyframes neon-pulse {
+  0%, 100% {
+    filter: drop-shadow(0 0 10px hsl(280 100% 60%)) drop-shadow(0 0 20px hsl(280 100% 60%));
+  }
+  50% {
+    filter: drop-shadow(0 0 20px hsl(280 100% 60%)) drop-shadow(0 0 40px hsl(280 100% 60%));
+  }
+}
+
 @keyframes sway {
   0%, 100% {
     transform: translateX(0);
