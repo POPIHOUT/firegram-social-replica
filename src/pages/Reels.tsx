@@ -43,18 +43,28 @@ const Reels = () => {
     // Setup IntersectionObserver for autoplay
     observerRef.current = new IntersectionObserver(
       (entries) => {
+        // Find the entry with the highest intersection ratio
+        let mostVisibleEntry = entries[0];
+        let maxRatio = 0;
+        
         entries.forEach((entry) => {
-          if (entry.isIntersecting && entry.intersectionRatio >= 0.75) {
-            const reelId = entry.target.getAttribute('data-reel-id');
-            if (reelId) {
-              setActiveReelId(reelId);
-            }
+          if (entry.intersectionRatio > maxRatio) {
+            maxRatio = entry.intersectionRatio;
+            mostVisibleEntry = entry;
           }
         });
+
+        // Activate the most visible reel if it's at least 50% visible
+        if (mostVisibleEntry && mostVisibleEntry.intersectionRatio >= 0.5) {
+          const reelId = mostVisibleEntry.target.getAttribute('data-reel-id');
+          if (reelId && reelId !== activeReelId) {
+            setActiveReelId(reelId);
+          }
+        }
       },
       {
         root: null,
-        threshold: [0, 0.25, 0.5, 0.75, 1.0],
+        threshold: [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0],
         rootMargin: '0px',
       }
     );
@@ -71,7 +81,7 @@ const Reels = () => {
         observerRef.current.disconnect();
       }
     };
-  }, [reels]);
+  }, [reels, activeReelId]);
 
   const checkAuth = async () => {
     const { data: { session } } = await supabase.auth.getSession();
