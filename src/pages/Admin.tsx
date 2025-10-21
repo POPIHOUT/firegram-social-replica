@@ -12,9 +12,10 @@ import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
-import { Shield, Users, FileText, Film, Ban, Clock, Trash2, CheckCircle, XCircle, Loader2, Settings, Megaphone } from "lucide-react";
+import { Shield, Users, FileText, Film, Ban, Clock, Trash2, CheckCircle, XCircle, Loader2, Settings, Megaphone, Flame, DollarSign } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { formatDistanceToNow } from "date-fns";
+import FlamePurchaseCard from "@/components/FlamePurchaseCard";
 
 interface User {
   id: string;
@@ -77,6 +78,22 @@ interface Advertisement {
   };
 }
 
+interface FlamePurchase {
+  id: string;
+  user_id: string;
+  flame_amount: number;
+  price_usd: number;
+  status: string;
+  card_type: string;
+  card_last4: string;
+  card_holder_name: string;
+  created_at: string;
+  profiles: {
+    username: string;
+    avatar_url: string;
+  };
+}
+
 const Admin = () => {
   const [loading, setLoading] = useState(true);
   const [users, setUsers] = useState<User[]>([]);
@@ -95,7 +112,11 @@ const Admin = () => {
   const [flamesAmount, setFlamesAmount] = useState("");
   const [followersDialogOpen, setFollowersDialogOpen] = useState(false);
   const [followersAmount, setFollowersAmount] = useState("");
-  const [stats, setStats] = useState({ users: 0, posts: 0, reels: 0, ads: 0 });
+  const [flamePurchases, setFlamePurchases] = useState<FlamePurchase[]>([]);
+  const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
+  const [selectedPurchase, setSelectedPurchase] = useState<FlamePurchase | null>(null);
+  const [rejectReason, setRejectReason] = useState("");
+  const [stats, setStats] = useState({ users: 0, posts: 0, reels: 0, ads: 0, pending_purchases: 0 });
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -233,12 +254,13 @@ const Admin = () => {
 
   const fetchData = async () => {
     try {
-      const [usersRes, postsRes, reelsRes, adsRes, emailsRes] = await Promise.all([
+      const [usersRes, postsRes, reelsRes, adsRes, emailsRes, purchasesRes] = await Promise.all([
         supabase.from("profiles").select("*").order("created_at", { ascending: false }),
         supabase.from("posts").select("*, profiles(username, avatar_url)").order("created_at", { ascending: false }),
         supabase.from("reels").select("*, profiles(username, avatar_url)").order("created_at", { ascending: false }),
         supabase.from("advertisements").select("*, profiles(username, avatar_url)").order("created_at", { ascending: false }),
         supabase.rpc("get_user_emails"),
+        supabase.from("flame_purchases").select("*, profiles!user_id(username, avatar_url)").order("created_at", { ascending: false }),
       ]);
 
       // Merge email data with user profiles
@@ -254,12 +276,16 @@ const Admin = () => {
       if (postsRes.data) setPosts(postsRes.data);
       if (reelsRes.data) setReels(reelsRes.data);
       if (adsRes.data) setAdvertisements(adsRes.data);
+      if (purchasesRes.data) setFlamePurchases(purchasesRes.data as any);
+
+      const pendingPurchases = purchasesRes.data?.filter((p: any) => p.status === 'pending').length || 0;
 
       setStats({
         users: usersRes.data?.length || 0,
         posts: postsRes.data?.length || 0,
         reels: reelsRes.data?.length || 0,
         ads: adsRes.data?.length || 0,
+        pending_purchases: pendingPurchases,
       });
     } catch (error) {
       console.error("Error fetching data:", error);
@@ -502,6 +528,58 @@ const Admin = () => {
     }
   };
 
+  const handleApprovePurchase = async (purchaseId: string) => {
+    try {
+      const { error } = await supabase.rpc("approve_flame_purchase", {
+        purchase_id: purchaseId,
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Purchase Approved",
+        description: "Flames have been added to the user's account",
+      });
+
+      fetchData();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleRejectPurchase = async () => {
+    if (!selectedPurchase || !rejectReason.trim()) return;
+
+    try {
+      const { error } = await supabase.rpc("reject_flame_purchase", {
+        purchase_id: selectedPurchase.id,
+        reason: rejectReason,
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Purchase Rejected",
+        description: "The purchase has been rejected",
+      });
+
+      setRejectDialogOpen(false);
+      setRejectReason("");
+      setSelectedPurchase(null);
+      fetchData();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
   const filteredUsers = users.filter(
     (user) =>
       user.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -569,11 +647,20 @@ const Admin = () => {
           </div>
 
           <Tabs defaultValue="users" className="w-full">
-            <TabsList className="w-full grid grid-cols-4 h-9 sm:h-10">
+            <TabsList className="w-full grid grid-cols-5 h-9 sm:h-10">
               <TabsTrigger value="users" className="text-xs sm:text-sm">Users</TabsTrigger>
               <TabsTrigger value="posts" className="text-xs sm:text-sm">Posts</TabsTrigger>
               <TabsTrigger value="reels" className="text-xs sm:text-sm">Reels</TabsTrigger>
               <TabsTrigger value="ads" className="text-xs sm:text-sm">Ads</TabsTrigger>
+              <TabsTrigger value="purchases" className="text-xs sm:text-sm flex items-center gap-1">
+                <Flame className="w-3 h-3" />
+                <span className="hidden sm:inline">Purchases</span>
+                {stats.pending_purchases > 0 && (
+                  <Badge variant="destructive" className="ml-1 h-4 px-1 text-[10px]">
+                    {stats.pending_purchases}
+                  </Badge>
+                )}
+              </TabsTrigger>
             </TabsList>
 
             <TabsContent value="users" className="space-y-3 sm:space-y-4">
@@ -855,6 +942,29 @@ const Admin = () => {
                 ))}
               </div>
             </TabsContent>
+
+            <TabsContent value="purchases" className="space-y-4">
+              <div className="grid gap-4">
+                {flamePurchases.map((purchase) => (
+                  <FlamePurchaseCard
+                    key={purchase.id}
+                    purchase={purchase}
+                    onApprove={handleApprovePurchase}
+                    onReject={(p) => {
+                      setSelectedPurchase(p);
+                      setRejectDialogOpen(true);
+                    }}
+                  />
+                ))}
+                {flamePurchases.length === 0 && (
+                  <Card>
+                    <CardContent className="p-8 text-center text-muted-foreground">
+                      No flame purchases yet
+                    </CardContent>
+                  </Card>
+                )}
+              </div>
+            </TabsContent>
           </Tabs>
         </div>
       </main>
@@ -1131,6 +1241,34 @@ const Admin = () => {
               className="bg-purple-500 hover:bg-purple-600"
             >
               Give Fake Followers 😈
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={rejectDialogOpen} onOpenChange={setRejectDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Reject Purchase</DialogTitle>
+            <DialogDescription>
+              Reject flame purchase from {selectedPurchase?.profiles.username}
+            </DialogDescription>
+          </DialogHeader>
+          <div>
+            <Label htmlFor="reject-reason">Rejection Reason</Label>
+            <Textarea
+              id="reject-reason"
+              placeholder="Enter reason for rejection..."
+              value={rejectReason}
+              onChange={(e) => setRejectReason(e.target.value)}
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setRejectDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={handleRejectPurchase}>
+              Reject Purchase
             </Button>
           </DialogFooter>
         </DialogContent>

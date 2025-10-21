@@ -15,6 +15,7 @@ import Profile from "./pages/Profile";
 import Admin from "./pages/Admin";
 import Settings from "./pages/Settings";
 import Shop from "./pages/Shop";
+import FirePay from "./pages/FirePay";
 import NotFound from "./pages/NotFound";
 import FrameProcessor from "./pages/FrameProcessor";
 
@@ -39,6 +40,7 @@ const App = () => (
           <Route path="/profile/:userId" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
           <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
             <Route path="/shop" element={<ProtectedRoute><Shop /></ProtectedRoute>} />
+            <Route path="/firepay" element={<ProtectedRoute><FirePay /></ProtectedRoute>} />
             <Route path="/admin" element={<ProtectedRoute><Admin /></ProtectedRoute>} />
             <Route path="/frame-processor" element={<ProtectedRoute><FrameProcessor /></ProtectedRoute>} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

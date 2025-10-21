@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Upload, Loader2, X, Image as ImageIcon, Video as VideoIcon, Megaphone } from "lucide-react";
+import FlameShopDialog from "@/components/FlameShopDialog";
 
 const Create = () => {
   const [caption, setCaption] = useState("");
@@ -20,6 +21,7 @@ const Create = () => {
   const [thumbnail, setThumbnail] = useState<File | null>(null);
   const [thumbnailPreview, setThumbnailPreview] = useState<string>("");
   const [userFlames, setUserFlames] = useState(0);
+  const [shopDialogOpen, setShopDialogOpen] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -333,10 +335,13 @@ const Create = () => {
       <main className="max-w-2xl mx-auto pt-16 sm:pt-20 px-3 sm:px-4 pb-20 sm:pb-24">
         <div className="flex justify-between items-center mb-4 sm:mb-6">
           <h1 className="text-xl sm:text-2xl font-bold fire-text">Create Content</h1>
-          <div className="flex items-center gap-2 bg-orange-500/10 px-3 py-1.5 rounded-lg border border-orange-500/20">
+          <button
+            onClick={() => setShopDialogOpen(true)}
+            className="flex items-center gap-2 bg-orange-500/10 px-3 py-1.5 rounded-lg border border-orange-500/20 hover:bg-orange-500/20 transition-colors cursor-pointer"
+          >
             <span className="text-xl">🔥</span>
             <span className="font-bold text-base sm:text-lg">{userFlames}</span>
-          </div>
+          </button>
         </div>
 
         <Card className="p-4 sm:p-6 border-border bg-card">
@@ -798,8 +803,9 @@ const Create = () => {
             </TabsContent>
           </Tabs>
         </TabsContent>
-      </Tabs>
+          </Tabs>
         </Card>
+        <FlameShopDialog open={shopDialogOpen} onOpenChange={setShopDialogOpen} />
       </main>
     </div>
   );

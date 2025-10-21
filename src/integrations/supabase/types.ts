@@ -184,6 +184,66 @@ export type Database = {
         }
         Relationships: []
       }
+      flame_purchases: {
+        Row: {
+          card_holder_name: string
+          card_last4: string
+          card_type: string
+          created_at: string
+          flame_amount: number
+          id: string
+          price_usd: number
+          processed_at: string | null
+          processed_by: string | null
+          rejection_reason: string | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          card_holder_name: string
+          card_last4: string
+          card_type: string
+          created_at?: string
+          flame_amount: number
+          id?: string
+          price_usd: number
+          processed_at?: string | null
+          processed_by?: string | null
+          rejection_reason?: string | null
+          status?: string
+          user_id: string
+        }
+        Update: {
+          card_holder_name?: string
+          card_last4?: string
+          card_type?: string
+          created_at?: string
+          flame_amount?: number
+          id?: string
+          price_usd?: number
+          processed_at?: string | null
+          processed_by?: string | null
+          rejection_reason?: string | null
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "flame_purchases_processed_by_fkey"
+            columns: ["processed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "flame_purchases_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       follows: {
         Row: {
           created_at: string
@@ -715,6 +775,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      approve_flame_purchase: {
+        Args: { purchase_id: string }
+        Returns: undefined
+      }
       cancel_premium: {
         Args: Record<PropertyKey, never>
         Returns: undefined
@@ -752,6 +816,10 @@ export type Database = {
       }
       purchase_premium: {
         Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
+      reject_flame_purchase: {
+        Args: { purchase_id: string; reason: string }
         Returns: undefined
       }
     }
