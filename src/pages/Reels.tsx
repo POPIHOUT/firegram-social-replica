@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import Navigation from "@/components/Navigation";
@@ -27,9 +27,10 @@ const Reels = () => {
   const [loading, setLoading] = useState(true);
   const [reels, setReels] = useState<Reel[]>([]);
   const [profiles, setProfiles] = useState<Record<string, Profile>>({});
-  const [currentIndex, setCurrentIndex] = useState(0);
+  const [activeReelId, setActiveReelId] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const videoRefs = useRef<Record<number, HTMLVideoElement | null>>({});
+  const observerRef = useRef<IntersectionObserver | null>(null);
+  const reelRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -39,45 +40,38 @@ const Reels = () => {
   }, []);
 
   useEffect(() => {
-    const container = containerRef.current;
-    if (!container) return;
+    // Setup IntersectionObserver for autoplay
+    observerRef.current = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting && entry.intersectionRatio >= 0.75) {
+            const reelId = entry.target.getAttribute('data-reel-id');
+            if (reelId) {
+              setActiveReelId(reelId);
+            }
+          }
+        });
+      },
+      {
+        root: null,
+        threshold: [0, 0.25, 0.5, 0.75, 1.0],
+        rootMargin: '0px',
+      }
+    );
 
-    // Disable scroll during ads
-    const currentReel = reels[currentIndex];
-    if (currentReel?.type === "ad") {
-      container.style.overflow = "hidden";
-    } else {
-      container.style.overflow = "scroll";
-    }
+    // Observe all reel elements
+    Object.values(reelRefs.current).forEach((ref) => {
+      if (ref && observerRef.current) {
+        observerRef.current.observe(ref);
+      }
+    });
 
-    const handleScroll = () => {
-      const scrollTop = container.scrollTop;
-      const clientHeight = container.clientHeight;
-      const newIndex = Math.round(scrollTop / clientHeight);
-      
-      if (newIndex !== currentIndex) {
-        // Pause previous video
-        const prevVideo = videoRefs.current[currentIndex];
-        if (prevVideo) {
-          prevVideo.pause();
-        }
-        
-        // Play new video
-        const newVideo = videoRefs.current[newIndex];
-        if (newVideo) {
-          newVideo.play();
-        }
-        
-        setCurrentIndex(newIndex);
+    return () => {
+      if (observerRef.current) {
+        observerRef.current.disconnect();
       }
     };
-
-    container.addEventListener("scroll", handleScroll);
-    return () => {
-      container.removeEventListener("scroll", handleScroll);
-      container.style.overflow = "scroll";
-    };
-  }, [currentIndex, reels]);
+  }, [reels]);
 
   const checkAuth = async () => {
     const { data: { session } } = await supabase.auth.getSession();
@@ -164,18 +158,21 @@ const Reels = () => {
           setProfiles(profilesMap);
         }
 
-        // Scroll to initial reel if specified
+        // Set initial active reel
         const state = location.state as { initialReelId?: string } | null;
         if (state?.initialReelId) {
+          setActiveReelId(state.initialReelId);
           const index = mixedContent.findIndex(r => r.id === state.initialReelId);
           if (index !== -1) {
-            setCurrentIndex(index);
             setTimeout(() => {
               if (containerRef.current) {
                 containerRef.current.scrollTop = index * containerRef.current.clientHeight;
               }
             }, 100);
           }
+        } else if (mixedContent.length > 0) {
+          // Auto-activate first reel on load
+          setActiveReelId(mixedContent[0].id);
         }
       }
     } catch (error) {
@@ -225,14 +222,18 @@ const Reels = () => {
             display: none;
           }
         `}</style>
-        {reels.map((reel, index) => (
-          <ReelCard
+        {reels.map((reel) => (
+          <div
             key={reel.id}
-            reel={reel}
-            profile={profiles[reel.user_id] || { username: "User", avatar_url: null, is_verified: false }}
-            isActive={index === currentIndex}
-            videoRef={(el) => { videoRefs.current[index] = el; }}
-          />
+            ref={(el) => { reelRefs.current[reel.id] = el; }}
+            data-reel-id={reel.id}
+          >
+            <ReelCard
+              reel={reel}
+              profile={profiles[reel.user_id] || { username: "User", avatar_url: null, is_verified: false }}
+              isActive={activeReelId === reel.id}
+            />
+          </div>
         ))}
       </div>
     </div>

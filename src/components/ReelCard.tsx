@@ -27,10 +27,9 @@ interface ReelCardProps {
   };
   isActive: boolean;
   onUpdate?: () => void;
-  videoRef?: (el: HTMLVideoElement | null) => void;
 }
 
-const ReelCard = ({ reel, profile, isActive, onUpdate, videoRef }: ReelCardProps) => {
+const ReelCard = ({ reel, profile, isActive, onUpdate }: ReelCardProps) => {
   const [isLiked, setIsLiked] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
   const [likesCount, setLikesCount] = useState(reel.likes_count);
@@ -55,11 +54,12 @@ const ReelCard = ({ reel, profile, isActive, onUpdate, videoRef }: ReelCardProps
     if (video) {
       if (isActive && !isAd) {
         video.muted = false;
-        video.play();
+        video.currentTime = 0; // Reset to start
+        video.play().catch(err => console.log("Autoplay prevented:", err));
         setIsPlaying(true);
       } else {
-        video.muted = true;
         video.pause();
+        video.currentTime = 0; // Reset when not active
         setIsPlaying(false);
       }
     }
@@ -253,10 +253,7 @@ const ReelCard = ({ reel, profile, isActive, onUpdate, videoRef }: ReelCardProps
       ) : (
         // Regular video or video ad
         <video
-          ref={(el) => {
-            internalVideoRef.current = el;
-            if (videoRef) videoRef(el);
-          }}
+          ref={internalVideoRef}
           src={reel.video_url}
           loop
           playsInline
