@@ -82,21 +82,22 @@ const ReelCard = ({ reel, profile, isActive, onUpdate, onAdTimerComplete, onAdTi
     // Start ad timer if this is an ad and it's active
     if (isActive && isAd) {
       // Image ads can be skipped immediately (0s), video ads need 5 seconds
-      const timerDuration = reel.image_url ? 0 : 5;
+      const isImageAd = !!reel.image_url;
+      const timerDuration = isImageAd ? 0 : 5;
       setAdTimer(timerDuration);
       
-      // Notify parent if scroll should be blocked (only for video ads)
+      // For image ads, never block scroll. For video ads, block until timer completes
       if (onAdTimerStart) {
-        onAdTimerStart(timerDuration > 0);
+        onAdTimerStart(!isImageAd && timerDuration > 0);
       }
       
-      if (timerDuration === 0) {
-        // Notify parent immediately for image ads
+      if (isImageAd) {
+        // Image ads - immediately allow scrolling
         if (onAdTimerComplete) {
           onAdTimerComplete();
         }
       } else {
-        // Start countdown for video ads (5 seconds)
+        // Video ads - start countdown (5 seconds)
         adTimerRef.current = setInterval(() => {
           setAdTimer((prev) => {
             if (prev <= 1) {

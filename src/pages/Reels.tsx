@@ -251,8 +251,16 @@ const Reels = () => {
             }, 100);
           }
         } else if (mixedContent.length > 0) {
-          // Auto-activate first reel on load
-          setActiveReelId(mixedContent[0].id);
+          // Auto-activate first reel on load and force play
+          const firstReel = mixedContent[0];
+          setActiveReelId(firstReel.id);
+          
+          // Force initial scroll position
+          setTimeout(() => {
+            if (containerRef.current) {
+              containerRef.current.scrollTop = 0;
+            }
+          }, 50);
         }
       }
     } catch (error) {
