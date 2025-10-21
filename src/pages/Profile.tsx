@@ -347,7 +347,7 @@ const Profile = () => {
 
       {/* Custom Effect Overlay */}
       {selectedEffect && (
-        <ProfileEffect effectType={selectedEffect.type} icon={selectedEffect.icon} scope="screen" />
+        <ProfileEffect effectType={selectedEffect.type} icon={selectedEffect.icon} />
       )}
 
 
@@ -358,9 +358,6 @@ const Profile = () => {
               <Avatar className="w-32 h-32 sm:w-40 sm:h-40 relative">
                 <AvatarImage src={profile.avatar_url} alt={profile.username} />
                 <AvatarFallback>{profile.username[0]?.toUpperCase()}</AvatarFallback>
-                {selectedEffect && (
-                  <ProfileEffect effectType={selectedEffect.type} icon={selectedEffect.icon} scope="avatar" />
-                )}
               </Avatar>
             </div>
 

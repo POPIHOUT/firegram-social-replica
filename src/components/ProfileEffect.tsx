@@ -3,59 +3,11 @@ import React from "react";
 interface ProfileEffectProps {
   effectType: string;
   icon: string;
-  scope?: "screen" | "avatar";
 }
 
-// ProfileEffect can render different effect types based on effectType
-const ProfileEffect = ({ effectType, icon, scope = "screen" }: ProfileEffectProps) => {
-  if (scope === "avatar") {
-    // Edge-only ring around the avatar with effect-specific styling
-    return (
-      <div className="absolute inset-0 z-30 pointer-events-none">
-        {/* Animated gradient ring clipped to edges only */}
-        <div
-          className="absolute inset-0 rounded-full animate-spin"
-          style={{
-            background:
-              effectType === 'neon' 
-                ? "conic-gradient(from 0deg, hsl(280 100% 60%) 0%, hsl(200 100% 60%) 25%, hsl(280 100% 60%) 50%, hsl(200 100% 60%) 75%, hsl(280 100% 60%) 100%)"
-                : effectType === 'lightning'
-                ? "conic-gradient(from 0deg, hsl(50 100% 60%) 0%, hsl(200 100% 60%) 50%, hsl(50 100% 60%) 100%)"
-                : "conic-gradient(from 0deg, hsl(var(--primary)) 0%, hsl(var(--accent)) 25%, hsl(var(--primary)) 50%, hsl(var(--accent)) 75%, hsl(var(--primary)) 100%)",
-            WebkitMask:
-              "radial-gradient(farthest-side, transparent calc(100% - 6px), black 0)",
-            mask: "radial-gradient(farthest-side, transparent calc(100% - 6px), black 0)",
-            animationDuration: effectType === 'lightning' ? "3s" : "6s",
-            opacity: 0.8,
-          }}
-        />
-
-        {/* Small glow pulses distributed around the edge */}
-        {[...Array(8)].map((_, i) => {
-          const angle = (i / 8) * 2 * Math.PI;
-          const x = 50 + Math.cos(angle) * 44; // keep inside padding
-          const y = 50 + Math.sin(angle) * 44;
-          return (
-            <div
-              key={i}
-              className="absolute w-2 h-2 rounded-full shadow-[0_0_10px_hsl(var(--primary))]"
-              style={{
-                left: `${x}%`,
-                top: `${y}%`,
-                transform: "translate(-50%, -50%)",
-                background: effectType === 'neon' ? "hsl(280 100% 60%)" : effectType === 'lightning' ? "hsl(50 100% 60%)" : "hsl(var(--primary))",
-                opacity: 0.9,
-                animation: "pulse 2s ease-in-out infinite",
-                animationDelay: `${i * 0.2}s`,
-              }}
-            />
-          );
-        })}
-      </div>
-    );
-  }
-
-  // Default: full-screen particle overlay with varied effects
+// ProfileEffect renders particle animation overlays based on effectType
+const ProfileEffect = ({ effectType, icon }: ProfileEffectProps) => {
+  // Full-screen particle overlay with varied effects
   const getEffectStyles = () => {
     switch (effectType) {
       case 'hearts':
