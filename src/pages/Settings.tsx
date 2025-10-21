@@ -504,7 +504,7 @@ const Settings = () => {
                   <div className="space-y-4 p-4 bg-muted rounded-lg">
                     <div className="flex items-center justify-between">
                       <div>
-                        <Label htmlFor="fire-effect">Show fire effect to myself</Label>
+                        <Label htmlFor="fire-effect">Fire Effect Visibility</Label>
                         <p className="text-xs text-muted-foreground">Only you can toggle this - others always see your fire effect</p>
                       </div>
                       <Switch
