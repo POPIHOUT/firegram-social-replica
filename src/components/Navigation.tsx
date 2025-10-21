@@ -17,6 +17,13 @@ const Navigation = () => {
   }, []);
 
   useEffect(() => {
+    // Request notification permission
+    if ('Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission();
+    }
+  }, []);
+
+  useEffect(() => {
     if (currentUserId) {
       fetchNotifications();
       
@@ -26,13 +33,50 @@ const Navigation = () => {
         .on(
           'postgres_changes',
           {
-            event: '*',
+            event: 'INSERT',
             schema: 'public',
             table: 'notifications',
             filter: `user_id=eq.${currentUserId}`
           },
-          () => {
-            fetchNotifications();
+          async (payload) => {
+            // Fetch the new notification with profile data
+            const { data: newNotification } = await supabase
+              .from("notifications")
+              .select("*, from_profile:profiles!notifications_from_user_id_fkey(username, avatar_url, is_verified)")
+              .eq("id", payload.new.id)
+              .single();
+
+            if (newNotification) {
+              // Add to notifications list
+              setNotifications(prev => [newNotification, ...prev]);
+              setUnreadCount(prev => prev + 1);
+
+              // Send browser notification
+              if ('Notification' in window && Notification.permission === 'granted') {
+                const username = newNotification.from_profile?.username || "Someone";
+                let message = "";
+                
+                switch (newNotification.type) {
+                  case "follow":
+                    message = `${username} started following you`;
+                    break;
+                  case "like":
+                    message = `${username} liked your post`;
+                    break;
+                  case "comment":
+                    message = `${username} commented on your post`;
+                    break;
+                  default:
+                    message = newNotification.message || "New notification";
+                }
+
+                new Notification("Firegram", {
+                  body: message,
+                  icon: "/favicon.png",
+                  badge: "/favicon.png",
+                });
+              }
+            }
           }
         )
         .subscribe();

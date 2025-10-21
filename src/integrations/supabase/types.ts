@@ -318,7 +318,6 @@ export type Database = {
           created_at: string
           from_user_id: string | null
           id: string
-          is_read: boolean | null
           message: string | null
           post_id: string | null
           read: boolean
@@ -330,7 +329,6 @@ export type Database = {
           created_at?: string
           from_user_id?: string | null
           id?: string
-          is_read?: boolean | null
           message?: string | null
           post_id?: string | null
           read?: boolean
@@ -342,7 +340,6 @@ export type Database = {
           created_at?: string
           from_user_id?: string | null
           id?: string
-          is_read?: boolean | null
           message?: string | null
           post_id?: string | null
           read?: boolean
