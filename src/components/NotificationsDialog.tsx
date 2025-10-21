@@ -58,6 +58,9 @@ const NotificationsDialog = ({
     } else if (notification.type === "message" && notification.conversation_id) {
       navigate(`/messages/${notification.conversation_id}`);
       onOpenChange(false);
+    } else if (notification.type === "purchase_approved" || notification.type === "purchase_rejected") {
+      navigate("/create");
+      onOpenChange(false);
     }
   };
 
@@ -72,6 +75,9 @@ const NotificationsDialog = ({
         return `${username} commented on your post`;
       case "message":
         return `${username} sent you a message`;
+      case "purchase_approved":
+      case "purchase_rejected":
+        return notification.message || "Purchase status updated";
       default:
         return notification.message || "New notification";
     }

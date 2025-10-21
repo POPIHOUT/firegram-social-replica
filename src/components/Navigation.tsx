@@ -69,6 +69,10 @@ const Navigation = () => {
                   case "message":
                     message = `${username} sent you a message`;
                     break;
+                  case "purchase_approved":
+                  case "purchase_rejected":
+                    message = newNotification.message || "Purchase status updated";
+                    break;
                   default:
                     message = newNotification.message || "New notification";
                 }
