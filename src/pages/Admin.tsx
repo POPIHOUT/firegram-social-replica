@@ -17,6 +17,8 @@ import { useToast } from "@/hooks/use-toast";
 import { formatDistanceToNow } from "date-fns";
 import FlamePurchaseCard from "@/components/FlamePurchaseCard";
 import SACCodesManagement from "@/components/SACCodesManagement";
+import { UpdateLockManagement } from "@/components/UpdateLockManagement";
+import { UpdateAnnouncementManagement } from "@/components/UpdateAnnouncementManagement";
 
 interface User {
   id: string;
@@ -896,7 +898,7 @@ const Admin = () => {
           </div>
 
           <Tabs defaultValue="users" className="w-full">
-            <TabsList className="w-full grid grid-cols-7 h-9 sm:h-10">
+            <TabsList className="w-full grid grid-cols-9 h-9 sm:h-10">
               <TabsTrigger value="users" className="text-xs sm:text-sm">Users</TabsTrigger>
               <TabsTrigger value="posts" className="text-xs sm:text-sm">Posts</TabsTrigger>
               <TabsTrigger value="reels" className="text-xs sm:text-sm">Reels</TabsTrigger>
@@ -916,6 +918,12 @@ const Admin = () => {
               </TabsTrigger>
               <TabsTrigger value="sac" className="text-xs sm:text-sm">
                 SAC
+              </TabsTrigger>
+              <TabsTrigger value="update-lock" className="text-xs sm:text-sm">
+                Lock
+              </TabsTrigger>
+              <TabsTrigger value="update-info" className="text-xs sm:text-sm">
+                Info
               </TabsTrigger>
             </TabsList>
 
@@ -1271,6 +1279,14 @@ const Admin = () => {
 
             <TabsContent value="sac" className="space-y-3 sm:space-y-4">
               <SACCodesManagement />
+            </TabsContent>
+
+            <TabsContent value="update-lock" className="space-y-3 sm:space-y-4">
+              <UpdateLockManagement />
+            </TabsContent>
+
+            <TabsContent value="update-info" className="space-y-3 sm:space-y-4">
+              <UpdateAnnouncementManagement />
             </TabsContent>
           </Tabs>
           </>

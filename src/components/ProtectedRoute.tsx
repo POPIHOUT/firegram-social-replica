@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { BannedSuspendedScreen } from "./BannedSuspendedScreen";
+import { UpdateLockScreen } from "./UpdateLockScreen";
 import { Loader2 } from "lucide-react";
 
 interface ProtectedRouteProps {
@@ -18,6 +19,12 @@ export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
     suspendedReason?: string;
     suspendedUntil?: string;
   } | null>(null);
+  const [updateLock, setUpdateLock] = useState<{
+    reason: string;
+    lockedUntil: string;
+    creatorUsername: string;
+  } | null>(null);
+  const [isAdminOrSupport, setIsAdminOrSupport] = useState(false);
 
   useEffect(() => {
     checkUserStatus();
@@ -34,11 +41,41 @@ export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
 
       const { data: profile } = await supabase
         .from("profiles")
-        .select("banned, suspended, ban_reason, suspended_reason, suspended_until")
+        .select("banned, suspended, ban_reason, suspended_reason, suspended_until, is_admin, is_support")
         .eq("id", user.id)
         .single();
 
       if (profile) {
+        // Check if user is admin or support
+        const hasPrivilegedRole = profile.is_admin || profile.is_support;
+        setIsAdminOrSupport(hasPrivilegedRole);
+
+        // Check for active update lock (only for non-admin/support users)
+        if (!hasPrivilegedRole) {
+          const { data: activeLock } = await supabase
+            .from("update_locks")
+            .select(`
+              reason,
+              locked_until,
+              creator:profiles!update_locks_created_by_fkey(username)
+            `)
+            .eq("active", true)
+            .gt("locked_until", new Date().toISOString())
+            .order("created_at", { ascending: false })
+            .limit(1)
+            .single();
+
+          if (activeLock) {
+            setUpdateLock({
+              reason: activeLock.reason,
+              lockedUntil: activeLock.locked_until,
+              creatorUsername: activeLock.creator?.username || "Admin"
+            });
+            setLoading(false);
+            return;
+          }
+        }
+
         // Check if suspension has expired
         const now = new Date();
         const suspendedUntil = profile.suspended_until ? new Date(profile.suspended_until) : null;
@@ -99,6 +136,16 @@ export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
         type="suspended"
         reason={userStatus.suspendedReason}
         suspendedUntil={userStatus.suspendedUntil}
+      />
+    );
+  }
+
+  if (updateLock && !isAdminOrSupport) {
+    return (
+      <UpdateLockScreen
+        reason={updateLock.reason}
+        lockedUntil={updateLock.lockedUntil}
+        creatorUsername={updateLock.creatorUsername}
       />
     );
   }
