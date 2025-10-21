@@ -28,13 +28,10 @@ interface Frame {
 const Shop = () => {
   const [loading, setLoading] = useState(true);
   const [effects, setEffects] = useState<Effect[]>([]);
-  const [frames, setFrames] = useState<Frame[]>([]);
   const [ownedEffects, setOwnedEffects] = useState<Set<string>>(new Set());
-  const [ownedFrames, setOwnedFrames] = useState<Set<string>>(new Set());
   const [purchasing, setPurchasing] = useState<string | null>(null);
   const [userFlames, setUserFlames] = useState(0);
   const [isPremium, setIsPremium] = useState(false);
-  const [activeTab, setActiveTab] = useState<"effects" | "frames">("effects");
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -72,20 +69,14 @@ const Shop = () => {
 
   const fetchEffects = async (userId: string) => {
     try {
-      const [effectsRes, framesRes, ownedEffectsRes, ownedFramesRes] = await Promise.all([
+      const [effectsRes, ownedEffectsRes] = await Promise.all([
         supabase.from("effects").select("*").order("price"),
-        supabase.from("frames").select("*").order("price"),
         supabase.from("user_effects").select("effect_id").eq("user_id", userId),
-        supabase.from("user_frames").select("frame_id").eq("user_id", userId),
       ]);
 
       if (effectsRes.data) setEffects(effectsRes.data);
-      if (framesRes.data) setFrames(framesRes.data);
       if (ownedEffectsRes.data) {
         setOwnedEffects(new Set(ownedEffectsRes.data.map((e) => e.effect_id)));
-      }
-      if (ownedFramesRes.data) {
-        setOwnedFrames(new Set(ownedFramesRes.data.map((f) => f.frame_id)));
       }
     } catch (error) {
       console.error("Error fetching shop items:", error);
@@ -122,33 +113,6 @@ const Shop = () => {
     }
   };
 
-  const handlePurchaseFrame = async (frameId: string, price: number) => {
-    setPurchasing(frameId);
-    try {
-      const { error } = await supabase.rpc("purchase_frame", {
-        frame_uuid: frameId,
-      });
-
-      if (error) throw error;
-
-      toast({
-        title: "Frame Purchased! 🖼️",
-        description: "You can now use this frame on your avatar",
-      });
-
-      setUserFlames((prev) => prev - price);
-      setOwnedFrames((prev) => new Set([...prev, frameId]));
-    } catch (error: any) {
-      console.error("Error purchasing frame:", error);
-      toast({
-        title: "Error",
-        description: error.message || "Failed to purchase frame",
-        variant: "destructive",
-      });
-    } finally {
-      setPurchasing(null);
-    }
-  };
 
   if (loading) {
     return (
@@ -174,158 +138,71 @@ const Shop = () => {
             </div>
           </div>
 
-          <div className="flex gap-2 mb-4">
-            <Button
-              variant={activeTab === "effects" ? "default" : "outline"}
-              onClick={() => setActiveTab("effects")}
-            >
-              Effects
-            </Button>
-            <Button
-              variant={activeTab === "frames" ? "default" : "outline"}
-              onClick={() => setActiveTab("frames")}
-            >
-              Avatar Frames
-            </Button>
-          </div>
+          <p className="text-muted-foreground">
+            Premium exclusive effects to customize your profile
+          </p>
 
-          {activeTab === "effects" ? (
-            <>
-              <p className="text-muted-foreground">
-                Premium exclusive effects to customize your profile
-              </p>
+           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+             {effects.map((effect) => {
+               const owned = ownedEffects.has(effect.id);
+               const canAfford = userFlames >= effect.price;
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {effects.map((effect) => {
-                  const owned = ownedEffects.has(effect.id);
-                  const canAfford = userFlames >= effect.price;
-
-                  return (
-                    <Card
-                      key={effect.id}
-                      className={owned ? "border-primary/50 bg-primary/5" : ""}
-                    >
-                      <CardHeader>
-                        <div className="flex items-center justify-between">
-                          <span className="text-4xl">{effect.icon}</span>
-                          {owned && <Badge variant="default">Owned</Badge>}
-                        </div>
-                        <CardTitle className="text-xl">{effect.name}</CardTitle>
-                        <CardDescription>{effect.description}</CardDescription>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <Flame className="w-4 h-4 text-orange-500" />
-                            <span className="font-semibold">{effect.price}</span>
-                          </div>
-                          {owned ? (
-                            <Button variant="outline" disabled>
-                              <Check className="mr-2 h-4 w-4" />
-                              Owned
-                            </Button>
-                          ) : (
-                            <Button
-                              onClick={() => handlePurchase(effect.id, effect.price)}
-                              disabled={purchasing === effect.id || !canAfford}
-                              className="bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600"
-                            >
-                              {purchasing === effect.id ? (
-                                <>
-                                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                  Buying...
-                                </>
-                              ) : (
-                                <>
-                                  <ShoppingBag className="mr-2 h-4 w-4" />
-                                  Buy
-                                </>
-                              )}
-                            </Button>
-                          )}
-                        </div>
-                        {!canAfford && !owned && (
-                          <p className="text-xs text-destructive mt-2">
-                            Need {effect.price - userFlames} more flames
-                          </p>
-                        )}
-                      </CardContent>
-                    </Card>
-                  );
-                })}
-              </div>
-            </>
-          ) : (
-            <>
-              <p className="text-muted-foreground">
-                Exclusive frames to decorate your profile avatar
-              </p>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {frames.map((frame) => {
-                  const owned = ownedFrames.has(frame.id);
-                  const canAfford = userFlames >= frame.price;
-
-                  return (
-                    <Card
-                      key={frame.id}
-                      className={owned ? "border-primary/50 bg-primary/5" : ""}
-                    >
-                      <CardHeader>
-                        <div className="flex items-center justify-between">
-                          <div className="w-16 h-16 relative">
-                            <img src={frame.image_url} alt={frame.name} className="w-full h-full object-contain" />
-                          </div>
-                          {owned && <Badge variant="default">Owned</Badge>}
-                        </div>
-                        <CardTitle className="text-xl">{frame.name}</CardTitle>
-                        <CardDescription>{frame.description}</CardDescription>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <Flame className="w-4 h-4 text-orange-500" />
-                            <span className="font-semibold">{frame.price}</span>
-                          </div>
-                          {owned ? (
-                            <Button variant="outline" disabled>
-                              <Check className="mr-2 h-4 w-4" />
-                              Owned
-                            </Button>
-                          ) : (
-                            <Button
-                              onClick={() => handlePurchaseFrame(frame.id, frame.price)}
-                              disabled={purchasing === frame.id || !canAfford}
-                              className="bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600"
-                            >
-                              {purchasing === frame.id ? (
-                                <>
-                                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                  Buying...
-                                </>
-                              ) : (
-                                <>
-                                  <ShoppingBag className="mr-2 h-4 w-4" />
-                                  Buy
-                                </>
-                              )}
-                            </Button>
-                          )}
-                        </div>
-                        {!canAfford && !owned && (
-                          <p className="text-xs text-destructive mt-2">
-                            Need {frame.price - userFlames} more flames
-                          </p>
-                        )}
-                      </CardContent>
-                    </Card>
-                  );
-                })}
-              </div>
-            </>
-          )}
-        </div>
-      </main>
+               return (
+                 <Card
+                   key={effect.id}
+                   className={owned ? "border-primary/50 bg-primary/5" : ""}
+                 >
+                   <CardHeader>
+                     <div className="flex items-center justify-between">
+                       <span className="text-4xl">{effect.icon}</span>
+                       {owned && <Badge variant="default">Owned</Badge>}
+                     </div>
+                     <CardTitle className="text-xl">{effect.name}</CardTitle>
+                     <CardDescription>{effect.description}</CardDescription>
+                   </CardHeader>
+                   <CardContent>
+                     <div className="flex items-center justify-between">
+                       <div className="flex items-center gap-2">
+                         <Flame className="w-4 h-4 text-orange-500" />
+                         <span className="font-semibold">{effect.price}</span>
+                       </div>
+                       {owned ? (
+                         <Button variant="outline" disabled>
+                           <Check className="mr-2 h-4 w-4" />
+                           Owned
+                         </Button>
+                       ) : (
+                         <Button
+                           onClick={() => handlePurchase(effect.id, effect.price)}
+                           disabled={purchasing === effect.id || !canAfford}
+                           className="bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600"
+                         >
+                           {purchasing === effect.id ? (
+                             <>
+                               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                               Buying...
+                             </>
+                           ) : (
+                             <>
+                               <ShoppingBag className="mr-2 h-4 w-4" />
+                               Buy
+                             </>
+                           )}
+                         </Button>
+                       )}
+                     </div>
+                     {!canAfford && !owned && (
+                       <p className="text-xs text-destructive mt-2">
+                         Need {effect.price - userFlames} more flames
+                       </p>
+                     )}
+                   </CardContent>
+                 </Card>
+               );
+             })}
+           </div>
+         </div>
+       </main>
     </div>
   );
 };

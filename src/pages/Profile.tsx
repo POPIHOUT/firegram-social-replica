@@ -70,7 +70,6 @@ const Profile = () => {
   const [showFireEffect, setShowFireEffect] = useState(false);
   const [fireInBackground, setFireInBackground] = useState(false);
   const [selectedEffect, setSelectedEffect] = useState<{type: string, icon: string} | null>(null);
-  const [selectedFrameUrl, setSelectedFrameUrl] = useState<string | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -119,23 +118,6 @@ const Profile = () => {
         }
       } else {
         setSelectedEffect(null);
-      }
-
-      // Fetch selected frame if user has one selected
-      if (profileData.selected_frame_id) {
-        const { data: frameData } = await supabase
-          .from("frames")
-          .select("*")
-          .eq("id", profileData.selected_frame_id)
-          .single();
-        
-        if (frameData) {
-          setSelectedFrameUrl(frameData.image_url);
-        } else {
-          setSelectedFrameUrl(null);
-        }
-      } else {
-        setSelectedFrameUrl(null);
       }
 
       // Show fire effect for premium profiles only if they don't have a custom effect equipped
@@ -368,11 +350,10 @@ const Profile = () => {
         <div className="space-y-4 sm:space-y-8">
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-8">
             <div className="relative mx-auto sm:mx-0">
-              <AvatarWithFrame 
-                avatarUrl={profile.avatar_url}
-                frameUrl={selectedFrameUrl || undefined}
-                size="xl"
-              />
+              <Avatar className="w-32 h-32 sm:w-40 sm:h-40">
+                <AvatarImage src={profile.avatar_url} alt={profile.username} />
+                <AvatarFallback>{profile.username[0]?.toUpperCase()}</AvatarFallback>
+              </Avatar>
               {selectedEffect && (
                 <ProfileEffect effectType={selectedEffect.type} icon={selectedEffect.icon} scope="avatar" />
               )}
