@@ -29,11 +29,12 @@ const ImageViewerDialog = ({
           <X className="w-6 h-6" />
         </Button>
 
-        <div className="relative w-full h-full flex items-center justify-center p-16">
+        <div className="relative w-full h-full flex items-center justify-center p-4 sm:p-16">
           <img
             src={images[currentIndex]}
             alt="Full screen view"
-            className="max-w-full max-h-full w-auto h-auto object-contain"
+            className="max-w-full max-h-full object-contain"
+            style={{ width: 'auto', height: 'auto' }}
           />
 
           {images.length > 1 && (
