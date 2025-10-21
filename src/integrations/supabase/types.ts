@@ -362,6 +362,7 @@ export type Database = {
           bio: string | null
           created_at: string | null
           custom_background_url: string | null
+          custom_premium_badge_url: string | null
           flames: number
           full_name: string | null
           id: string
@@ -387,6 +388,7 @@ export type Database = {
           bio?: string | null
           created_at?: string | null
           custom_background_url?: string | null
+          custom_premium_badge_url?: string | null
           flames?: number
           full_name?: string | null
           id: string
@@ -412,6 +414,7 @@ export type Database = {
           bio?: string | null
           created_at?: string | null
           custom_background_url?: string | null
+          custom_premium_badge_url?: string | null
           flames?: number
           full_name?: string | null
           id?: string

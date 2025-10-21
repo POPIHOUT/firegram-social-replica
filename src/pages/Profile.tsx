@@ -28,6 +28,7 @@ interface Profile {
   custom_background_url?: string;
   show_custom_background?: boolean;
   selected_effect_id?: string;
+  custom_premium_badge_url?: string;
 }
 
 interface Post {
@@ -369,7 +370,7 @@ const Profile = () => {
                 {profile.is_premium && (
                   <div className="relative group">
                     <img 
-                      src={firegramLogo} 
+                      src={profile.custom_premium_badge_url || firegramLogo} 
                       alt="Premium" 
                       className="w-6 h-6 sm:w-7 sm:h-7 animate-pulse" 
                     />
