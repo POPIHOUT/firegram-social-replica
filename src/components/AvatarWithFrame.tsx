@@ -16,7 +16,7 @@ const AvatarWithFrame = ({ avatarUrl, frameUrl, size = "lg", className = "" }: A
   return (
     <div className={`relative ${sizeClasses[size]} ${className}`}>
       {/* Avatar - positioned with padding to account for frame */}
-      <div className="absolute inset-[5%] rounded-full overflow-hidden z-10">
+      <div className="absolute inset-[12%] rounded-full overflow-hidden z-10">
         <img
           src={avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${Date.now()}`}
           alt="Avatar"
