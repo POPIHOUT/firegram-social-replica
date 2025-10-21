@@ -495,6 +495,7 @@ export type Database = {
           bio: string | null
           created_at: string | null
           custom_background_url: string | null
+          fake_followers_count: number | null
           flames: number
           full_name: string | null
           id: string
@@ -520,6 +521,7 @@ export type Database = {
           bio?: string | null
           created_at?: string | null
           custom_background_url?: string | null
+          fake_followers_count?: number | null
           flames?: number
           full_name?: string | null
           id: string
@@ -545,6 +547,7 @@ export type Database = {
           bio?: string | null
           created_at?: string | null
           custom_background_url?: string | null
+          fake_followers_count?: number | null
           flames?: number
           full_name?: string | null
           id?: string

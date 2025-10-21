@@ -164,7 +164,10 @@ const Profile = () => {
         .select("*", { count: "exact", head: true })
         .eq("following_id", profileId);
 
-      setFollowersCount(followersTotal || 0);
+      // Add fake followers count
+      const realFollowers = followersTotal || 0;
+      const fakeFollowers = profileData.fake_followers_count || 0;
+      setFollowersCount(realFollowers + fakeFollowers);
 
       // Fetch following count
       const { count: followingTotal } = await supabase
