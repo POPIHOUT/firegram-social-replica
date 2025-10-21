@@ -1017,6 +1017,10 @@ export type Database = {
         Args: { purchase_id: string; reason: string }
         Returns: undefined
       }
+      remove_fake_followers: {
+        Args: { follower_count: number; target_user_id: string }
+        Returns: number
+      }
     }
     Enums: {
       app_role: "admin" | "support" | "system_manager"

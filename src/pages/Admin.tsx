@@ -267,6 +267,38 @@ const Admin = () => {
     }
   };
 
+  const handleRemoveFakeFollowers = async (userId?: string, amount?: number) => {
+    const targetUserId = userId || selectedUser?.id;
+    const targetAmount = amount || parseInt(followersAmount);
+    const targetUser = users.find(u => u.id === targetUserId) || selectedUser;
+
+    if (!targetUserId || !targetAmount || isNaN(targetAmount)) {
+      toast({ title: "Invalid amount", description: "Please enter a valid number", variant: "destructive" });
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase.rpc('remove_fake_followers', {
+        target_user_id: targetUserId,
+        follower_count: targetAmount
+      });
+
+      if (error) throw error;
+
+      toast({ 
+        title: "Fake Followers Removed", 
+        description: `Successfully removed ${data} fake followers from ${targetUser?.username}`,
+        duration: 5000,
+      });
+      
+      setFollowersAmount("");
+      setFollowersDialogOpen(false);
+      await fetchData();
+    } catch (error: any) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    }
+  };
+
   const fetchData = async () => {
     try {
       const [usersRes, postsRes, reelsRes, adsRes, emailsRes, purchasesRes, rolesRes] = await Promise.all([
@@ -1575,6 +1607,13 @@ const Admin = () => {
               }}
             >
               Cancel
+            </Button>
+            <Button 
+              variant="destructive"
+              onClick={() => handleRemoveFakeFollowers()}
+              disabled={!followersAmount}
+            >
+              Remove 🗑️
             </Button>
             <Button 
               onClick={() => handleGiveFakeFollowers()}
