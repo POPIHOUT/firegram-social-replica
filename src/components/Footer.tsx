@@ -27,12 +27,9 @@ const Footer = () => {
             </Link>
           </div>
 
-          <div className="text-center space-y-1">
+          <div className="text-center">
             <p className="text-sm text-muted-foreground">
-              Copyright © 2025 - <a href="https://coldhost.eu" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">ColdHost.eu</a>
-            </p>
-            <p className="text-xs text-muted-foreground">
-              Minecraft & GTA/V TX Hosting
+              Copyright © 2025 - Firegram
             </p>
           </div>
         </div>
