@@ -28,7 +28,7 @@ const Reels = () => {
   const [reels, setReels] = useState<Reel[]>([]);
   const [profiles, setProfiles] = useState<Record<string, Profile>>({});
   const [activeReelId, setActiveReelId] = useState<string | null>(null);
-  const [isAdActive, setIsAdActive] = useState(false);
+  const [scrollBlocked, setScrollBlocked] = useState(false);
   const [activeTab, setActiveTab] = useState<"foryou" | "friends">("foryou");
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -67,10 +67,6 @@ const Reels = () => {
           const reelId = mostVisibleEntry.target.getAttribute('data-reel-id');
           if (reelId && reelId !== activeReelId) {
             setActiveReelId(reelId);
-            
-            // Check if the active reel is an ad
-            const activeReel = reels.find(r => r.id === reelId);
-            setIsAdActive(activeReel?.type === 'ad');
           }
         }
       },
@@ -359,7 +355,7 @@ const Reels = () => {
           msOverflowStyle: 'none',
           scrollBehavior: 'smooth',
           overscrollBehavior: 'contain',
-          overflow: isAdActive ? 'hidden' : 'scroll'
+          overflow: scrollBlocked ? 'hidden' : 'scroll'
         }}
       >
         <style>{`
@@ -377,7 +373,8 @@ const Reels = () => {
               reel={reel}
               profile={profiles[reel.user_id] || { username: "User", avatar_url: null, is_verified: false }}
               isActive={activeReelId === reel.id}
-              onAdTimerComplete={() => setIsAdActive(false)}
+              onAdTimerComplete={() => setScrollBlocked(false)}
+              onAdTimerStart={(shouldBlock) => setScrollBlocked(shouldBlock)}
             />
           </div>
         ))}

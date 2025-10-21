@@ -28,9 +28,10 @@ interface ReelCardProps {
   isActive: boolean;
   onUpdate?: () => void;
   onAdTimerComplete?: () => void;
+  onAdTimerStart?: (shouldBlock: boolean) => void;
 }
 
-const ReelCard = ({ reel, profile, isActive, onUpdate, onAdTimerComplete }: ReelCardProps) => {
+const ReelCard = ({ reel, profile, isActive, onUpdate, onAdTimerComplete, onAdTimerStart }: ReelCardProps) => {
   const [isLiked, setIsLiked] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
   const [likesCount, setLikesCount] = useState(reel.likes_count);
@@ -84,6 +85,11 @@ const ReelCard = ({ reel, profile, isActive, onUpdate, onAdTimerComplete }: Reel
       const timerDuration = reel.image_url ? 0 : 5;
       setAdTimer(timerDuration);
       
+      // Notify parent if scroll should be blocked (only for video ads)
+      if (onAdTimerStart) {
+        onAdTimerStart(timerDuration > 0);
+      }
+      
       if (timerDuration === 0) {
         // Notify parent immediately for image ads
         if (onAdTimerComplete) {
@@ -110,6 +116,10 @@ const ReelCard = ({ reel, profile, isActive, onUpdate, onAdTimerComplete }: Reel
     } else {
       if (adTimerRef.current) {
         clearInterval(adTimerRef.current);
+      }
+      // Unblock scroll when leaving ad
+      if (onAdTimerStart) {
+        onAdTimerStart(false);
       }
     }
 
