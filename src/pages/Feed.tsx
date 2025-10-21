@@ -5,6 +5,7 @@ import Navigation from "@/components/Navigation";
 import PostCard from "@/components/PostCard";
 import VideoPostCard from "@/components/VideoPostCard";
 import StoriesBar from "@/components/StoriesBar";
+import Footer from "@/components/Footer";
 import { Loader2 } from "lucide-react";
 
 interface Post {
@@ -142,6 +143,7 @@ const Feed = () => {
           )}
         </div>
       </main>
+      <Footer />
     </div>
   );
 };
