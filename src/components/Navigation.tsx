@@ -55,6 +55,7 @@ const Navigation = () => {
               if ('Notification' in window && Notification.permission === 'granted') {
               const username = newNotification.from_profile?.username || "Someone";
                 let message = "";
+                let title = "Firegram";
                 
                 switch (newNotification.type) {
                   case "follow":
@@ -73,11 +74,15 @@ const Navigation = () => {
                   case "purchase_rejected":
                     message = newNotification.message || "Purchase status updated";
                     break;
+                  case "announcement":
+                    title = "FireGram Announcement";
+                    message = newNotification.message || "New announcement";
+                    break;
                   default:
                     message = newNotification.message || "New notification";
                 }
 
-                new Notification("Firegram", {
+                new Notification(title, {
                   body: message,
                   icon: "/favicon.png",
                   badge: "/favicon.png",

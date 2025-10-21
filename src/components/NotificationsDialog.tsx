@@ -78,6 +78,8 @@ const NotificationsDialog = ({
       case "purchase_approved":
       case "purchase_rejected":
         return notification.message || "Purchase status updated";
+      case "announcement":
+        return notification.message || "New announcement";
       default:
         return notification.message || "New notification";
     }

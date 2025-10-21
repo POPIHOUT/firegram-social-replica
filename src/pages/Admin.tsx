@@ -120,6 +120,8 @@ const Admin = () => {
   const [consoleMode, setConsoleMode] = useState(false);
   const [consoleInput, setConsoleInput] = useState("");
   const [consoleOutput, setConsoleOutput] = useState<string[]>([]);
+  const [announcementMessage, setAnnouncementMessage] = useState("");
+  const [sendingAnnouncement, setSendingAnnouncement] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -747,6 +749,44 @@ const Admin = () => {
     }
   };
 
+  const handleSendAnnouncement = async () => {
+    if (!announcementMessage.trim()) {
+      toast({
+        title: "Error",
+        description: "Announcement message cannot be empty",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setSendingAnnouncement(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error("Not authenticated");
+
+      const { data, error } = await supabase.functions.invoke("send-announcement", {
+        body: { message: announcementMessage },
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Announcement Sent",
+        description: data.message || "Announcement sent to all users",
+      });
+
+      setAnnouncementMessage("");
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setSendingAnnouncement(false);
+    }
+  };
+
   const filteredUsers = users.filter(
     (user) =>
       user.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -854,7 +894,7 @@ const Admin = () => {
           </div>
 
           <Tabs defaultValue="users" className="w-full">
-            <TabsList className="w-full grid grid-cols-5 h-9 sm:h-10">
+            <TabsList className="w-full grid grid-cols-6 h-9 sm:h-10">
               <TabsTrigger value="users" className="text-xs sm:text-sm">Users</TabsTrigger>
               <TabsTrigger value="posts" className="text-xs sm:text-sm">Posts</TabsTrigger>
               <TabsTrigger value="reels" className="text-xs sm:text-sm">Reels</TabsTrigger>
@@ -867,6 +907,10 @@ const Admin = () => {
                     {stats.pending_purchases}
                   </Badge>
                 )}
+              </TabsTrigger>
+              <TabsTrigger value="announcements" className="text-xs sm:text-sm flex items-center gap-1">
+                <Megaphone className="w-3 h-3" />
+                <span className="hidden sm:inline">Announce</span>
               </TabsTrigger>
             </TabsList>
 
@@ -1171,6 +1215,53 @@ const Admin = () => {
                   </Card>
                 )}
               </div>
+            </TabsContent>
+
+            <TabsContent value="announcements" className="space-y-3 sm:space-y-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Megaphone className="w-5 h-5" />
+                    Send Announcement
+                  </CardTitle>
+                  <CardDescription>
+                    Send a notification to all users from the official FireGram account
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <Label htmlFor="announcement-message">Message</Label>
+                    <Textarea
+                      id="announcement-message"
+                      placeholder="Enter your announcement message..."
+                      value={announcementMessage}
+                      onChange={(e) => setAnnouncementMessage(e.target.value)}
+                      rows={6}
+                      className="mt-2"
+                    />
+                    <p className="text-xs text-muted-foreground mt-2">
+                      This message will be sent to all users as a notification from FireGram Official
+                    </p>
+                  </div>
+                  <Button
+                    onClick={handleSendAnnouncement}
+                    disabled={sendingAnnouncement || !announcementMessage.trim()}
+                    className="w-full"
+                  >
+                    {sendingAnnouncement ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Sending...
+                      </>
+                    ) : (
+                      <>
+                        <Megaphone className="w-4 h-4 mr-2" />
+                        Send Announcement
+                      </>
+                    )}
+                  </Button>
+                </CardContent>
+              </Card>
             </TabsContent>
           </Tabs>
           </>
