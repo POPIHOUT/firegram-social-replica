@@ -50,6 +50,8 @@ const StoryViewerDialog = ({
   const [advertisements, setAdvertisements] = useState<any[]>([]);
   const [showingAd, setShowingAd] = useState(false);
   const [currentAd, setCurrentAd] = useState<any | null>(null);
+  const [adAssociations, setAdAssociations] = useState<Record<string, string>>({});
+  const [adAuthorProfile, setAdAuthorProfile] = useState<{ username: string; avatar_url: string | null } | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const progressInterval = useRef<NodeJS.Timeout | null>(null);
   const navigate = useNavigate();
@@ -58,6 +60,7 @@ const StoryViewerDialog = ({
   useEffect(() => {
     checkAuth();
     fetchAdvertisements();
+    fetchAdAssociations();
   }, []);
 
   const fetchAdvertisements = async () => {
@@ -77,6 +80,27 @@ const StoryViewerDialog = ({
     }
   };
 
+  const fetchAdAssociations = async () => {
+    if (!currentUserId) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from("story_ad_associations")
+        .select("story_owner_id, ad_id")
+        .eq("user_id", currentUserId);
+
+      if (!error && data) {
+        const associations: Record<string, string> = {};
+        data.forEach(assoc => {
+          associations[assoc.story_owner_id] = assoc.ad_id;
+        });
+        setAdAssociations(associations);
+      }
+    } catch (error) {
+      console.error("Error fetching ad associations:", error);
+    }
+  };
+
   useEffect(() => {
     const index = storyGroups.findIndex(g => g.user_id === userId);
     if (index !== -1) {
@@ -84,6 +108,12 @@ const StoryViewerDialog = ({
       setCurrentStoryIndex(0);
     }
   }, [userId, storyGroups]);
+
+  useEffect(() => {
+    if (currentUserId) {
+      fetchAdAssociations();
+    }
+  }, [currentUserId]);
 
   useEffect(() => {
     if (open && currentGroup) {
@@ -158,11 +188,62 @@ const StoryViewerDialog = ({
     }
   };
 
-  const nextStory = () => {
+  const nextStory = async () => {
     // Show ad after completing a story
     if (!showingAd && advertisements.length > 0 && currentStoryIndex === currentGroup.stories.length - 1) {
-      const randomAd = advertisements[Math.floor(Math.random() * advertisements.length)];
-      setCurrentAd(randomAd);
+      let adToShow;
+      const storyOwnerId = currentGroup.user_id;
+      
+      // Check if we have a stored association for this story owner
+      if (adAssociations[storyOwnerId]) {
+        // Find the associated ad
+        adToShow = advertisements.find(ad => ad.id === adAssociations[storyOwnerId]);
+        
+        // If the associated ad is no longer active, pick a new random one
+        if (!adToShow) {
+          adToShow = advertisements[Math.floor(Math.random() * advertisements.length)];
+          
+          // Update the association
+          if (currentUserId) {
+            await supabase
+              .from("story_ad_associations")
+              .update({ ad_id: adToShow.id })
+              .eq("user_id", currentUserId)
+              .eq("story_owner_id", storyOwnerId);
+            
+            setAdAssociations(prev => ({ ...prev, [storyOwnerId]: adToShow.id }));
+          }
+        }
+      } else {
+        // No association exists, pick a random ad
+        adToShow = advertisements[Math.floor(Math.random() * advertisements.length)];
+        
+        // Create a new association
+        if (currentUserId) {
+          await supabase
+            .from("story_ad_associations")
+            .insert({
+              user_id: currentUserId,
+              story_owner_id: storyOwnerId,
+              ad_id: adToShow.id
+            });
+          
+          setAdAssociations(prev => ({ ...prev, [storyOwnerId]: adToShow.id }));
+        }
+      }
+      
+      // Fetch ad author profile
+      const { data: profileData } = await supabase
+        .from("profiles")
+        .select("username, avatar_url")
+        .eq("id", adToShow.user_id)
+        .single();
+      
+      if (profileData) {
+        setAdAuthorProfile(profileData);
+      }
+      
+      setCurrentAd(adToShow);
       setShowingAd(true);
       setProgress(0);
       return;
@@ -170,6 +251,7 @@ const StoryViewerDialog = ({
 
     setShowingAd(false);
     setCurrentAd(null);
+    setAdAuthorProfile(null);
 
     if (currentStoryIndex < currentGroup.stories.length - 1) {
       setCurrentStoryIndex(prev => prev + 1);
@@ -258,11 +340,27 @@ const StoryViewerDialog = ({
             )}
           </div>
 
-          {/* AD Badge */}
+          {/* AD Badge and Author */}
           {showingAd && (
-            <div className="absolute top-4 right-4 z-20 bg-orange-500/90 px-3 py-1 rounded-full">
-              <span className="text-xs font-bold text-white">AD</span>
-            </div>
+            <>
+              <div className="absolute top-4 right-4 z-20 bg-orange-500/90 px-3 py-1 rounded-full">
+                <span className="text-xs font-bold text-white">AD</span>
+              </div>
+              {adAuthorProfile && (
+                <div className="absolute top-4 left-4 z-20 bg-black/70 backdrop-blur-sm px-3 py-2 rounded-lg shadow-lg flex items-center gap-2">
+                  <Avatar className="h-8 w-8 border-2 border-white">
+                    <AvatarImage src={adAuthorProfile.avatar_url || undefined} />
+                    <AvatarFallback className="bg-primary text-primary-foreground">
+                      {adAuthorProfile.username[0].toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <p className="text-white text-xs font-semibold">Sponsored by</p>
+                    <p className="text-white text-xs">{adAuthorProfile.username}</p>
+                  </div>
+                </div>
+              )}
+            </>
           )}
 
           {/* Header */}

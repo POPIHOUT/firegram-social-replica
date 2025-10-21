@@ -556,6 +556,30 @@ export type Database = {
           },
         ]
       }
+      story_ad_associations: {
+        Row: {
+          ad_id: string
+          created_at: string
+          id: string
+          story_owner_id: string
+          user_id: string
+        }
+        Insert: {
+          ad_id: string
+          created_at?: string
+          id?: string
+          story_owner_id: string
+          user_id: string
+        }
+        Update: {
+          ad_id?: string
+          created_at?: string
+          id?: string
+          story_owner_id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       story_views: {
         Row: {
           id: string
