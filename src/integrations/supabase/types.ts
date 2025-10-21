@@ -313,6 +313,42 @@ export type Database = {
           },
         ]
       }
+      notifications: {
+        Row: {
+          created_at: string
+          from_user_id: string | null
+          id: string
+          message: string | null
+          post_id: string | null
+          read: boolean
+          reel_id: string | null
+          type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          from_user_id?: string | null
+          id?: string
+          message?: string | null
+          post_id?: string | null
+          read?: boolean
+          reel_id?: string | null
+          type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          from_user_id?: string | null
+          id?: string
+          message?: string | null
+          post_id?: string | null
+          read?: boolean
+          reel_id?: string | null
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       posts: {
         Row: {
           caption: string | null
@@ -362,7 +398,6 @@ export type Database = {
           bio: string | null
           created_at: string | null
           custom_background_url: string | null
-          custom_premium_badge_url: string | null
           flames: number
           full_name: string | null
           id: string
@@ -388,7 +423,6 @@ export type Database = {
           bio?: string | null
           created_at?: string | null
           custom_background_url?: string | null
-          custom_premium_badge_url?: string | null
           flames?: number
           full_name?: string | null
           id: string
@@ -414,7 +448,6 @@ export type Database = {
           bio?: string | null
           created_at?: string | null
           custom_background_url?: string | null
-          custom_premium_badge_url?: string | null
           flames?: number
           full_name?: string | null
           id?: string

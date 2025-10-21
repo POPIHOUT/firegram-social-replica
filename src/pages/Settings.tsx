@@ -28,8 +28,6 @@ const Settings = () => {
   const [ownedEffects, setOwnedEffects] = useState<any[]>([]);
   const [selectedEffectId, setSelectedEffectId] = useState<string | null>(null);
   const [cancellingPremium, setCancellingPremium] = useState(false);
-  const [uploadingBadge, setUploadingBadge] = useState(false);
-  const [customBadgeUrl, setCustomBadgeUrl] = useState<string>("");
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -43,7 +41,7 @@ const Settings = () => {
 
     const { data: profile } = await supabase
       .from("profiles")
-      .select("flames, is_premium, show_own_fire_effect, custom_background_url, show_custom_background, premium_until, selected_effect_id, custom_premium_badge_url")
+      .select("flames, is_premium, show_own_fire_effect, custom_background_url, show_custom_background, premium_until, selected_effect_id")
       .eq("id", user.id)
       .single();
 
@@ -55,7 +53,6 @@ const Settings = () => {
       setShowCustomBackground(profile.show_custom_background ?? true);
       setPremiumUntil(profile.premium_until);
       setSelectedEffectId(profile.selected_effect_id);
-      setCustomBadgeUrl(profile.custom_premium_badge_url || "");
       
       // Fetch owned effects if premium
       if (profile.is_premium) {
@@ -283,67 +280,6 @@ const Settings = () => {
     }
   };
 
-  const handleBadgeUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    if (!file.type.startsWith('image/')) {
-      toast({
-        title: "Invalid file",
-        description: "Only image files are allowed for premium badge",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setUploadingBadge(true);
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Not authenticated");
-
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${user.id}/badge-${Date.now()}.${fileExt}`;
-
-      // Delete old badge if exists
-      if (customBadgeUrl) {
-        const oldPath = customBadgeUrl.split('/').slice(-2).join('/');
-        await supabase.storage.from("avatars").remove([oldPath]);
-      }
-
-      const { error: uploadError } = await supabase.storage
-        .from("avatars")
-        .upload(fileName, file);
-
-      if (uploadError) throw uploadError;
-
-      const { data: { publicUrl } } = supabase.storage
-        .from("avatars")
-        .getPublicUrl(fileName);
-
-      const { error: updateError } = await supabase
-        .from("profiles")
-        .update({ custom_premium_badge_url: publicUrl })
-        .eq("id", user.id);
-
-      if (updateError) throw updateError;
-
-      setCustomBadgeUrl(publicUrl);
-      
-      toast({
-        title: "Premium Badge Updated",
-        description: "Your custom premium badge icon has been set",
-      });
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
-    } finally {
-      setUploadingBadge(false);
-    }
-  };
-
   const handleSelectEffect = async (effectId: string) => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -487,33 +423,6 @@ const Settings = () => {
                       </p>
                     </div>
                   )}
-
-                  <div className="space-y-2">
-                    <Label htmlFor="badge-upload">Custom Premium Badge Icon</Label>
-                    <p className="text-xs text-muted-foreground mb-2">Upload a custom icon for your premium badge</p>
-                    {customBadgeUrl && (
-                      <div className="relative w-16 h-16 mb-2 rounded-lg overflow-hidden border border-border">
-                        <img 
-                          src={customBadgeUrl} 
-                          alt="Custom badge" 
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                    )}
-                    <div className="flex gap-2">
-                      <Input
-                        id="badge-upload"
-                        type="file"
-                        accept="image/*"
-                        onChange={handleBadgeUpload}
-                        disabled={uploadingBadge}
-                        className="flex-1"
-                      />
-                      {uploadingBadge && (
-                        <Loader2 className="h-5 w-5 animate-spin text-primary" />
-                      )}
-                    </div>
-                  </div>
 
                   <div className="space-y-4 p-4 bg-muted rounded-lg">
                     <div className="flex items-center justify-between">
