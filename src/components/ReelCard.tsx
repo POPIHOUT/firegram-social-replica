@@ -80,8 +80,8 @@ const ReelCard = ({ reel, profile, isActive, onUpdate, onAdTimerComplete }: Reel
 
     // Start ad timer if this is an ad and it's active
     if (isActive && isAd) {
-      // Image ads can be skipped immediately, video ads need 3 seconds
-      const timerDuration = reel.image_url ? 0 : 3;
+      // Image ads can be skipped immediately (0s), video ads need 5 seconds
+      const timerDuration = reel.image_url ? 0 : 5;
       setAdTimer(timerDuration);
       
       if (timerDuration === 0) {
@@ -90,7 +90,7 @@ const ReelCard = ({ reel, profile, isActive, onUpdate, onAdTimerComplete }: Reel
           onAdTimerComplete();
         }
       } else {
-        // Start countdown for video ads
+        // Start countdown for video ads (5 seconds)
         adTimerRef.current = setInterval(() => {
           setAdTimer((prev) => {
             if (prev <= 1) {
