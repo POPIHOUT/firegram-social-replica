@@ -57,6 +57,7 @@ export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
             .select(`
               reason,
               locked_until,
+              bypass_user_ids,
               creator:profiles!update_locks_created_by_fkey(username)
             `)
             .eq("active", true)
@@ -66,13 +67,19 @@ export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
             .single();
 
           if (activeLock) {
-            setUpdateLock({
-              reason: activeLock.reason,
-              lockedUntil: activeLock.locked_until,
-              creatorUsername: activeLock.creator?.username || "Admin"
-            });
-            setLoading(false);
-            return;
+            // Check if user is in bypass list
+            const isBypassed = activeLock.bypass_user_ids && 
+                              activeLock.bypass_user_ids.includes(user.id);
+            
+            if (!isBypassed) {
+              setUpdateLock({
+                reason: activeLock.reason,
+                lockedUntil: activeLock.locked_until,
+                creatorUsername: activeLock.creator?.username || "Admin"
+              });
+              setLoading(false);
+              return;
+            }
           }
         }
 

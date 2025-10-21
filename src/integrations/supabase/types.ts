@@ -809,6 +809,7 @@ export type Database = {
       update_locks: {
         Row: {
           active: boolean
+          bypass_user_ids: string[] | null
           created_at: string
           created_by: string
           id: string
@@ -817,6 +818,7 @@ export type Database = {
         }
         Insert: {
           active?: boolean
+          bypass_user_ids?: string[] | null
           created_at?: string
           created_by: string
           id?: string
@@ -825,6 +827,7 @@ export type Database = {
         }
         Update: {
           active?: boolean
+          bypass_user_ids?: string[] | null
           created_at?: string
           created_by?: string
           id?: string
