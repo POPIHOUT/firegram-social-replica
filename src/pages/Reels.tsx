@@ -248,6 +248,7 @@ const Reels = () => {
               reel={reel}
               profile={profiles[reel.user_id] || { username: "User", avatar_url: null, is_verified: false }}
               isActive={activeReelId === reel.id}
+              onAdTimerComplete={() => setIsAdActive(false)}
             />
           </div>
         ))}

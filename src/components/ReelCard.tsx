@@ -27,9 +27,10 @@ interface ReelCardProps {
   };
   isActive: boolean;
   onUpdate?: () => void;
+  onAdTimerComplete?: () => void;
 }
 
-const ReelCard = ({ reel, profile, isActive, onUpdate }: ReelCardProps) => {
+const ReelCard = ({ reel, profile, isActive, onUpdate, onAdTimerComplete }: ReelCardProps) => {
   const [isLiked, setIsLiked] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
   const [likesCount, setLikesCount] = useState(reel.likes_count);
@@ -86,15 +87,9 @@ const ReelCard = ({ reel, profile, isActive, onUpdate }: ReelCardProps) => {
             if (adTimerRef.current) {
               clearInterval(adTimerRef.current);
             }
-            // Trigger scroll to next item after timer ends
-            const container = document.querySelector('.snap-y');
-            if (container) {
-              const currentScroll = container.scrollTop;
-              const height = container.clientHeight;
-              container.scrollTo({
-                top: currentScroll + height,
-                behavior: 'smooth'
-              });
+            // Notify parent that ad timer is complete
+            if (onAdTimerComplete) {
+              onAdTimerComplete();
             }
             return 0;
           }
@@ -281,9 +276,21 @@ const ReelCard = ({ reel, profile, isActive, onUpdate }: ReelCardProps) => {
           <div className="absolute top-20 right-4 z-50 bg-orange-500 px-4 py-2 rounded-full shadow-lg">
             <span className="text-sm font-bold text-white">AD</span>
           </div>
+          <div className="absolute top-20 left-4 z-50 bg-black/70 backdrop-blur-sm px-4 py-3 rounded-lg shadow-lg flex items-center gap-3">
+            <Avatar className="h-10 w-10 border-2 border-white">
+              <AvatarImage src={profile.avatar_url || undefined} />
+              <AvatarFallback className="bg-primary text-primary-foreground">
+                {profile.username[0].toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
+            <div>
+              <p className="text-white text-sm font-semibold">Sponsored by</p>
+              <p className="text-white text-xs">{profile.username}</p>
+            </div>
+          </div>
           {adTimer > 0 && (
             <div className="absolute bottom-24 left-1/2 -translate-x-1/2 z-50 bg-black/60 px-4 py-2 rounded-full">
-              <span className="text-white text-sm font-semibold">Skip in {adTimer}s</span>
+              <span className="text-white text-sm font-semibold">You can scroll in {adTimer}s</span>
             </div>
           )}
         </>
