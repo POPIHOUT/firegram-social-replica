@@ -53,7 +53,7 @@ const Navigation = () => {
 
               // Send browser notification
               if ('Notification' in window && Notification.permission === 'granted') {
-                const username = newNotification.from_profile?.username || "Someone";
+              const username = newNotification.from_profile?.username || "Someone";
                 let message = "";
                 
                 switch (newNotification.type) {
@@ -65,6 +65,9 @@ const Navigation = () => {
                     break;
                   case "comment":
                     message = `${username} commented on your post`;
+                    break;
+                  case "message":
+                    message = `${username} sent you a message`;
                     break;
                   default:
                     message = newNotification.message || "New notification";

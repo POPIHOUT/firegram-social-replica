@@ -315,6 +315,7 @@ export type Database = {
       }
       notifications: {
         Row: {
+          conversation_id: string | null
           created_at: string
           from_user_id: string | null
           id: string
@@ -326,6 +327,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          conversation_id?: string | null
           created_at?: string
           from_user_id?: string | null
           id?: string
@@ -337,6 +339,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          conversation_id?: string | null
           created_at?: string
           from_user_id?: string | null
           id?: string
@@ -348,6 +351,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "notifications_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "notifications_from_user_id_fkey"
             columns: ["from_user_id"]

@@ -13,6 +13,7 @@ interface Notification {
   from_user_id: string | null;
   post_id: string | null;
   reel_id: string | null;
+  conversation_id?: string | null;
   message: string | null;
   read: boolean;
   created_at: string;
@@ -54,6 +55,9 @@ const NotificationsDialog = ({
     } else if (notification.type === "comment" && notification.post_id) {
       // Navigate to post
       onOpenChange(false);
+    } else if (notification.type === "message" && notification.conversation_id) {
+      navigate(`/messages/${notification.conversation_id}`);
+      onOpenChange(false);
     }
   };
 
@@ -66,6 +70,8 @@ const NotificationsDialog = ({
         return `${username} liked your post`;
       case "comment":
         return `${username} commented on your post`;
+      case "message":
+        return `${username} sent you a message`;
       default:
         return notification.message || "New notification";
     }
