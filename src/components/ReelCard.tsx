@@ -310,7 +310,7 @@ const ReelCard = ({ reel, profile, isActive, onUpdate, onAdTimerComplete, onAdTi
               <p className="text-white text-xs">{profile.username}</p>
             </div>
           </div>
-          {adTimer > 0 && (
+          {adTimer > 0 && !reel.image_url && (
             <div className="absolute bottom-24 left-1/2 -translate-x-1/2 z-50 bg-black/60 px-4 py-2 rounded-full">
               <span className="text-white text-sm font-semibold">You can scroll in {adTimer}s</span>
             </div>
