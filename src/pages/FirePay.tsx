@@ -13,6 +13,7 @@ const FirePay = () => {
   const [searchParams] = useSearchParams();
   const amount = searchParams.get("amount");
   const price = searchParams.get("price");
+  const sacCode = searchParams.get("sac");
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -21,6 +22,52 @@ const FirePay = () => {
   const [cardHolder, setCardHolder] = useState("");
   const [expiryDate, setExpiryDate] = useState("");
   const [cvv, setCvv] = useState("");
+  const [validatedSacCode, setValidatedSacCode] = useState<{
+    code: string;
+    creatorId: string;
+    creatorUsername: string;
+  } | null>(null);
+  const [finalPrice, setFinalPrice] = useState(parseFloat(price || "0"));
+
+  // Validate SAC code on component mount
+  useState(() => {
+    const validateSacCode = async () => {
+      if (sacCode && sacCode.trim()) {
+        const { data, error } = await supabase
+          .from("sac_codes")
+          .select(`
+            code,
+            user_id,
+            profiles:user_id (username)
+          `)
+          .eq("code", sacCode.toUpperCase())
+          .eq("active", true)
+          .single();
+
+        if (!error && data) {
+          const discount = parseFloat(price || "0") * 0.05; // 5% discount
+          const discountedPrice = parseFloat(price || "0") - discount;
+          setFinalPrice(discountedPrice);
+          setValidatedSacCode({
+            code: data.code,
+            creatorId: data.user_id,
+            creatorUsername: (data.profiles as any)?.username || "Unknown",
+          });
+          toast({
+            title: "SAC Code Applied!",
+            description: `5% discount applied. Supporting ${(data.profiles as any)?.username}`,
+          });
+        } else {
+          toast({
+            title: "Invalid SAC Code",
+            description: "The code you entered is not valid or inactive",
+            variant: "destructive",
+          });
+        }
+      }
+    };
+    validateSacCode();
+  });
 
   const detectCardType = (number: string): "visa" | "mastercard" | null => {
     const cleaned = number.replace(/\s/g, "");
@@ -78,13 +125,22 @@ const FirePay = () => {
 
       const last4 = cleaned.slice(-4);
 
+      // Calculate creator commission (15% of the flames)
+      const creatorCommission = validatedSacCode
+        ? Math.floor(parseInt(amount || "0") * 0.15)
+        : 0;
+
       const { error } = await supabase.from("flame_purchases").insert({
         user_id: session.user.id,
         flame_amount: parseInt(amount || "0"),
-        price_usd: parseFloat(price || "0"),
+        price_usd: finalPrice,
         card_type: cardType,
         card_last4: last4,
         card_holder_name: cardHolder,
+        sac_code: validatedSacCode?.code || null,
+        creator_id: validatedSacCode?.creatorId || null,
+        discount_percent: validatedSacCode ? 5 : 0,
+        creator_commission_flames: creatorCommission,
       });
 
       if (error) throw error;
@@ -140,14 +196,30 @@ const FirePay = () => {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="mb-6 p-4 bg-muted rounded-lg">
+            <div className="mb-6 p-4 bg-muted rounded-lg space-y-2">
               <div className="flex justify-between items-center">
                 <span className="text-sm text-muted-foreground">Flames:</span>
                 <span className="font-semibold">{parseInt(amount).toLocaleString()}</span>
               </div>
-              <div className="flex justify-between items-center mt-2">
+              {validatedSacCode && (
+                <>
+                  <div className="flex justify-between items-center text-green-500">
+                    <span className="text-sm">SAC Code ({validatedSacCode.code}):</span>
+                    <span className="font-semibold">-5% discount</span>
+                  </div>
+                  <div className="flex justify-between items-center text-xs text-muted-foreground">
+                    <span>Supporting:</span>
+                    <span>{validatedSacCode.creatorUsername}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-muted-foreground">Original:</span>
+                    <span className="line-through text-muted-foreground">${price}</span>
+                  </div>
+                </>
+              )}
+              <div className="flex justify-between items-center mt-2 pt-2 border-t">
                 <span className="text-sm text-muted-foreground">Total:</span>
-                <span className="text-2xl font-bold">${price}</span>
+                <span className="text-2xl font-bold">${finalPrice.toFixed(2)}</span>
               </div>
             </div>
 
@@ -221,7 +293,7 @@ const FirePay = () => {
                     Processing...
                   </>
                 ) : (
-                  `Pay $${price}`
+                  `Pay $${finalPrice.toFixed(2)}`
                 )}
               </Button>
 

@@ -27,9 +27,10 @@ const FlameShopDialog = ({ open, onOpenChange }: FlameShopDialogProps) => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [customAmount, setCustomAmount] = useState("");
+  const [sacCode, setSacCode] = useState("");
 
   const handlePurchase = (amount: number, price: number) => {
-    navigate(`/firepay?amount=${amount}&price=${price}`);
+    navigate(`/firepay?amount=${amount}&price=${price}&sac=${encodeURIComponent(sacCode)}`);
     onOpenChange(false);
   };
 
@@ -55,7 +56,7 @@ const FlameShopDialog = ({ open, onOpenChange }: FlameShopDialogProps) => {
     }
 
     const price = amount * PRICE_PER_FLAME;
-    navigate(`/firepay?amount=${amount}&price=${price.toFixed(2)}`);
+    navigate(`/firepay?amount=${amount}&price=${price.toFixed(2)}&sac=${encodeURIComponent(sacCode)}`);
     onOpenChange(false);
     setCustomAmount("");
   };
@@ -71,6 +72,24 @@ const FlameShopDialog = ({ open, onOpenChange }: FlameShopDialogProps) => {
         </DialogHeader>
 
         <div className="space-y-6">
+          {/* SAC Code Section */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-sm">Support a Creator</CardTitle>
+              <CardDescription className="text-xs">
+                Enter a creator code to get 5% discount and support your favorite creator
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Input
+                placeholder="Enter SAC code (optional)"
+                value={sacCode}
+                onChange={(e) => setSacCode(e.target.value.toUpperCase())}
+                className="font-mono"
+              />
+            </CardContent>
+          </Card>
+
           {/* Custom Amount Section */}
           <Card className="border-2 border-purple-500 bg-purple-500/5">
             <CardHeader>

@@ -190,12 +190,16 @@ export type Database = {
           card_last4: string
           card_type: string
           created_at: string
+          creator_commission_flames: number | null
+          creator_id: string | null
+          discount_percent: number | null
           flame_amount: number
           id: string
           price_usd: number
           processed_at: string | null
           processed_by: string | null
           rejection_reason: string | null
+          sac_code: string | null
           status: string
           user_id: string
         }
@@ -204,12 +208,16 @@ export type Database = {
           card_last4: string
           card_type: string
           created_at?: string
+          creator_commission_flames?: number | null
+          creator_id?: string | null
+          discount_percent?: number | null
           flame_amount: number
           id?: string
           price_usd: number
           processed_at?: string | null
           processed_by?: string | null
           rejection_reason?: string | null
+          sac_code?: string | null
           status?: string
           user_id: string
         }
@@ -218,16 +226,27 @@ export type Database = {
           card_last4?: string
           card_type?: string
           created_at?: string
+          creator_commission_flames?: number | null
+          creator_id?: string | null
+          discount_percent?: number | null
           flame_amount?: number
           id?: string
           price_usd?: number
           processed_at?: string | null
           processed_by?: string | null
           rejection_reason?: string | null
+          sac_code?: string | null
           status?: string
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "flame_purchases_creator_id_fkey"
+            columns: ["creator_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "flame_purchases_processed_by_fkey"
             columns: ["processed_by"]
@@ -598,6 +617,38 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "reels_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sac_codes: {
+        Row: {
+          active: boolean
+          code: string
+          created_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          active?: boolean
+          code: string
+          created_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          active?: boolean
+          code?: string
+          created_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sac_codes_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"

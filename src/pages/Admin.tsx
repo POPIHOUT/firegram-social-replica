@@ -16,6 +16,7 @@ import { Shield, Users, FileText, Film, Ban, Clock, Trash2, CheckCircle, XCircle
 import { useToast } from "@/hooks/use-toast";
 import { formatDistanceToNow } from "date-fns";
 import FlamePurchaseCard from "@/components/FlamePurchaseCard";
+import SACCodesManagement from "@/components/SACCodesManagement";
 
 interface User {
   id: string;
@@ -894,7 +895,7 @@ const Admin = () => {
           </div>
 
           <Tabs defaultValue="users" className="w-full">
-            <TabsList className="w-full grid grid-cols-6 h-9 sm:h-10">
+            <TabsList className="w-full grid grid-cols-7 h-9 sm:h-10">
               <TabsTrigger value="users" className="text-xs sm:text-sm">Users</TabsTrigger>
               <TabsTrigger value="posts" className="text-xs sm:text-sm">Posts</TabsTrigger>
               <TabsTrigger value="reels" className="text-xs sm:text-sm">Reels</TabsTrigger>
@@ -911,6 +912,9 @@ const Admin = () => {
               <TabsTrigger value="announcements" className="text-xs sm:text-sm flex items-center gap-1">
                 <Megaphone className="w-3 h-3" />
                 <span className="hidden sm:inline">Announce</span>
+              </TabsTrigger>
+              <TabsTrigger value="sac" className="text-xs sm:text-sm">
+                SAC
               </TabsTrigger>
             </TabsList>
 
@@ -1262,6 +1266,10 @@ const Admin = () => {
                   </Button>
                 </CardContent>
               </Card>
+            </TabsContent>
+
+            <TabsContent value="sac" className="space-y-3 sm:space-y-4">
+              <SACCodesManagement />
             </TabsContent>
           </Tabs>
           </>
