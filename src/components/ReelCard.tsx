@@ -51,8 +51,8 @@ const ReelCard = ({ reel, profile, isActive, onUpdate }: ReelCardProps) => {
 
   useEffect(() => {
     const video = internalVideoRef.current;
-    if (video) {
-      if (isActive && !isAd) {
+    if (video && !isAd) {
+      if (isActive) {
         video.muted = false;
         video.currentTime = 0; // Reset to start
         video.play().catch(err => console.log("Autoplay prevented:", err));
@@ -62,6 +62,13 @@ const ReelCard = ({ reel, profile, isActive, onUpdate }: ReelCardProps) => {
         video.currentTime = 0; // Reset when not active
         setIsPlaying(false);
       }
+    }
+    
+    // Handle ad video autoplay separately
+    if (isAd && video && isActive) {
+      video.muted = false;
+      video.currentTime = 0;
+      video.play().catch(err => console.log("Ad autoplay prevented:", err));
     }
 
     // Start ad timer if this is an ad and it's active

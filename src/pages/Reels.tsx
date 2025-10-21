@@ -28,6 +28,7 @@ const Reels = () => {
   const [reels, setReels] = useState<Reel[]>([]);
   const [profiles, setProfiles] = useState<Record<string, Profile>>({});
   const [activeReelId, setActiveReelId] = useState<string | null>(null);
+  const [isAdActive, setIsAdActive] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const observerRef = useRef<IntersectionObserver | null>(null);
   const reelRefs = useRef<Record<string, HTMLDivElement | null>>({});
@@ -59,6 +60,10 @@ const Reels = () => {
           const reelId = mostVisibleEntry.target.getAttribute('data-reel-id');
           if (reelId && reelId !== activeReelId) {
             setActiveReelId(reelId);
+            
+            // Check if the active reel is an ad
+            const activeReel = reels.find(r => r.id === reelId);
+            setIsAdActive(activeReel?.type === 'ad');
           }
         }
       },
@@ -224,7 +229,8 @@ const Reels = () => {
           scrollbarWidth: 'none', 
           msOverflowStyle: 'none',
           scrollBehavior: 'smooth',
-          overscrollBehavior: 'contain'
+          overscrollBehavior: 'contain',
+          overflow: isAdActive ? 'hidden' : 'scroll'
         }}
       >
         <style>{`
