@@ -363,20 +363,21 @@ const Profile = () => {
         </div>
       )}
 
-      {/* Selected Profile Effect */}
-      {selectedEffect && (
-        <ProfileEffect effectType={selectedEffect.type} icon={selectedEffect.icon} />
-      )}
 
       <main className="max-w-4xl mx-auto pt-16 sm:pt-20 px-3 sm:px-4 pb-20 sm:pb-24">
         <div className="space-y-4 sm:space-y-8">
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-8">
-            <AvatarWithFrame 
-              avatarUrl={profile.avatar_url}
-              frameUrl={selectedFrameUrl || undefined}
-              size="xl"
-              className="mx-auto sm:mx-0"
-            />
+            <div className="relative mx-auto sm:mx-0">
+              <AvatarWithFrame 
+                avatarUrl={profile.avatar_url}
+                frameUrl={selectedFrameUrl || undefined}
+                size="xl"
+              />
+              {selectedEffect && (
+                <ProfileEffect effectType={selectedEffect.type} icon={selectedEffect.icon} scope="avatar" />
+              )}
+            </div>
+
 
             <div className="flex-1 w-full space-y-3 sm:space-y-4">
               <div className="flex items-center justify-center sm:justify-start gap-2 flex-wrap">

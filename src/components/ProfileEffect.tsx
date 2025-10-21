@@ -1,126 +1,74 @@
-import { useEffect, useState } from "react";
+import React from "react";
 
 interface ProfileEffectProps {
   effectType: string;
   icon: string;
+  scope?: "screen" | "avatar";
 }
 
-const ProfileEffect = ({ effectType, icon }: ProfileEffectProps) => {
-  const [particles, setParticles] = useState<Array<{ id: number; left: number; delay: number; duration: number }>>([]);
+// ProfileEffect can render either full-screen particles (scope="screen")
+// or a subtle animated ring around an avatar (scope="avatar").
+const ProfileEffect = ({ effectType, icon, scope = "screen" }: ProfileEffectProps) => {
+  if (scope === "avatar") {
+    // Edge-only ring around the avatar
+    return (
+      <div className="absolute inset-0 z-30 pointer-events-none">
+        {/* Animated gradient ring clipped to edges only */}
+        <div
+          className="absolute inset-0 rounded-full animate-spin"
+          style={{
+            background:
+              "conic-gradient(from 0deg, hsl(var(--primary)) 0%, hsl(var(--accent)) 25%, hsl(var(--primary)) 50%, hsl(var(--accent)) 75%, hsl(var(--primary)) 100%)",
+            WebkitMask:
+              "radial-gradient(farthest-side, transparent calc(100% - 6px), black 0)",
+            mask: "radial-gradient(farthest-side, transparent calc(100% - 6px), black 0)",
+            animationDuration: "6s",
+            opacity: 0.8,
+          }}
+        />
 
-  useEffect(() => {
-    // Generate 40 particles with random positions and timings for more lively effect
-    const newParticles = Array.from({ length: 40 }, (_, i) => ({
-      id: i,
-      left: Math.random() * 100,
-      delay: Math.random() * 3,
-      duration: 2 + Math.random() * 3,
-    }));
-    setParticles(newParticles);
-  }, [effectType]);
+        {/* Small glow pulses distributed around the edge */}
+        {[...Array(8)].map((_, i) => {
+          const angle = (i / 8) * 2 * Math.PI;
+          const x = 50 + Math.cos(angle) * 44; // keep inside padding
+          const y = 50 + Math.sin(angle) * 44;
+          return (
+            <div
+              key={i}
+              className="absolute w-2 h-2 rounded-full shadow-[0_0_10px_hsl(var(--primary))]"
+              style={{
+                left: `${x}%`,
+                top: `${y}%`,
+                transform: "translate(-50%, -50%)",
+                background: "hsl(var(--primary))",
+                opacity: 0.9,
+                animation: "pulse 2s ease-in-out infinite",
+                animationDelay: `${i * 0.2}s`,
+              }}
+            />
+          );
+        })}
+      </div>
+    );
+  }
 
-  const getParticleStyles = (type: string) => {
-    switch (type) {
-      case 'snow':
-        return 'text-white text-3xl drop-shadow-[0_0_8px_rgba(255,255,255,0.8)]';
-      case 'hearts':
-        return 'text-pink-500 text-2xl drop-shadow-[0_0_12px_rgba(236,72,153,0.8)]';
-      case 'stars':
-        return 'text-yellow-300 text-2xl drop-shadow-[0_0_15px_rgba(253,224,71,1)]';
-      case 'bubbles':
-        return 'text-blue-400 text-3xl drop-shadow-[0_0_10px_rgba(96,165,250,0.6)]';
-      case 'leaves':
-        return 'text-orange-500 text-2xl drop-shadow-[0_0_8px_rgba(249,115,22,0.6)]';
-      case 'confetti':
-        return 'text-primary text-2xl drop-shadow-[0_0_10px_rgba(255,100,100,0.8)]';
-      case 'lightning':
-        return 'text-yellow-300 text-4xl drop-shadow-[0_0_20px_rgba(253,224,71,1)]';
-      case 'sakura':
-        return 'text-pink-300 text-2xl drop-shadow-[0_0_12px_rgba(249,168,212,0.8)]';
-      case 'money':
-        return 'text-green-400 text-2xl drop-shadow-[0_0_12px_rgba(74,222,128,0.8)]';
-      case 'emojis':
-        return 'text-3xl drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]';
-      default:
-        return 'text-primary text-2xl drop-shadow-[0_0_10px_rgba(255,100,100,0.6)]';
-    }
-  };
-
-  const getAnimationClass = (type: string) => {
-    // Snow falls with gentle sway
-    if (type === 'snow') {
-      return 'animate-[float_3s_ease-in-out_infinite,sway_2s_ease-in-out_infinite]';
-    }
-    // Leaves fall and rotate
-    if (type === 'leaves') {
-      return 'animate-[float_3.5s_ease-in-out_infinite,spin_3s_linear_infinite]';
-    }
-    // Sakura petals float gently
-    if (type === 'sakura') {
-      return 'animate-[float_4s_ease-in-out_infinite,sway_3s_ease-in-out_infinite]';
-    }
-    // Money falls straight down fast
-    if (type === 'money') {
-      return 'animate-[float_2s_linear_infinite]';
-    }
-    // Confetti falls with spin and wobble
-    if (type === 'confetti') {
-      return 'animate-[float_2.5s_ease-in-out_infinite,spin_1.5s_linear_infinite]';
-    }
-    // Hearts float up with gentle sway
-    if (type === 'hearts') {
-      return 'animate-[float_4s_ease-in-out_infinite_reverse,sway_2.5s_ease-in-out_infinite]';
-    }
-    // Bubbles float up with wobble
-    if (type === 'bubbles') {
-      return 'animate-[float_5s_ease-in-out_infinite_reverse,sway_3s_ease-in-out_infinite]';
-    }
-    // Stars twinkle intensely
-    if (type === 'stars') {
-      return 'animate-[pulse_1s_ease-in-out_infinite,spin_4s_linear_infinite]';
-    }
-    // Lightning flashes rapidly
-    if (type === 'lightning') {
-      return 'animate-[pulse_0.3s_ease-in-out_infinite]';
-    }
-    // Emojis spin and bounce wildly
-    if (type === 'emojis') {
-      return 'animate-[spin_2s_linear_infinite,bounce_1s_ease-in-out_infinite]';
-    }
-    return 'animate-float';
-  };
-
+  // Default: legacy full-screen particle overlay (kept for compatibility)
   return (
     <div className="fixed inset-0 z-40 pointer-events-none overflow-hidden">
-      {particles.map((particle) => {
-        const randomRotation = Math.random() * 360;
-        const randomScale = 0.7 + Math.random() * 0.6;
-        
-        return (
-          <div
-            key={particle.id}
-            className={`absolute transition-all will-change-transform ${getParticleStyles(effectType)} ${getAnimationClass(effectType)}`}
-            style={{
-              left: `${particle.left}%`,
-              ...( ['stars', 'lightning', 'emojis'].includes(effectType)
-                ? { top: `${Math.random() * 80 + 5}%` }
-                : { bottom: '-20px' }
-              ),
-              animationDelay: `${particle.delay}s`,
-              animationDuration: `${particle.duration}s`,
-              opacity: 0.7 + Math.random() * 0.3,
-              transform: effectType === 'confetti' 
-                ? `rotate(${randomRotation}deg) scale(${randomScale})`
-                : `scale(${randomScale})`,
-              filter: ['stars', 'lightning'].includes(effectType) 
-                ? `brightness(${1 + Math.random() * 0.5})`
-                : 'none',
-            }}
-          >
-            {icon}
-          </div>
-        );
-      })}
+      {[...Array(30)].map((_, idx) => (
+        <div
+          key={idx}
+          className="absolute text-primary/80 animate-[float_4s_ease-in-out_infinite]"
+          style={{
+            left: `${Math.random() * 100}%`,
+            bottom: "-20px",
+            animationDelay: `${Math.random() * 3}s`,
+            filter: "drop-shadow(0 0 10px hsl(var(--primary)))",
+          }}
+        >
+          {icon}
+        </div>
+      ))}
     </div>
   );
 };
