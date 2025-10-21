@@ -37,6 +37,7 @@ interface User {
   ban_reason: string | null;
   suspended_reason: string | null;
   created_at: string;
+  system_manager?: boolean;
 }
 
 interface Post {
@@ -298,21 +299,33 @@ const Admin = () => {
 
   const fetchData = async () => {
     try {
-      const [usersRes, postsRes, reelsRes, adsRes, emailsRes, purchasesRes] = await Promise.all([
+      const [usersRes, postsRes, reelsRes, adsRes, emailsRes, purchasesRes, rolesRes] = await Promise.all([
         supabase.from("profiles").select("*").order("created_at", { ascending: false }),
         supabase.from("posts").select("*, profiles(username, avatar_url)").order("created_at", { ascending: false }),
         supabase.from("reels").select("*, profiles(username, avatar_url)").order("created_at", { ascending: false }),
         supabase.from("advertisements").select("*, profiles(username, avatar_url)").order("created_at", { ascending: false }),
         supabase.rpc("get_user_emails"),
         supabase.from("flame_purchases").select("*, profiles!user_id(username, avatar_url)").order("created_at", { ascending: false }),
+        supabase.from("user_roles").select("user_id, role"),
       ]);
 
-      // Merge email data with user profiles
+      // Create a map of user_id to system_manager role
+      const systemManagerMap = new Map();
+      if (rolesRes.data) {
+        rolesRes.data.forEach((role: any) => {
+          if (role.role === 'system_manager') {
+            systemManagerMap.set(role.user_id, true);
+          }
+        });
+      }
+
+      // Merge email data and roles with user profiles
       if (usersRes.data && emailsRes.data) {
         const emailMap = new Map(emailsRes.data.map((e: any) => [e.user_id, e.email]));
         const usersWithEmails = usersRes.data.map((user: any) => ({
           ...user,
           email: emailMap.get(user.id) || "",
+          system_manager: systemManagerMap.get(user.id) || false,
         }));
         setUsers(usersWithEmails);
       }
@@ -975,6 +988,12 @@ const Admin = () => {
                           <div className="min-w-0 flex-1">
                             <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
                               <p className="font-semibold text-sm sm:text-base truncate">{user.username}</p>
+                              {user.system_manager && (
+                                <Badge className="bg-gradient-to-r from-yellow-500 to-orange-500 text-white text-xs flex items-center gap-1">
+                                  <Crown className="w-3 h-3" />
+                                  System Manager
+                                </Badge>
+                              )}
                               {user.is_admin && <Badge variant="secondary" className="text-xs">Admin</Badge>}
                               {user.is_verified && <Badge variant="default" className="text-xs">Verified</Badge>}
                               {user.is_support && <Badge className="bg-purple-500 text-xs">Support</Badge>}
