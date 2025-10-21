@@ -1,8 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { X, Sparkles } from "lucide-react";
+import { X, Megaphone } from "lucide-react";
 import { toast } from "sonner";
 
 interface UpdateAnnouncement {
@@ -80,32 +79,42 @@ export const UpdateAnnouncementWidget = () => {
   if (!visible || !announcement) return null;
 
   return (
-    <div className="fixed bottom-4 right-4 z-50 max-w-sm animate-in slide-in-from-bottom-5">
-      <Card className="border-primary shadow-lg">
-        <CardHeader className="pb-3">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gradient-to-br from-background/95 to-secondary/20 backdrop-blur-sm animate-in fade-in-0">
+      <div className="max-w-2xl w-full bg-background border-2 border-primary rounded-lg shadow-2xl animate-in zoom-in-95">
+        <div className="p-6 space-y-6">
           <div className="flex items-start justify-between">
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <Sparkles className="w-5 h-5 text-primary" />
-              New Update!
-            </CardTitle>
+            <div className="flex items-center gap-3">
+              <div className="p-3 bg-primary/10 rounded-full">
+                <Megaphone className="w-8 h-8 text-primary" />
+              </div>
+              <div>
+                <h2 className="text-2xl font-bold">{announcement.title}</h2>
+                <p className="text-sm text-muted-foreground mt-1">
+                  New Update from {announcement.creator?.username || "Admin"}
+                </p>
+              </div>
+            </div>
             <Button
               variant="ghost"
-              size="sm"
+              size="icon"
               onClick={handleClose}
-              className="h-6 w-6 p-0"
+              className="h-8 w-8"
             >
-              <X className="w-4 h-4" />
+              <X className="w-5 h-5" />
             </Button>
           </div>
-        </CardHeader>
-        <CardContent className="space-y-2">
-          <h4 className="font-semibold">{announcement.title}</h4>
-          <p className="text-sm text-muted-foreground">{announcement.content}</p>
-          <p className="text-xs text-muted-foreground">
-            — {announcement.creator?.username || "Admin"}
-          </p>
-        </CardContent>
-      </Card>
+          
+          <div className="bg-secondary/50 p-6 rounded-lg">
+            <p className="text-base leading-relaxed whitespace-pre-wrap">{announcement.content}</p>
+          </div>
+
+          <div className="flex justify-end">
+            <Button onClick={handleClose} size="lg">
+              Got it!
+            </Button>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };

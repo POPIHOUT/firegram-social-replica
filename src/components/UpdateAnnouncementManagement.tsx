@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
-import { Megaphone, Eye, EyeOff } from "lucide-react";
+import { Megaphone, Eye, EyeOff, Trash2 } from "lucide-react";
 
 interface UpdateAnnouncement {
   id: string;
@@ -46,6 +46,38 @@ export const UpdateAnnouncementManagement = () => {
     }
 
     setAnnouncements(data || []);
+  };
+
+  const deactivateAnnouncement = async (announcementId: string) => {
+    const { error } = await supabase
+      .from("update_announcements")
+      .update({ active: false })
+      .eq("id", announcementId);
+
+    if (error) {
+      toast.error("Failed to deactivate announcement");
+      return;
+    }
+
+    toast.success("Announcement deactivated");
+    fetchAnnouncements();
+  };
+
+  const deleteAnnouncement = async (announcementId: string) => {
+    if (!confirm("Are you sure you want to delete this announcement?")) return;
+
+    const { error } = await supabase
+      .from("update_announcements")
+      .delete()
+      .eq("id", announcementId);
+
+    if (error) {
+      toast.error("Failed to delete announcement");
+      return;
+    }
+
+    toast.success("Announcement deleted");
+    fetchAnnouncements();
   };
 
   const createAnnouncement = async () => {
@@ -169,15 +201,24 @@ export const UpdateAnnouncementManagement = () => {
                       <strong>Created:</strong> {new Date(announcement.created_at).toLocaleString()}
                     </p>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Label htmlFor={`active-${announcement.id}`} className="text-sm">
-                      {announcement.active ? "Active" : "Inactive"}
-                    </Label>
-                    <Switch
-                      id={`active-${announcement.id}`}
-                      checked={announcement.active}
-                      onCheckedChange={() => toggleActive(announcement.id, announcement.active)}
-                    />
+                  <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2">
+                      <Label htmlFor={`active-${announcement.id}`} className="text-sm">
+                        {announcement.active ? "Active" : "Inactive"}
+                      </Label>
+                      <Switch
+                        id={`active-${announcement.id}`}
+                        checked={announcement.active}
+                        onCheckedChange={() => toggleActive(announcement.id, announcement.active)}
+                      />
+                    </div>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => deleteAnnouncement(announcement.id)}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
                   </div>
                 </div>
               </CardContent>
