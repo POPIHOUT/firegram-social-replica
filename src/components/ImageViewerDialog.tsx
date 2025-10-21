@@ -19,7 +19,7 @@ const ImageViewerDialog = ({
 }: ImageViewerDialogProps) => {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-none max-h-none w-screen h-screen p-0 bg-black/95 border-0 overflow-hidden">
+      <DialogContent className="max-w-none max-h-[100vh] w-screen h-screen p-0 bg-black/95 border-0 overflow-hidden flex flex-col">
         <Button
           variant="ghost"
           size="icon"
@@ -29,12 +29,11 @@ const ImageViewerDialog = ({
           <X className="w-6 h-6" />
         </Button>
 
-        <div className="relative w-full h-full flex items-center justify-center p-4 sm:p-16">
+        <div className="relative flex-1 flex items-center justify-center min-h-0 px-4 py-20 sm:px-20 sm:py-24">
           <img
             src={images[currentIndex]}
             alt="Full screen view"
-            className="max-w-full max-h-full object-contain"
-            style={{ width: 'auto', height: 'auto' }}
+            className="max-w-full max-h-full w-auto h-auto object-contain"
           />
 
           {images.length > 1 && (
