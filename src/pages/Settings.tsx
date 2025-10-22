@@ -11,6 +11,7 @@ import { Loader2, ArrowLeft, Flame, Sparkles, Upload, ShoppingBag, X, Wallet, Cr
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import firegramLogo from "@/assets/firegram-logo.png";
+import { RedeemWalletCode } from "@/components/RedeemWalletCode";
 
 const Settings = () => {
   const [loading, setLoading] = useState(false);
@@ -389,6 +390,7 @@ const Settings = () => {
                       <p className="text-2xl font-bold">${walletBalance.toFixed(2)}</p>
                     </div>
                   </div>
+                  <RedeemWalletCode />
                 </div>
 
                 <div className="space-y-2">

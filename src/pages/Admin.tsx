@@ -19,6 +19,7 @@ import FlamePurchaseCard from "@/components/FlamePurchaseCard";
 import SACCodesManagement from "@/components/SACCodesManagement";
 import { UpdateLockManagement } from "@/components/UpdateLockManagement";
 import { UpdateAnnouncementManagement } from "@/components/UpdateAnnouncementManagement";
+import { WalletCodesManagement } from "@/components/WalletCodesManagement";
 
 interface User {
   id: string;
@@ -1075,7 +1076,7 @@ const Admin = () => {
 
           <Tabs defaultValue="users" className="w-full">
             <div className="w-full overflow-x-auto">
-              <TabsList className="w-full inline-flex sm:grid sm:grid-cols-9 h-auto sm:h-10 flex-nowrap">
+              <TabsList className="w-full inline-flex sm:grid sm:grid-cols-10 h-auto sm:h-10 flex-nowrap">
                 <TabsTrigger value="users" className="text-xs sm:text-sm whitespace-nowrap px-3 py-2">Users</TabsTrigger>
                 <TabsTrigger value="posts" className="text-xs sm:text-sm whitespace-nowrap px-3 py-2">Posts</TabsTrigger>
                 <TabsTrigger value="reels" className="text-xs sm:text-sm whitespace-nowrap px-3 py-2">Reels</TabsTrigger>
@@ -1095,6 +1096,10 @@ const Admin = () => {
                 </TabsTrigger>
                 <TabsTrigger value="sac" className="text-xs sm:text-sm whitespace-nowrap px-3 py-2">
                   SAC
+                </TabsTrigger>
+                <TabsTrigger value="wallet-codes" className="text-xs sm:text-sm flex items-center gap-1 whitespace-nowrap px-3 py-2">
+                  <Wallet className="w-3 h-3" />
+                  <span className="hidden sm:inline">Codes</span>
                 </TabsTrigger>
                 <TabsTrigger value="update-lock" className="text-xs sm:text-sm whitespace-nowrap px-3 py-2">
                   Lock
@@ -1555,6 +1560,10 @@ const Admin = () => {
 
             <TabsContent value="sac" className="space-y-3 sm:space-y-4">
               <SACCodesManagement />
+            </TabsContent>
+
+            <TabsContent value="wallet-codes" className="space-y-3 sm:space-y-4">
+              <WalletCodesManagement />
             </TabsContent>
 
             <TabsContent value="update-lock" className="space-y-3 sm:space-y-4">

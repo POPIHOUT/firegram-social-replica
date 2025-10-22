@@ -966,6 +966,74 @@ export type Database = {
         }
         Relationships: []
       }
+      wallet_code_redemptions: {
+        Row: {
+          amount: number
+          code_id: string
+          id: string
+          redeemed_at: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          code_id: string
+          id?: string
+          redeemed_at?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          code_id?: string
+          id?: string
+          redeemed_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wallet_code_redemptions_code_id_fkey"
+            columns: ["code_id"]
+            isOneToOne: false
+            referencedRelation: "wallet_codes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      wallet_codes: {
+        Row: {
+          active: boolean
+          code: string
+          created_at: string
+          created_by: string
+          current_uses: number
+          expires_at: string | null
+          id: string
+          max_uses: number
+          value: number
+        }
+        Insert: {
+          active?: boolean
+          code: string
+          created_at?: string
+          created_by: string
+          current_uses?: number
+          expires_at?: string | null
+          id?: string
+          max_uses?: number
+          value: number
+        }
+        Update: {
+          active?: boolean
+          code?: string
+          created_at?: string
+          created_by?: string
+          current_uses?: number
+          expires_at?: string | null
+          id?: string
+          max_uses?: number
+          value?: number
+        }
+        Relationships: []
+      }
       wallet_deposits: {
         Row: {
           amount: number
@@ -1103,6 +1171,7 @@ export type Database = {
       }
       purchase_frame: { Args: { frame_uuid: string }; Returns: undefined }
       purchase_premium: { Args: never; Returns: undefined }
+      redeem_wallet_code: { Args: { code_text: string }; Returns: number }
       reject_flame_purchase: {
         Args: { purchase_id: string; reason: string }
         Returns: undefined
