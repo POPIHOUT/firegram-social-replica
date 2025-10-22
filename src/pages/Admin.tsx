@@ -99,6 +99,21 @@ interface FlamePurchase {
   };
 }
 
+interface WalletDeposit {
+  id: string;
+  user_id: string;
+  amount: number;
+  status: string;
+  card_type: string;
+  card_last4: string;
+  card_holder_name: string;
+  created_at: string;
+  profiles: {
+    username: string;
+    avatar_url: string;
+  };
+}
+
 const Admin = () => {
   const [loading, setLoading] = useState(true);
   const [users, setUsers] = useState<User[]>([]);
@@ -120,10 +135,13 @@ const Admin = () => {
   const [followersDialogOpen, setFollowersDialogOpen] = useState(false);
   const [followersAmount, setFollowersAmount] = useState("");
   const [flamePurchases, setFlamePurchases] = useState<FlamePurchase[]>([]);
+  const [walletDeposits, setWalletDeposits] = useState<WalletDeposit[]>([]);
   const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
+  const [rejectDepositDialogOpen, setRejectDepositDialogOpen] = useState(false);
   const [selectedPurchase, setSelectedPurchase] = useState<FlamePurchase | null>(null);
+  const [selectedDeposit, setSelectedDeposit] = useState<WalletDeposit | null>(null);
   const [rejectReason, setRejectReason] = useState("");
-  const [stats, setStats] = useState({ users: 0, posts: 0, reels: 0, ads: 0, pending_purchases: 0 });
+  const [stats, setStats] = useState({ users: 0, posts: 0, reels: 0, ads: 0, pending_purchases: 0, pending_deposits: 0 });
   const [consoleMode, setConsoleMode] = useState(false);
   const [consoleInput, setConsoleInput] = useState("");
   const [consoleOutput, setConsoleOutput] = useState<string[]>([]);
@@ -332,13 +350,14 @@ const Admin = () => {
 
   const fetchData = async () => {
     try {
-      const [usersRes, postsRes, reelsRes, adsRes, emailsRes, purchasesRes, rolesRes] = await Promise.all([
+      const [usersRes, postsRes, reelsRes, adsRes, emailsRes, purchasesRes, depositsRes, rolesRes] = await Promise.all([
         supabase.from("profiles").select("*").order("created_at", { ascending: false }),
         supabase.from("posts").select("*, profiles(username, avatar_url)").order("created_at", { ascending: false }),
         supabase.from("reels").select("*, profiles(username, avatar_url)").order("created_at", { ascending: false }),
         supabase.from("advertisements").select("*, profiles(username, avatar_url)").order("created_at", { ascending: false }),
         supabase.rpc("get_user_emails"),
         supabase.from("flame_purchases").select("*, profiles!user_id(username, avatar_url)").order("created_at", { ascending: false }),
+        supabase.from("wallet_deposits").select("*, profiles!user_id(username, avatar_url)").order("created_at", { ascending: false }),
         supabase.from("user_roles").select("user_id, role"),
       ]);
 
@@ -367,8 +386,10 @@ const Admin = () => {
       if (reelsRes.data) setReels(reelsRes.data);
       if (adsRes.data) setAdvertisements(adsRes.data);
       if (purchasesRes.data) setFlamePurchases(purchasesRes.data as any);
+      if (depositsRes.data) setWalletDeposits(depositsRes.data as any);
 
       const pendingPurchases = purchasesRes.data?.filter((p: any) => p.status === 'pending').length || 0;
+      const pendingDeposits = depositsRes.data?.filter((d: any) => d.status === 'pending').length || 0;
 
       setStats({
         users: usersRes.data?.length || 0,
@@ -376,6 +397,7 @@ const Admin = () => {
         reels: reelsRes.data?.length || 0,
         ads: adsRes.data?.length || 0,
         pending_purchases: pendingPurchases,
+        pending_deposits: pendingDeposits,
       });
     } catch (error) {
       console.error("Error fetching data:", error);
@@ -686,6 +708,64 @@ const Admin = () => {
     }
   };
 
+  const handleApproveDeposit = async (depositId: string) => {
+    try {
+      const { error } = await supabase.rpc('approve_wallet_deposit', {
+        deposit_id: depositId
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Deposit Approved",
+        description: "Money has been added to user's wallet",
+      });
+
+      await fetchData();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleRejectDeposit = async () => {
+    if (!selectedDeposit || !rejectReason.trim()) {
+      toast({
+        title: "Missing reason",
+        description: "Please provide a rejection reason",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const { error } = await supabase.rpc('reject_wallet_deposit', {
+        deposit_id: selectedDeposit.id,
+        reason: rejectReason
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Deposit Rejected",
+        description: "The wallet deposit has been rejected",
+      });
+
+      setRejectDepositDialogOpen(false);
+      setRejectReason("");
+      await fetchData();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
   const executeCommand = async (command: string) => {
     const parts = command.trim().split(" ");
     const cmd = parts[0].toLowerCase();
@@ -973,7 +1053,7 @@ const Admin = () => {
 
           <Tabs defaultValue="users" className="w-full">
             <div className="w-full overflow-x-auto">
-              <TabsList className="w-full inline-flex sm:grid sm:grid-cols-9 h-auto sm:h-10 flex-nowrap">
+              <TabsList className="w-full inline-flex sm:grid sm:grid-cols-10 h-auto sm:h-10 flex-nowrap">
                 <TabsTrigger value="users" className="text-xs sm:text-sm whitespace-nowrap px-3 py-2">Users</TabsTrigger>
                 <TabsTrigger value="posts" className="text-xs sm:text-sm whitespace-nowrap px-3 py-2">Posts</TabsTrigger>
                 <TabsTrigger value="reels" className="text-xs sm:text-sm whitespace-nowrap px-3 py-2">Reels</TabsTrigger>
@@ -984,6 +1064,15 @@ const Admin = () => {
                   {stats.pending_purchases > 0 && (
                     <Badge variant="destructive" className="ml-1 h-4 px-1 text-[10px]">
                       {stats.pending_purchases}
+                    </Badge>
+                  )}
+                </TabsTrigger>
+                <TabsTrigger value="wallet" className="text-xs sm:text-sm flex items-center gap-1 whitespace-nowrap px-3 py-2">
+                  <Wallet className="w-3 h-3" />
+                  <span className="hidden sm:inline">Wallet</span>
+                  {stats.pending_deposits > 0 && (
+                    <Badge variant="destructive" className="ml-1 h-4 px-1 text-[10px]">
+                      {stats.pending_deposits}
                     </Badge>
                   )}
                 </TabsTrigger>
@@ -1319,6 +1408,72 @@ const Admin = () => {
                   <Card>
                     <CardContent className="p-8 text-center text-muted-foreground">
                       No flame purchases yet
+                    </CardContent>
+                  </Card>
+                )}
+              </div>
+            </TabsContent>
+
+            <TabsContent value="wallet" className="space-y-4">
+              <div className="grid gap-4">
+                {walletDeposits.map((deposit) => (
+                  <Card key={deposit.id} className={deposit.status === 'pending' ? 'border-orange-500/50' : ''}>
+                    <CardContent className="p-6">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-4">
+                          <Avatar>
+                            <AvatarImage src={deposit.profiles.avatar_url} />
+                            <AvatarFallback>{deposit.profiles.username.charAt(0).toUpperCase()}</AvatarFallback>
+                          </Avatar>
+                          <div>
+                            <p className="font-semibold">{deposit.profiles.username}</p>
+                            <p className="text-sm text-muted-foreground">
+                              ${Number(deposit.amount).toFixed(2)} • {deposit.card_type} •••• {deposit.card_last4}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              {formatDistanceToNow(new Date(deposit.created_at), { addSuffix: true })}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              Cardholder: {deposit.card_holder_name}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {deposit.status === 'pending' ? (
+                            <>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => {
+                                  setSelectedDeposit(deposit);
+                                  setRejectDepositDialogOpen(true);
+                                }}
+                              >
+                                <XCircle className="w-4 h-4 mr-2" />
+                                Reject
+                              </Button>
+                              <Button
+                                size="sm"
+                                onClick={() => handleApproveDeposit(deposit.id)}
+                              >
+                                <CheckCircle className="w-4 h-4 mr-2" />
+                                Approve
+                              </Button>
+                            </>
+                          ) : (
+                            <Badge variant={deposit.status === 'approved' ? 'default' : 'destructive'}>
+                              {deposit.status}
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+                {walletDeposits.length === 0 && (
+                  <Card>
+                    <CardContent className="p-8 text-center text-muted-foreground">
+                      No wallet deposits yet
                     </CardContent>
                   </Card>
                 )}
@@ -1758,6 +1913,34 @@ const Admin = () => {
             </Button>
             <Button variant="destructive" onClick={handleRejectPurchase} className="w-full sm:w-auto">
               Reject Purchase
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={rejectDepositDialogOpen} onOpenChange={setRejectDepositDialogOpen}>
+        <DialogContent className="max-w-[95vw] sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Reject Wallet Deposit</DialogTitle>
+            <DialogDescription>
+              Reject wallet deposit from {selectedDeposit?.profiles.username}
+            </DialogDescription>
+          </DialogHeader>
+          <div>
+            <Label htmlFor="reject-deposit-reason">Rejection Reason</Label>
+            <Textarea
+              id="reject-deposit-reason"
+              placeholder="Enter reason for rejection..."
+              value={rejectReason}
+              onChange={(e) => setRejectReason(e.target.value)}
+            />
+          </div>
+          <DialogFooter className="flex-col sm:flex-row gap-2">
+            <Button variant="outline" onClick={() => setRejectDepositDialogOpen(false)} className="w-full sm:w-auto">
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={handleRejectDeposit} className="w-full sm:w-auto">
+              Reject Deposit
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -348,41 +348,8 @@ const Settings = () => {
       return;
     }
 
-    setAddingMoney(true);
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      const { error } = await supabase
-        .from("profiles")
-        .update({ wallet_balance: walletBalance + amount })
-        .eq("id", user.id);
-
-      if (error) throw error;
-
-      await supabase.from("wallet_transactions").insert({
-        user_id: user.id,
-        amount: amount,
-        transaction_type: "deposit",
-        description: "Wallet deposit",
-      });
-
-      setWalletBalance(walletBalance + amount);
-      setAddMoneyAmount("");
-      
-      toast({
-        title: "Money Added",
-        description: `Successfully added $${amount.toFixed(2)} to your wallet`,
-      });
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
-    } finally {
-      setAddingMoney(false);
-    }
+    // Navigate to FirePay for wallet deposit
+    navigate(`/firepay?wallet_deposit=true&amount=${amount}`);
   };
 
   return (
@@ -438,17 +405,17 @@ const Settings = () => {
                     />
                     <Button 
                       onClick={handleAddMoney}
-                      disabled={addingMoney}
+                      disabled={addingMoney || !addMoneyAmount}
                     >
                       {addingMoney ? (
                         <Loader2 className="h-4 w-4 animate-spin" />
                       ) : (
-                        "Add"
+                        "Continue to Payment"
                       )}
                     </Button>
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    Add money to your wallet for instant flame purchases
+                    Money will be added after admin approval via secure payment
                   </p>
                 </div>
               </div>

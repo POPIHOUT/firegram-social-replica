@@ -966,6 +966,48 @@ export type Database = {
         }
         Relationships: []
       }
+      wallet_deposits: {
+        Row: {
+          amount: number
+          card_holder_name: string
+          card_last4: string
+          card_type: string
+          created_at: string
+          id: string
+          processed_at: string | null
+          processed_by: string | null
+          rejection_reason: string | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          card_holder_name: string
+          card_last4: string
+          card_type: string
+          created_at?: string
+          id?: string
+          processed_at?: string | null
+          processed_by?: string | null
+          rejection_reason?: string | null
+          status?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          card_holder_name?: string
+          card_last4?: string
+          card_type?: string
+          created_at?: string
+          id?: string
+          processed_at?: string | null
+          processed_by?: string | null
+          rejection_reason?: string | null
+          status?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       wallet_transactions: {
         Row: {
           amount: number
@@ -1013,6 +1055,10 @@ export type Database = {
         Args: { purchase_id: string }
         Returns: undefined
       }
+      approve_wallet_deposit: {
+        Args: { deposit_id: string }
+        Returns: undefined
+      }
       cancel_premium: { Args: never; Returns: undefined }
       create_or_get_conversation: {
         Args: { other_user_id: string }
@@ -1051,6 +1097,10 @@ export type Database = {
       purchase_premium: { Args: never; Returns: undefined }
       reject_flame_purchase: {
         Args: { purchase_id: string; reason: string }
+        Returns: undefined
+      }
+      reject_wallet_deposit: {
+        Args: { deposit_id: string; reason: string }
         Returns: undefined
       }
       remove_fake_followers: {

@@ -15,6 +15,8 @@ const FirePay = () => {
   const price = searchParams.get("price");
   const sacCode = searchParams.get("sac");
   const useWallet = searchParams.get("wallet") === "true";
+  const isWalletDeposit = searchParams.get("wallet_deposit") === "true";
+  const walletDepositAmount = searchParams.get("amount");
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -99,6 +101,55 @@ const FirePay = () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
         navigate("/auth");
+        return;
+      }
+
+      // If this is a wallet deposit
+      if (isWalletDeposit) {
+        const cardType = detectCardType(cardNumber);
+        if (!cardType) {
+          toast({
+            title: "Invalid Card",
+            description: "Only Visa and Mastercard are accepted",
+            variant: "destructive",
+          });
+          setLoading(false);
+          return;
+        }
+
+        const cleaned = cardNumber.replace(/\s/g, "");
+        if (cleaned.length !== 16) {
+          toast({
+            title: "Invalid Card Number",
+            description: "Card number must be 16 digits",
+            variant: "destructive",
+          });
+          setLoading(false);
+          return;
+        }
+
+        const last4 = cleaned.slice(-4);
+
+        const { error } = await supabase.from("wallet_deposits").insert({
+          user_id: session.user.id,
+          amount: parseFloat(walletDepositAmount || "0"),
+          card_type: cardType,
+          card_last4: last4,
+          card_holder_name: cardHolder,
+        });
+
+        if (error) throw error;
+
+        toast({
+          title: "Deposit Submitted",
+          description: "Your wallet deposit is pending admin approval. Money will be added once approved.",
+        });
+
+        setTimeout(() => {
+          navigate("/settings");
+        }, 1500);
+        
+        setLoading(false);
         return;
       }
 
@@ -189,7 +240,7 @@ const FirePay = () => {
     }
   };
 
-  if (!amount || !price) {
+  if ((!amount || !price) && !isWalletDeposit) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Card>
@@ -209,7 +260,106 @@ const FirePay = () => {
     <div className="min-h-screen pb-safe">
       <Navigation />
       <main className="max-w-2xl mx-auto pt-20 px-4 pb-20">
-        {useWallet ? (
+        {isWalletDeposit ? (
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-center mb-4">
+                <Wallet className="w-12 h-12 text-primary" />
+              </div>
+              <CardTitle className="text-2xl text-center">Add Money to Wallet</CardTitle>
+              <CardDescription className="text-center">
+                Secure Payment via FirePay
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="mb-6 p-4 bg-muted rounded-lg space-y-2">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-muted-foreground">Amount:</span>
+                  <span className="text-2xl font-bold">${parseFloat(walletDepositAmount || "0").toFixed(2)}</span>
+                </div>
+              </div>
+
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="cardNumber">Card Number</Label>
+                  <Input
+                    id="cardNumber"
+                    placeholder="1234 5678 9012 3456"
+                    value={cardNumber}
+                    onChange={(e) => setCardNumber(formatCardNumber(e.target.value))}
+                    required
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Only Visa and Mastercard accepted
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="cardHolder">Card Holder Name</Label>
+                  <Input
+                    id="cardHolder"
+                    placeholder="JOHN DOE"
+                    value={cardHolder}
+                    onChange={(e) => setCardHolder(e.target.value.toUpperCase())}
+                    required
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="expiry">Expiry Date</Label>
+                    <Input
+                      id="expiry"
+                      placeholder="MM/YY"
+                      value={expiryDate}
+                      onChange={(e) => setExpiryDate(formatExpiryDate(e.target.value))}
+                      maxLength={5}
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="cvv">CVV</Label>
+                    <Input
+                      id="cvv"
+                      placeholder="123"
+                      type="password"
+                      value={cvv}
+                      onChange={(e) => setCvv(e.target.value.replace(/\D/g, "").slice(0, 3))}
+                      maxLength={3}
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 p-3 bg-green-500/10 rounded-lg border border-green-500/20">
+                  <ShieldCheck className="w-5 h-5 text-green-500" />
+                  <span className="text-sm text-green-500">
+                    Secured by FirePay encryption
+                  </span>
+                </div>
+
+                <Button
+                  type="submit"
+                  className="w-full bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600"
+                  disabled={loading}
+                >
+                  {loading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Processing...
+                    </>
+                  ) : (
+                    `Pay $${parseFloat(walletDepositAmount || "0").toFixed(2)}`
+                  )}
+                </Button>
+
+                <p className="text-xs text-muted-foreground text-center mt-4">
+                  Your deposit will be reviewed by our admin team. Money will be added to your wallet after approval.
+                </p>
+              </form>
+            </CardContent>
+          </Card>
+        ) : useWallet ? (
           <Card>
             <CardHeader>
               <div className="flex items-center justify-center mb-4">
