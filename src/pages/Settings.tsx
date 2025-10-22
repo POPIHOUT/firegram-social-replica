@@ -39,6 +39,7 @@ const Settings = () => {
   const [disablingMfa, setDisablingMfa] = useState(false);
   const [secretTimer, setSecretTimer] = useState(60);
   const [showSecret, setShowSecret] = useState(false);
+  const [currentFactorId, setCurrentFactorId] = useState<string>("");
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -395,8 +396,9 @@ const Settings = () => {
       });
 
       if (error) throw error;
-
+      
       setTotpSecret(data.totp.secret);
+      setCurrentFactorId(data.id);
       setQrCode("enabled");
       setShowSecret(true);
       setSecretTimer(60);
@@ -428,13 +430,10 @@ const Settings = () => {
 
     setEnablingMfa(true);
     try {
-      const { data: factors } = await supabase.auth.mfa.listFactors();
-      const totpFactor = factors?.totp?.[0];
-      
-      if (!totpFactor) throw new Error("No TOTP factor found");
+      if (!currentFactorId) throw new Error("No TOTP factor found");
 
       const { error } = await supabase.auth.mfa.challengeAndVerify({
-        factorId: totpFactor.id,
+        factorId: currentFactorId,
         code: verifyCode
       });
 
@@ -444,6 +443,7 @@ const Settings = () => {
       setQrCode("");
       setTotpSecret("");
       setVerifyCode("");
+      setCurrentFactorId("");
 
       toast({
         title: "2FA Enabled! 🔒",
