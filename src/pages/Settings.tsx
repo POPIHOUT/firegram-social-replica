@@ -361,16 +361,20 @@ const Settings = () => {
     try {
       const { data, error } = await supabase.auth.mfa.enroll({
         factorType: 'totp',
-        friendlyName: 'FireGram 2FA'
+        friendlyName: 'FireGram'
       });
 
       if (error) throw error;
 
       setTotpSecret(data.totp.secret);
       
-      // Generate QR code
+      // Generate QR code with optimized settings
       const qrCodeUrl = data.totp.qr_code;
-      const qrCodeDataUrl = await QRCode.toDataURL(qrCodeUrl);
+      const qrCodeDataUrl = await QRCode.toDataURL(qrCodeUrl, {
+        errorCorrectionLevel: 'L',
+        margin: 1,
+        width: 256
+      });
       setQrCode(qrCodeDataUrl);
 
       toast({
