@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, CreditCard, ShieldCheck, Wallet } from "lucide-react";
 import Navigation from "@/components/Navigation";
@@ -31,6 +32,8 @@ const FirePay = () => {
     creatorUsername: string;
   } | null>(null);
   const [finalPrice, setFinalPrice] = useState(parseFloat(price || "0"));
+  const [paymentMethod, setPaymentMethod] = useState<"wallet" | "card" | null>(null);
+  const [walletBalance, setWalletBalance] = useState(0);
 
   // Validate SAC code on component mount
   useState(() => {
@@ -70,6 +73,25 @@ const FirePay = () => {
       }
     };
     validateSacCode();
+
+    // Fetch wallet balance if not wallet deposit
+    if (!isWalletDeposit) {
+      const fetchBalance = async () => {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("wallet_balance")
+          .eq("id", user.id)
+          .single();
+
+        if (profile) {
+          setWalletBalance(Number(profile.wallet_balance) || 0);
+        }
+      };
+      fetchBalance();
+    }
   });
 
   const detectCardType = (number: string): "visa" | "mastercard" | null => {
@@ -154,7 +176,7 @@ const FirePay = () => {
       }
 
       // If paying with wallet
-      if (useWallet) {
+      if (paymentMethod === "wallet") {
         const { error } = await supabase.rpc("purchase_flames_with_wallet", {
           flame_amount: parseInt(amount || "0"),
           price_amount: finalPrice,
@@ -359,7 +381,90 @@ const FirePay = () => {
               </form>
             </CardContent>
           </Card>
-        ) : useWallet ? (
+        ) : !paymentMethod ? (
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-center mb-4">
+                <CreditCard className="w-12 h-12 text-primary" />
+              </div>
+              <CardTitle className="text-2xl text-center">Choose Payment Method</CardTitle>
+              <CardDescription className="text-center">
+                Select how you want to pay
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="mb-6 p-4 bg-muted rounded-lg space-y-2">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-muted-foreground">Flames:</span>
+                  <span className="font-semibold">{parseInt(amount || "0").toLocaleString()}</span>
+                </div>
+                {validatedSacCode && (
+                  <>
+                    <div className="flex justify-between items-center text-green-500">
+                      <span className="text-sm">SAC Code ({validatedSacCode.code}):</span>
+                      <span className="font-semibold">-5% discount</span>
+                    </div>
+                    <div className="flex justify-between items-center text-xs text-muted-foreground">
+                      <span>Supporting:</span>
+                      <span>{validatedSacCode.creatorUsername}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-muted-foreground">Original:</span>
+                      <span className="line-through text-muted-foreground">${price}</span>
+                    </div>
+                  </>
+                )}
+                <div className="flex justify-between items-center mt-2 pt-2 border-t">
+                  <span className="text-sm text-muted-foreground">Total:</span>
+                  <span className="text-2xl font-bold">${finalPrice.toFixed(2)}</span>
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                {walletBalance >= finalPrice && (
+                  <Button
+                    onClick={() => setPaymentMethod("wallet")}
+                    className="w-full h-auto py-6 flex flex-col items-start gap-2 bg-gradient-to-r from-primary to-primary/80"
+                  >
+                    <div className="flex items-center gap-2 w-full justify-between">
+                      <div className="flex items-center gap-2">
+                        <Wallet className="w-5 h-5" />
+                        <span className="font-semibold">Pay with FireWallet</span>
+                      </div>
+                      <Badge variant="secondary">Instant</Badge>
+                    </div>
+                    <div className="text-xs text-left opacity-90">
+                      Balance: ${walletBalance.toFixed(2)} • Instant flames delivery
+                    </div>
+                  </Button>
+                )}
+
+                <Button
+                  onClick={() => setPaymentMethod("card")}
+                  variant="outline"
+                  className="w-full h-auto py-6 flex flex-col items-start gap-2"
+                >
+                  <div className="flex items-center gap-2 w-full justify-between">
+                    <div className="flex items-center gap-2">
+                      <CreditCard className="w-5 h-5" />
+                      <span className="font-semibold">Pay with Card</span>
+                    </div>
+                    <Badge variant="secondary">Requires Approval</Badge>
+                  </div>
+                  <div className="text-xs text-left text-muted-foreground">
+                    Visa/Mastercard • Admin approval required
+                  </div>
+                </Button>
+
+                {walletBalance < finalPrice && walletBalance > 0 && (
+                  <p className="text-xs text-center text-muted-foreground">
+                    Not enough wallet balance (${walletBalance.toFixed(2)} available). Add more in Settings or pay with card.
+                  </p>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        ) : paymentMethod === "wallet" ? (
           <Card>
             <CardHeader>
               <div className="flex items-center justify-center mb-4">
@@ -399,20 +504,30 @@ const FirePay = () => {
               </div>
 
               <form onSubmit={handleSubmit}>
-                <Button
-                  type="submit"
-                  className="w-full bg-gradient-to-r from-primary to-primary/80"
-                  disabled={loading}
-                >
-                  {loading ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Processing...
-                    </>
-                  ) : (
-                    `Pay $${finalPrice.toFixed(2)} with Wallet`
-                  )}
-                </Button>
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setPaymentMethod(null)}
+                    className="flex-1"
+                  >
+                    Back
+                  </Button>
+                  <Button
+                    type="submit"
+                    className="flex-1 bg-gradient-to-r from-primary to-primary/80"
+                    disabled={loading}
+                  >
+                    {loading ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Processing...
+                      </>
+                    ) : (
+                      `Pay $${finalPrice.toFixed(2)}`
+                    )}
+                  </Button>
+                </div>
               </form>
 
               <p className="text-xs text-muted-foreground text-center mt-4">
@@ -429,116 +544,126 @@ const FirePay = () => {
             <CardTitle className="text-2xl text-center">FirePay</CardTitle>
             <CardDescription className="text-center">
               Secure Payment Gateway
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="mb-6 p-4 bg-muted rounded-lg space-y-2">
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-muted-foreground">Flames:</span>
-                <span className="font-semibold">{parseInt(amount).toLocaleString()}</span>
-              </div>
-              {validatedSacCode && (
-                <>
-                  <div className="flex justify-between items-center text-green-500">
-                    <span className="text-sm">SAC Code ({validatedSacCode.code}):</span>
-                    <span className="font-semibold">-5% discount</span>
-                  </div>
-                  <div className="flex justify-between items-center text-xs text-muted-foreground">
-                    <span>Supporting:</span>
-                    <span>{validatedSacCode.creatorUsername}</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-muted-foreground">Original:</span>
-                    <span className="line-through text-muted-foreground">${price}</span>
-                  </div>
-                </>
-              )}
-              <div className="flex justify-between items-center mt-2 pt-2 border-t">
-                <span className="text-sm text-muted-foreground">Total:</span>
-                <span className="text-2xl font-bold">${finalPrice.toFixed(2)}</span>
-              </div>
-            </div>
-
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="cardNumber">Card Number</Label>
-                <Input
-                  id="cardNumber"
-                  placeholder="1234 5678 9012 3456"
-                  value={cardNumber}
-                  onChange={(e) => setCardNumber(formatCardNumber(e.target.value))}
-                  required
-                />
-                <p className="text-xs text-muted-foreground">
-                  Only Visa and Mastercard accepted
-                </p>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="cardHolder">Card Holder Name</Label>
-                <Input
-                  id="cardHolder"
-                  placeholder="JOHN DOE"
-                  value={cardHolder}
-                  onChange={(e) => setCardHolder(e.target.value.toUpperCase())}
-                  required
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="expiry">Expiry Date</Label>
-                  <Input
-                    id="expiry"
-                    placeholder="MM/YY"
-                    value={expiryDate}
-                    onChange={(e) => setExpiryDate(formatExpiryDate(e.target.value))}
-                    maxLength={5}
-                    required
-                  />
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="mb-6 p-4 bg-muted rounded-lg space-y-2">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-muted-foreground">Flames:</span>
+                  <span className="font-semibold">{parseInt(amount || "0").toLocaleString()}</span>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="cvv">CVV</Label>
-                  <Input
-                    id="cvv"
-                    placeholder="123"
-                    type="password"
-                    value={cvv}
-                    onChange={(e) => setCvv(e.target.value.replace(/\D/g, "").slice(0, 3))}
-                    maxLength={3}
-                    required
-                  />
-                </div>
-              </div>
-
-              <div className="flex items-center gap-2 p-3 bg-green-500/10 rounded-lg border border-green-500/20">
-                <ShieldCheck className="w-5 h-5 text-green-500" />
-                <span className="text-sm text-green-500">
-                  Secured by FirePay encryption
-                </span>
-              </div>
-
-              <Button
-                type="submit"
-                className="w-full bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600"
-                disabled={loading}
-              >
-                {loading ? (
+                {validatedSacCode && (
                   <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Processing...
+                    <div className="flex justify-between items-center text-green-500">
+                      <span className="text-sm">SAC Code ({validatedSacCode.code}):</span>
+                      <span className="font-semibold">-5% discount</span>
+                    </div>
+                    <div className="flex justify-between items-center text-xs text-muted-foreground">
+                      <span>Supporting:</span>
+                      <span>{validatedSacCode.creatorUsername}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-muted-foreground">Original:</span>
+                      <span className="line-through text-muted-foreground">${price}</span>
+                    </div>
                   </>
-                ) : (
-                  `Pay $${finalPrice.toFixed(2)}`
                 )}
-              </Button>
+                <div className="flex justify-between items-center mt-2 pt-2 border-t">
+                  <span className="text-sm text-muted-foreground">Total:</span>
+                  <span className="text-2xl font-bold">${finalPrice.toFixed(2)}</span>
+                </div>
+              </div>
 
-              <p className="text-xs text-muted-foreground text-center mt-4">
-                Your purchase will be reviewed by our admin team. Flames will be added to your account after approval.
-              </p>
-            </form>
-          </CardContent>
-        </Card>
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="cardNumber">Card Number</Label>
+                  <Input
+                    id="cardNumber"
+                    placeholder="1234 5678 9012 3456"
+                    value={cardNumber}
+                    onChange={(e) => setCardNumber(formatCardNumber(e.target.value))}
+                    required
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Only Visa and Mastercard accepted
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="cardHolder">Card Holder Name</Label>
+                  <Input
+                    id="cardHolder"
+                    placeholder="JOHN DOE"
+                    value={cardHolder}
+                    onChange={(e) => setCardHolder(e.target.value.toUpperCase())}
+                    required
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="expiry">Expiry Date</Label>
+                    <Input
+                      id="expiry"
+                      placeholder="MM/YY"
+                      value={expiryDate}
+                      onChange={(e) => setExpiryDate(formatExpiryDate(e.target.value))}
+                      maxLength={5}
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="cvv">CVV</Label>
+                    <Input
+                      id="cvv"
+                      placeholder="123"
+                      type="password"
+                      value={cvv}
+                      onChange={(e) => setCvv(e.target.value.replace(/\D/g, "").slice(0, 3))}
+                      maxLength={3}
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 p-3 bg-green-500/10 rounded-lg border border-green-500/20">
+                  <ShieldCheck className="w-5 h-5 text-green-500" />
+                  <span className="text-sm text-green-500">
+                    Secured by FirePay encryption
+                  </span>
+                </div>
+
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setPaymentMethod(null)}
+                    className="flex-1"
+                  >
+                    Back
+                  </Button>
+                  <Button
+                    type="submit"
+                    className="flex-1 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600"
+                    disabled={loading}
+                  >
+                    {loading ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Processing...
+                      </>
+                    ) : (
+                      `Pay $${finalPrice.toFixed(2)}`
+                    )}
+                  </Button>
+                </div>
+
+                <p className="text-xs text-muted-foreground text-center mt-4">
+                  Your purchase will be reviewed by our admin team. Flames will be added to your account after approval.
+                </p>
+              </form>
+            </CardContent>
+          </Card>
         )}
       </main>
     </div>
