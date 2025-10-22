@@ -375,19 +375,11 @@ const Settings = () => {
       if (error) throw error;
 
       setTotpSecret(data.totp.secret);
-      
-      // Generate QR code with optimized settings
-      const qrCodeUrl = data.totp.qr_code;
-      const qrCodeDataUrl = await QRCode.toDataURL(qrCodeUrl, {
-        errorCorrectionLevel: 'L',
-        margin: 1,
-        width: 256
-      });
-      setQrCode(qrCodeDataUrl);
+      setQrCode("enabled"); // Just a flag to show the setup form
 
       toast({
-        title: "Scan QR Code",
-        description: "Scan with Microsoft Authenticator or any TOTP app and enter the code",
+        title: "Secret Key Generated",
+        description: "Enter the key in Google Authenticator app",
       });
     } catch (error: any) {
       toast({
@@ -788,16 +780,13 @@ const Settings = () => {
                     ) : (
                       <div className="space-y-4">
                         <div className="text-center space-y-2">
-                          <p className="font-semibold">Scan this QR code</p>
+                          <p className="font-semibold">Enter this key in Google Authenticator</p>
                           <p className="text-sm text-muted-foreground">
-                            Open Google Authenticator and scan the code below
+                            Add a new account and enter the secret key below
                           </p>
                         </div>
-                        <div className="flex justify-center p-4 bg-white rounded-lg">
-                          <img src={qrCode} alt="QR Code" className="w-48 h-48" />
-                        </div>
                         <div className="space-y-2">
-                          <Label>Or enter this secret key manually:</Label>
+                          <Label>Secret Key</Label>
                           <div className="flex gap-2">
                             <Input
                               value={totpSecret}
