@@ -432,8 +432,14 @@ const Settings = () => {
     try {
       if (!currentFactorId) throw new Error("No TOTP factor found");
 
-      const { error } = await supabase.auth.mfa.challengeAndVerify({
+      const { data: challenge, error: challengeError } = await supabase.auth.mfa.challenge({
+        factorId: currentFactorId
+      });
+      if (challengeError || !challenge) throw challengeError || new Error("Failed to create challenge");
+
+      const { error } = await supabase.auth.mfa.verify({
         factorId: currentFactorId,
+        challengeId: challenge.id,
         code: verifyCode
       });
 

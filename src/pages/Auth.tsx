@@ -20,6 +20,7 @@ const Auth = () => {
   const [loading, setLoading] = useState(false);
   const [showMfaInput, setShowMfaInput] = useState(false);
   const [mfaCode, setMfaCode] = useState("");
+  const [mfaFactorId, setMfaFactorId] = useState("");
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -35,25 +36,43 @@ const Auth = () => {
         });
 
         if (error) {
-          // Check if MFA is required
-          if (error.message.includes('MFA') || error.message.includes('factor')) {
-            setShowMfaInput(true);
-            setLoading(false);
+          // If MFA is required, fetch factors and prompt for code
+          const msg = error.message?.toLowerCase() || "";
+          if (msg.includes('mfa') || msg.includes('factor')) {
+            try {
+              const { data: factors } = await supabase.auth.mfa.listFactors();
+              const totpFactor = factors?.totp?.find(f => f.status === 'verified');
+              if (totpFactor) {
+                setMfaFactorId(totpFactor.id);
+                setShowMfaInput(true);
+                setLoading(false);
+                toast({
+                  title: "2FA Required",
+                  description: "Please enter your 6-digit code from Google Authenticator",
+                });
+                return;
+              }
+            } catch (_) {}
+
             toast({
-              title: "2FA Required",
-              description: "Please enter your 6-digit code from Google Authenticator",
+              title: "Two‑factor setup issue",
+              description: "No TOTP factor found on your account.",
+              variant: 'destructive',
             });
+            setLoading(false);
             return;
           }
           throw error;
         }
 
-        // Check if user has MFA enabled
+        // After successful password login, check if user has MFA
         if (data.user) {
           const { data: factors } = await supabase.auth.mfa.listFactors();
-          const hasMfa = factors?.totp?.some(f => f.status === 'verified');
-
-          if (hasMfa && !showMfaInput) {
+          const totpFactor = factors?.totp?.find(f => f.status === 'verified');
+          
+          if (totpFactor) {
+            // User has MFA enabled, show MFA input
+            setMfaFactorId(totpFactor.id);
             setShowMfaInput(true);
             setLoading(false);
             toast({
@@ -63,6 +82,7 @@ const Auth = () => {
             return;
           }
 
+          // No MFA required, login successful
           toast({
             title: "Welcome back!",
             description: "You've successfully logged in.",
@@ -126,19 +146,16 @@ const Auth = () => {
 
     setLoading(true);
     try {
-      const { data: factors } = await supabase.auth.mfa.listFactors();
-      const totpFactor = factors?.totp?.find(f => f.status === 'verified');
-      
-      if (!totpFactor) throw new Error("No MFA factor found");
+      if (!mfaFactorId) throw new Error("No MFA factor found");
 
-      const { data: challenge } = await supabase.auth.mfa.challenge({
-        factorId: totpFactor.id
+      const { data: challenge, error: challengeError } = await supabase.auth.mfa.challenge({
+        factorId: mfaFactorId
       });
 
-      if (!challenge) throw new Error("Failed to create challenge");
+      if (challengeError || !challenge) throw challengeError || new Error("Failed to create challenge");
 
       const { error } = await supabase.auth.mfa.verify({
-        factorId: totpFactor.id,
+        factorId: mfaFactorId,
         challengeId: challenge.id,
         code: mfaCode
       });
@@ -218,6 +235,7 @@ const Auth = () => {
                 onClick={() => {
                   setShowMfaInput(false);
                   setMfaCode("");
+                  setMfaFactorId("");
                   setPassword("");
                 }}
               >
