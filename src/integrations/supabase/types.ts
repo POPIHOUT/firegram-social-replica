@@ -1165,10 +1165,19 @@ export type Database = {
         Returns: boolean
       }
       purchase_effect: { Args: { effect_uuid: string }; Returns: undefined }
-      purchase_flames_with_wallet: {
-        Args: { flame_amount: number; price_amount: number }
-        Returns: undefined
-      }
+      purchase_flames_with_wallet:
+        | {
+            Args: { flame_amount: number; price_amount: number }
+            Returns: undefined
+          }
+        | {
+            Args: {
+              flame_amount: number
+              price_amount: number
+              user_password: string
+            }
+            Returns: undefined
+          }
       purchase_frame: { Args: { frame_uuid: string }; Returns: undefined }
       purchase_premium: { Args: never; Returns: undefined }
       redeem_wallet_code: { Args: { code_text: string }; Returns: number }

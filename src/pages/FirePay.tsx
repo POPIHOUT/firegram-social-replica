@@ -34,6 +34,7 @@ const FirePay = () => {
   const [finalPrice, setFinalPrice] = useState(parseFloat(price || "0"));
   const [paymentMethod, setPaymentMethod] = useState<"wallet" | "card" | null>(null);
   const [walletBalance, setWalletBalance] = useState(0);
+  const [walletPassword, setWalletPassword] = useState("");
 
   // Validate SAC code on component mount
   useState(() => {
@@ -177,9 +178,49 @@ const FirePay = () => {
 
       // If paying with wallet
       if (paymentMethod === "wallet") {
+        // Verify password first
+        if (!walletPassword) {
+          toast({
+            title: "Password Required",
+            description: "Please enter your password to confirm",
+            variant: "destructive",
+          });
+          setLoading(false);
+          return;
+        }
+
+        // Verify password by attempting to sign in
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user?.email) {
+          toast({
+            title: "Error",
+            description: "User email not found",
+            variant: "destructive",
+          });
+          setLoading(false);
+          return;
+        }
+
+        const { error: passwordError } = await supabase.auth.signInWithPassword({
+          email: user.email,
+          password: walletPassword,
+        });
+
+        if (passwordError) {
+          toast({
+            title: "Incorrect Password",
+            description: "The password you entered is incorrect",
+            variant: "destructive",
+          });
+          setLoading(false);
+          return;
+        }
+
+        // Password verified, proceed with purchase
         const { error } = await supabase.rpc("purchase_flames_with_wallet", {
           flame_amount: parseInt(amount || "0"),
           price_amount: finalPrice,
+          user_password: walletPassword,
         });
 
         if (error) throw error;
@@ -503,12 +544,30 @@ const FirePay = () => {
                 </div>
               </div>
 
-              <form onSubmit={handleSubmit}>
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="wallet-password">Confirm Password</Label>
+                  <Input
+                    id="wallet-password"
+                    type="password"
+                    placeholder="Enter your account password"
+                    value={walletPassword}
+                    onChange={(e) => setWalletPassword(e.target.value)}
+                    required
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    For security, please confirm your password to complete this purchase
+                  </p>
+                </div>
+
                 <div className="flex gap-2">
                   <Button
                     type="button"
                     variant="outline"
-                    onClick={() => setPaymentMethod(null)}
+                    onClick={() => {
+                      setPaymentMethod(null);
+                      setWalletPassword("");
+                    }}
                     className="flex-1"
                   >
                     Back
@@ -516,7 +575,7 @@ const FirePay = () => {
                   <Button
                     type="submit"
                     className="flex-1 bg-gradient-to-r from-primary to-primary/80"
-                    disabled={loading}
+                    disabled={loading || !walletPassword}
                   >
                     {loading ? (
                       <>
