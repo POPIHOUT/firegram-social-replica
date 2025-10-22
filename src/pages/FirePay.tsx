@@ -501,19 +501,19 @@ const FirePay = () => {
                 )}
 
                 <Button
-                  onClick={() => setPaymentMethod("card")}
                   variant="outline"
-                  className="w-full h-auto py-6 flex flex-col items-start gap-2"
+                  disabled
+                  className="w-full h-auto py-6 flex flex-col items-start gap-2 opacity-60"
                 >
                   <div className="flex items-center gap-2 w-full justify-between">
                     <div className="flex items-center gap-2">
                       <CreditCard className="w-5 h-5" />
                       <span className="font-semibold">Pay with Card</span>
                     </div>
-                    <Badge variant="secondary">Requires Approval</Badge>
+                    <Badge variant="secondary">Coming Soon</Badge>
                   </div>
                   <div className="text-xs text-left text-muted-foreground">
-                    Visa/Mastercard • Admin approval required
+                    Card payments will be available soon
                   </div>
                 </Button>
 
