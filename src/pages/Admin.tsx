@@ -12,7 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
-import { Shield, Users, FileText, Film, Ban, Clock, Trash2, CheckCircle, XCircle, Loader2, Settings, Megaphone, Flame, DollarSign, Crown, Wallet } from "lucide-react";
+import { Shield, Users, FileText, Film, Ban, Clock, Trash2, CheckCircle, XCircle, Loader2, Settings, Megaphone, Flame, DollarSign, Crown, Wallet, KeyRound } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { formatDistanceToNow } from "date-fns";
 import FlamePurchaseCard from "@/components/FlamePurchaseCard";
@@ -150,6 +150,8 @@ const Admin = () => {
   const [announcementMessage, setAnnouncementMessage] = useState("");
   const [sendingAnnouncement, setSendingAnnouncement] = useState(false);
   const [userRole, setUserRole] = useState<string | null>(null);
+  const [resetPasswordDialogOpen, setResetPasswordDialogOpen] = useState(false);
+  const [tempPassword, setTempPassword] = useState("");
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -921,6 +923,30 @@ const Admin = () => {
     }
   };
 
+  const handleResetPassword = async () => {
+    if (!selectedUser) return;
+
+    try {
+      const { data, error } = await supabase.functions.invoke("reset-user-password", {
+        body: { targetUserId: selectedUser.id },
+      });
+
+      if (error) throw error;
+
+      setTempPassword(data.tempPassword);
+      toast({
+        title: "Password Reset",
+        description: "User password has been reset successfully",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleSendAnnouncement = async () => {
     if (!announcementMessage.trim()) {
       toast({
@@ -1224,6 +1250,19 @@ const Admin = () => {
                           >
                             <Settings className="w-3 h-3 sm:w-4 sm:h-4" />
                             <span className="hidden sm:inline ml-2">Roles</span>
+                          </Button>
+
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="text-xs h-8 bg-yellow-500/10 border-yellow-500/20 hover:bg-yellow-500/20"
+                            onClick={() => {
+                              setSelectedUser(user);
+                              setResetPasswordDialogOpen(true);
+                            }}
+                          >
+                            <KeyRound className="w-3 h-3 sm:w-4 sm:h-4" />
+                            <span className="hidden sm:inline ml-2">Reset Password</span>
                           </Button>
 
                           {user.banned ? (
@@ -1978,6 +2017,93 @@ const Admin = () => {
               Reject Deposit
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={resetPasswordDialogOpen} onOpenChange={(open) => {
+        setResetPasswordDialogOpen(open);
+        if (!open) setTempPassword("");
+      }}>
+        <DialogContent className="max-w-[95vw] sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <KeyRound className="w-5 h-5 text-yellow-500" />
+              Reset User Password
+            </DialogTitle>
+            <DialogDescription>
+              Reset password for {selectedUser?.username}. User will be required to change password on next login.
+            </DialogDescription>
+          </DialogHeader>
+          
+          {!tempPassword ? (
+            <div className="space-y-4">
+              <div className="p-4 rounded-lg bg-yellow-500/10 border border-yellow-500/20">
+                <p className="text-sm">
+                  This will:
+                </p>
+                <ul className="text-sm list-disc list-inside mt-2 space-y-1">
+                  <li>Generate a temporary password</li>
+                  <li>Force user to change password on next login</li>
+                  <li>User won't be able to use the app until they change it</li>
+                </ul>
+              </div>
+              
+              <DialogFooter className="flex-col sm:flex-row gap-2">
+                <Button 
+                  variant="outline" 
+                  onClick={() => setResetPasswordDialogOpen(false)}
+                  className="w-full sm:w-auto"
+                >
+                  Cancel
+                </Button>
+                <Button 
+                  onClick={handleResetPassword}
+                  className="bg-yellow-500 hover:bg-yellow-600 w-full sm:w-auto"
+                >
+                  Reset Password
+                </Button>
+              </DialogFooter>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <div className="p-4 rounded-lg bg-green-500/10 border border-green-500/20">
+                <p className="text-sm font-medium mb-2">Temporary Password Generated:</p>
+                <div className="flex items-center gap-2">
+                  <code className="flex-1 p-3 bg-background rounded border font-mono text-sm">
+                    {tempPassword}
+                  </code>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      navigator.clipboard.writeText(tempPassword);
+                      toast({
+                        title: "Copied",
+                        description: "Password copied to clipboard",
+                      });
+                    }}
+                  >
+                    Copy
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground mt-3">
+                  ⚠️ Save this password securely. It won't be shown again. Send it to {selectedUser?.username} through a secure channel.
+                </p>
+              </div>
+              
+              <DialogFooter>
+                <Button 
+                  onClick={() => {
+                    setResetPasswordDialogOpen(false);
+                    setTempPassword("");
+                  }}
+                  className="w-full"
+                >
+                  Done
+                </Button>
+              </DialogFooter>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </div>

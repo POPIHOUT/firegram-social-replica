@@ -82,7 +82,24 @@ const Auth = () => {
             return;
           }
 
-          // No MFA required, login successful
+          // No MFA required, check if password change is required
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("must_change_password")
+            .eq("id", data.user.id)
+            .single();
+
+          if (profile?.must_change_password) {
+            // Show password change dialog
+            toast({
+              title: "Password Change Required",
+              description: "Your password was reset by an administrator. Please set a new password.",
+              variant: "destructive",
+            });
+            navigate("/settings?changePassword=true");
+            return;
+          }
+
           toast({
             title: "Welcome back!",
             description: "You've successfully logged in.",
@@ -161,6 +178,26 @@ const Auth = () => {
       });
 
       if (error) throw error;
+
+      // Check if password change is required after MFA
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("must_change_password")
+          .eq("id", user.id)
+          .single();
+
+        if (profile?.must_change_password) {
+          toast({
+            title: "Password Change Required",
+            description: "Your password was reset by an administrator. Please set a new password.",
+            variant: "destructive",
+          });
+          navigate("/settings?changePassword=true");
+          return;
+        }
+      }
 
       toast({
         title: "Welcome back!",

@@ -506,6 +506,7 @@ export type Database = {
           is_support: boolean | null
           is_verified: boolean | null
           last_name: string | null
+          must_change_password: boolean
           premium_until: string | null
           selected_effect_id: string | null
           selected_frame_id: string | null
@@ -536,6 +537,7 @@ export type Database = {
           is_support?: boolean | null
           is_verified?: boolean | null
           last_name?: string | null
+          must_change_password?: boolean
           premium_until?: string | null
           selected_effect_id?: string | null
           selected_frame_id?: string | null
@@ -566,6 +568,7 @@ export type Database = {
           is_support?: boolean | null
           is_verified?: boolean | null
           last_name?: string | null
+          must_change_password?: boolean
           premium_until?: string | null
           selected_effect_id?: string | null
           selected_frame_id?: string | null
@@ -1142,6 +1145,7 @@ export type Database = {
       }
       delete_expired_stories: { Args: never; Returns: undefined }
       expire_premium_subscriptions: { Args: never; Returns: undefined }
+      generate_temp_password: { Args: never; Returns: string }
       get_user_emails: {
         Args: never
         Returns: {

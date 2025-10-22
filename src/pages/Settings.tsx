@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import Navigation from "@/components/Navigation";
 import { Button } from "@/components/ui/button";
@@ -44,13 +44,21 @@ const Settings = () => {
   const [showPasswordChangeDialog, setShowPasswordChangeDialog] = useState(false);
   const [showDisable2FADialog, setShowDisable2FADialog] = useState(false);
   const [pendingPasswordChange, setPendingPasswordChange] = useState(false);
+  const [mustChangePassword, setMustChangePassword] = useState(false);
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { toast } = useToast();
 
   useEffect(() => {
     fetchUserData();
     checkMfaStatus();
-  }, []);
+    
+    // Check if user needs to change password
+    const changePasswordParam = searchParams.get("changePassword");
+    if (changePasswordParam === "true") {
+      checkMustChangePassword();
+    }
+  }, [searchParams]);
 
   // Timer countdown for secret key
   useEffect(() => {
@@ -70,13 +78,33 @@ const Settings = () => {
     }
   }, [showSecret, secretTimer]);
 
+  const checkMustChangePassword = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("must_change_password")
+      .eq("id", user.id)
+      .single();
+
+    if (profile?.must_change_password) {
+      setMustChangePassword(true);
+      toast({
+        title: "Password Change Required",
+        description: "Your password was reset by an administrator. You must change it before using the app.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const fetchUserData = async () => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
 
     const { data: profile } = await supabase
       .from("profiles")
-      .select("flames, is_premium, show_own_fire_effect, custom_background_url, show_custom_background, premium_until, selected_effect_id, wallet_balance")
+      .select("flames, is_premium, show_own_fire_effect, custom_background_url, show_custom_background, premium_until, selected_effect_id, wallet_balance, must_change_password")
       .eq("id", user.id)
       .single();
 
@@ -89,6 +117,7 @@ const Settings = () => {
       setPremiumUntil(profile.premium_until);
       setSelectedEffectId(profile.selected_effect_id);
       setWalletBalance(Number(profile.wallet_balance) || 0);
+      setMustChangePassword(profile.must_change_password || false);
       
       // Fetch owned effects if premium
       if (profile.is_premium) {
@@ -140,6 +169,17 @@ const Settings = () => {
 
       if (error) throw error;
 
+      // Clear must_change_password flag if it was set
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user && mustChangePassword) {
+        await supabase
+          .from("profiles")
+          .update({ must_change_password: false })
+          .eq("id", user.id);
+        
+        setMustChangePassword(false);
+      }
+
       toast({
         title: "Password updated",
         description: "Your password has been changed successfully",
@@ -149,6 +189,11 @@ const Settings = () => {
       setNewPassword("");
       setConfirmPassword("");
       setPendingPasswordChange(false);
+      
+      // Clear the URL parameter if present
+      if (searchParams.get("changePassword") === "true") {
+        navigate("/settings", { replace: true });
+      }
     } catch (error: any) {
       console.error("Error updating password:", error);
       toast({
