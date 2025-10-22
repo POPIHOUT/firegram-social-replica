@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, CreditCard, ShieldCheck } from "lucide-react";
+import { Loader2, CreditCard, ShieldCheck, Wallet } from "lucide-react";
 import Navigation from "@/components/Navigation";
 
 const FirePay = () => {
@@ -14,6 +14,7 @@ const FirePay = () => {
   const amount = searchParams.get("amount");
   const price = searchParams.get("price");
   const sacCode = searchParams.get("sac");
+  const useWallet = searchParams.get("wallet") === "true";
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -101,6 +102,29 @@ const FirePay = () => {
         return;
       }
 
+      // If paying with wallet
+      if (useWallet) {
+        const { error } = await supabase.rpc("purchase_flames_with_wallet", {
+          flame_amount: parseInt(amount || "0"),
+          price_amount: finalPrice,
+        });
+
+        if (error) throw error;
+
+        toast({
+          title: "Purchase Successful!",
+          description: `${amount} flames added to your account instantly`,
+        });
+
+        setTimeout(() => {
+          navigate("/feed");
+        }, 1500);
+        
+        setLoading(false);
+        return;
+      }
+
+      // Paying with card - requires admin approval
       const cardType = detectCardType(cardNumber);
       if (!cardType) {
         toast({
@@ -185,7 +209,69 @@ const FirePay = () => {
     <div className="min-h-screen pb-safe">
       <Navigation />
       <main className="max-w-2xl mx-auto pt-20 px-4 pb-20">
-        <Card>
+        {useWallet ? (
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-center mb-4">
+                <Wallet className="w-12 h-12 text-primary" />
+              </div>
+              <CardTitle className="text-2xl text-center">Confirm Purchase</CardTitle>
+              <CardDescription className="text-center">
+                Pay with your FireWallet
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="mb-6 p-4 bg-muted rounded-lg space-y-2">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-muted-foreground">Flames:</span>
+                  <span className="font-semibold">{parseInt(amount || "0").toLocaleString()}</span>
+                </div>
+                {validatedSacCode && (
+                  <>
+                    <div className="flex justify-between items-center text-green-500">
+                      <span className="text-sm">SAC Code ({validatedSacCode.code}):</span>
+                      <span className="font-semibold">-5% discount</span>
+                    </div>
+                    <div className="flex justify-between items-center text-xs text-muted-foreground">
+                      <span>Supporting:</span>
+                      <span>{validatedSacCode.creatorUsername}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-muted-foreground">Original:</span>
+                      <span className="line-through text-muted-foreground">${price}</span>
+                    </div>
+                  </>
+                )}
+                <div className="flex justify-between items-center mt-2 pt-2 border-t">
+                  <span className="text-sm text-muted-foreground">Total:</span>
+                  <span className="text-2xl font-bold">${finalPrice.toFixed(2)}</span>
+                </div>
+              </div>
+
+              <form onSubmit={handleSubmit}>
+                <Button
+                  type="submit"
+                  className="w-full bg-gradient-to-r from-primary to-primary/80"
+                  disabled={loading}
+                >
+                  {loading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Processing...
+                    </>
+                  ) : (
+                    `Pay $${finalPrice.toFixed(2)} with Wallet`
+                  )}
+                </Button>
+              </form>
+
+              <p className="text-xs text-muted-foreground text-center mt-4">
+                Flames will be added to your account instantly!
+              </p>
+            </CardContent>
+          </Card>
+        ) : (
+          <Card>
           <CardHeader>
             <div className="flex items-center justify-center mb-4">
               <CreditCard className="w-12 h-12 text-primary" />
@@ -303,6 +389,7 @@ const FirePay = () => {
             </form>
           </CardContent>
         </Card>
+        )}
       </main>
     </div>
   );

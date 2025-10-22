@@ -12,7 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
-import { Shield, Users, FileText, Film, Ban, Clock, Trash2, CheckCircle, XCircle, Loader2, Settings, Megaphone, Flame, DollarSign, Crown } from "lucide-react";
+import { Shield, Users, FileText, Film, Ban, Clock, Trash2, CheckCircle, XCircle, Loader2, Settings, Megaphone, Flame, DollarSign, Crown, Wallet } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { formatDistanceToNow } from "date-fns";
 import FlamePurchaseCard from "@/components/FlamePurchaseCard";
@@ -115,6 +115,8 @@ const Admin = () => {
   const [rolesDialogOpen, setRolesDialogOpen] = useState(false);
   const [flamesDialogOpen, setFlamesDialogOpen] = useState(false);
   const [flamesAmount, setFlamesAmount] = useState("");
+  const [walletDialogOpen, setWalletDialogOpen] = useState(false);
+  const [walletAmount, setWalletAmount] = useState("");
   const [followersDialogOpen, setFollowersDialogOpen] = useState(false);
   const [followersAmount, setFollowersAmount] = useState("");
   const [flamePurchases, setFlamePurchases] = useState<FlamePurchase[]>([]);
@@ -293,6 +295,35 @@ const Admin = () => {
       
       setFollowersAmount("");
       setFollowersDialogOpen(false);
+      await fetchData();
+    } catch (error: any) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    }
+  };
+
+  const handleAddWalletMoney = async () => {
+    const amount = parseFloat(walletAmount);
+    if (!selectedUser || !amount || amount <= 0) {
+      toast({ title: "Invalid amount", description: "Please enter a valid amount", variant: "destructive" });
+      return;
+    }
+
+    try {
+      const { error } = await supabase.rpc('admin_add_wallet_money', {
+        target_user_id: selectedUser.id,
+        amount_to_add: amount,
+        description_text: `Admin added $${amount} to wallet`
+      });
+
+      if (error) throw error;
+
+      toast({ 
+        title: "Wallet Money Added", 
+        description: `Added $${amount} to ${selectedUser.username}'s wallet` 
+      });
+      
+      setWalletAmount("");
+      setWalletDialogOpen(false);
       await fetchData();
     } catch (error: any) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
@@ -1050,6 +1081,19 @@ const Admin = () => {
                           <Button
                             variant="outline"
                             size="sm"
+                            className="text-xs h-8 bg-green-500/10 border-green-500/20 hover:bg-green-500/20"
+                            onClick={() => {
+                              setSelectedUser(user);
+                              setWalletDialogOpen(true);
+                            }}
+                          >
+                            <Wallet className="w-3 h-3 sm:w-4 sm:h-4" />
+                            <span className="hidden sm:inline ml-1">Wallet</span>
+                          </Button>
+
+                          <Button
+                            variant="outline"
+                            size="sm"
                             className="text-xs h-8"
                             onClick={() => {
                               setSelectedUser(user);
@@ -1628,6 +1672,64 @@ const Admin = () => {
               className="bg-purple-500 hover:bg-purple-600 w-full sm:w-auto"
             >
               Give Fake Followers 😈
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={walletDialogOpen} onOpenChange={(open) => {
+        setWalletDialogOpen(open);
+        if (!open) setWalletAmount("");
+      }}>
+        <DialogContent className="max-w-[95vw] sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Add Wallet Money 💵</DialogTitle>
+            <DialogDescription>
+              Add money to {selectedUser?.username}'s FireWallet
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="p-4 rounded-lg bg-green-500/10 border border-green-500/20">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium">Adding to:</span>
+                <div className="flex items-center gap-2">
+                  <Wallet className="w-5 h-5" />
+                  <span className="font-bold">{selectedUser?.username}</span>
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <Label htmlFor="wallet-amount">Amount (USD)</Label>
+              <Input
+                id="wallet-amount"
+                type="number"
+                step="0.01"
+                placeholder="Enter amount..."
+                value={walletAmount}
+                onChange={(e) => setWalletAmount(e.target.value)}
+                min="0.01"
+                className="mt-2"
+              />
+            </div>
+          </div>
+          <DialogFooter className="flex-col sm:flex-row gap-2">
+            <Button 
+              variant="outline" 
+              onClick={() => {
+                setWalletDialogOpen(false);
+                setWalletAmount("");
+              }}
+              className="w-full sm:w-auto"
+            >
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleAddWalletMoney}
+              disabled={!walletAmount}
+              className="bg-green-500 hover:bg-green-600 w-full sm:w-auto"
+            >
+              Add Money
             </Button>
           </DialogFooter>
         </DialogContent>

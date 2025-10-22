@@ -495,7 +495,9 @@ export type Database = {
           bio: string | null
           created_at: string | null
           custom_background_url: string | null
+          date_of_birth: string | null
           fake_followers_count: number | null
+          first_name: string | null
           flames: number
           full_name: string | null
           id: string
@@ -503,6 +505,7 @@ export type Database = {
           is_premium: boolean | null
           is_support: boolean | null
           is_verified: boolean | null
+          last_name: string | null
           premium_until: string | null
           selected_effect_id: string | null
           selected_frame_id: string | null
@@ -513,6 +516,7 @@ export type Database = {
           suspended_until: string | null
           updated_at: string | null
           username: string
+          wallet_balance: number
         }
         Insert: {
           avatar_url?: string | null
@@ -521,7 +525,9 @@ export type Database = {
           bio?: string | null
           created_at?: string | null
           custom_background_url?: string | null
+          date_of_birth?: string | null
           fake_followers_count?: number | null
+          first_name?: string | null
           flames?: number
           full_name?: string | null
           id: string
@@ -529,6 +535,7 @@ export type Database = {
           is_premium?: boolean | null
           is_support?: boolean | null
           is_verified?: boolean | null
+          last_name?: string | null
           premium_until?: string | null
           selected_effect_id?: string | null
           selected_frame_id?: string | null
@@ -539,6 +546,7 @@ export type Database = {
           suspended_until?: string | null
           updated_at?: string | null
           username: string
+          wallet_balance?: number
         }
         Update: {
           avatar_url?: string | null
@@ -547,7 +555,9 @@ export type Database = {
           bio?: string | null
           created_at?: string | null
           custom_background_url?: string | null
+          date_of_birth?: string | null
           fake_followers_count?: number | null
+          first_name?: string | null
           flames?: number
           full_name?: string | null
           id?: string
@@ -555,6 +565,7 @@ export type Database = {
           is_premium?: boolean | null
           is_support?: boolean | null
           is_verified?: boolean | null
+          last_name?: string | null
           premium_until?: string | null
           selected_effect_id?: string | null
           selected_frame_id?: string | null
@@ -565,6 +576,7 @@ export type Database = {
           suspended_until?: string | null
           updated_at?: string | null
           username?: string
+          wallet_balance?: number
         }
         Relationships: [
           {
@@ -954,33 +966,62 @@ export type Database = {
         }
         Relationships: []
       }
+      wallet_transactions: {
+        Row: {
+          amount: number
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          transaction_type: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          transaction_type: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          transaction_type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      admin_add_wallet_money: {
+        Args: {
+          amount_to_add: number
+          description_text: string
+          target_user_id: string
+        }
+        Returns: undefined
+      }
       approve_flame_purchase: {
         Args: { purchase_id: string }
         Returns: undefined
       }
-      cancel_premium: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
+      cancel_premium: { Args: never; Returns: undefined }
       create_or_get_conversation: {
         Args: { other_user_id: string }
         Returns: string
       }
-      delete_expired_stories: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
-      expire_premium_subscriptions: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
+      delete_expired_stories: { Args: never; Returns: undefined }
+      expire_premium_subscriptions: { Args: never; Returns: undefined }
       get_user_emails: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           email: string
           user_id: string
@@ -1001,18 +1042,13 @@ export type Database = {
         Args: { _conversation_id: string; _user_id: string }
         Returns: boolean
       }
-      purchase_effect: {
-        Args: { effect_uuid: string }
+      purchase_effect: { Args: { effect_uuid: string }; Returns: undefined }
+      purchase_flames_with_wallet: {
+        Args: { flame_amount: number; price_amount: number }
         Returns: undefined
       }
-      purchase_frame: {
-        Args: { frame_uuid: string }
-        Returns: undefined
-      }
-      purchase_premium: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
+      purchase_frame: { Args: { frame_uuid: string }; Returns: undefined }
+      purchase_premium: { Args: never; Returns: undefined }
       reject_flame_purchase: {
         Args: { purchase_id: string; reason: string }
         Returns: undefined

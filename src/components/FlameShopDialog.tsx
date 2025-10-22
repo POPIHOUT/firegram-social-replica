@@ -3,9 +3,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Flame } from "lucide-react";
+import { Flame, Wallet } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -32,6 +32,28 @@ const FlameShopDialog = ({ open, onOpenChange }: FlameShopDialogProps) => {
   const [sacValidating, setSacValidating] = useState(false);
   const [sacValid, setSacValid] = useState<boolean | null>(null);
   const [sacCreator, setSacCreator] = useState<string | null>(null);
+  const [walletBalance, setWalletBalance] = useState(0);
+
+  useEffect(() => {
+    if (open) {
+      fetchWalletBalance();
+    }
+  }, [open]);
+
+  const fetchWalletBalance = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("wallet_balance")
+      .eq("id", user.id)
+      .single();
+
+    if (profile) {
+      setWalletBalance(Number(profile.wallet_balance) || 0);
+    }
+  };
 
   const validateSacCode = async (code: string) => {
     if (!code.trim()) {
@@ -85,7 +107,13 @@ const FlameShopDialog = ({ open, onOpenChange }: FlameShopDialogProps) => {
   };
 
   const handlePurchase = (amount: number, price: number) => {
-    navigate(`/firepay?amount=${amount}&price=${price}&sac=${encodeURIComponent(sacCode)}`);
+    if (walletBalance >= price) {
+      // Pay with wallet
+      navigate(`/firepay?amount=${amount}&price=${price}&sac=${encodeURIComponent(sacCode)}&wallet=true`);
+    } else {
+      // Pay with card
+      navigate(`/firepay?amount=${amount}&price=${price}&sac=${encodeURIComponent(sacCode)}`);
+    }
     onOpenChange(false);
   };
 
@@ -111,7 +139,14 @@ const FlameShopDialog = ({ open, onOpenChange }: FlameShopDialogProps) => {
     }
 
     const price = amount * PRICE_PER_FLAME;
-    navigate(`/firepay?amount=${amount}&price=${price.toFixed(2)}&sac=${encodeURIComponent(sacCode)}`);
+    
+    if (walletBalance >= price) {
+      // Pay with wallet
+      navigate(`/firepay?amount=${amount}&price=${price.toFixed(2)}&sac=${encodeURIComponent(sacCode)}&wallet=true`);
+    } else {
+      // Pay with card
+      navigate(`/firepay?amount=${amount}&price=${price.toFixed(2)}&sac=${encodeURIComponent(sacCode)}`);
+    }
     onOpenChange(false);
     setCustomAmount("");
   };
@@ -124,6 +159,13 @@ const FlameShopDialog = ({ open, onOpenChange }: FlameShopDialogProps) => {
             <Flame className="w-6 h-6 text-orange-500" />
             Buy Flames
           </DialogTitle>
+          <div className="flex items-center gap-2 mt-2 p-3 bg-primary/10 rounded-lg">
+            <Wallet className="w-5 h-5 text-primary" />
+            <div>
+              <p className="text-sm font-semibold">Wallet Balance: ${walletBalance.toFixed(2)}</p>
+              <p className="text-xs text-muted-foreground">Use your wallet for instant purchases</p>
+            </div>
+          </div>
         </DialogHeader>
 
         <div className="space-y-6">
@@ -250,7 +292,10 @@ const FlameShopDialog = ({ open, onOpenChange }: FlameShopDialogProps) => {
         </div>
 
         <p className="text-sm text-muted-foreground text-center mt-4">
-          All purchases require admin approval. Flames will be added to your account after approval.
+          {walletBalance > 0 
+            ? "Purchases with sufficient wallet balance are instant. Others require admin approval."
+            : "All purchases require admin approval. Flames will be added to your account after approval."
+          }
         </p>
       </DialogContent>
     </Dialog>

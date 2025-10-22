@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, ArrowLeft, Flame, Sparkles, Upload, ShoppingBag, X } from "lucide-react";
+import { Loader2, ArrowLeft, Flame, Sparkles, Upload, ShoppingBag, X, Wallet, CreditCard } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import firegramLogo from "@/assets/firegram-logo.png";
@@ -28,6 +28,9 @@ const Settings = () => {
   const [ownedEffects, setOwnedEffects] = useState<any[]>([]);
   const [selectedEffectId, setSelectedEffectId] = useState<string | null>(null);
   const [cancellingPremium, setCancellingPremium] = useState(false);
+  const [walletBalance, setWalletBalance] = useState(0);
+  const [addMoneyAmount, setAddMoneyAmount] = useState("");
+  const [addingMoney, setAddingMoney] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -41,7 +44,7 @@ const Settings = () => {
 
     const { data: profile } = await supabase
       .from("profiles")
-      .select("flames, is_premium, show_own_fire_effect, custom_background_url, show_custom_background, premium_until, selected_effect_id")
+      .select("flames, is_premium, show_own_fire_effect, custom_background_url, show_custom_background, premium_until, selected_effect_id, wallet_balance")
       .eq("id", user.id)
       .single();
 
@@ -53,6 +56,7 @@ const Settings = () => {
       setShowCustomBackground(profile.show_custom_background ?? true);
       setPremiumUntil(profile.premium_until);
       setSelectedEffectId(profile.selected_effect_id);
+      setWalletBalance(Number(profile.wallet_balance) || 0);
       
       // Fetch owned effects if premium
       if (profile.is_premium) {
@@ -333,6 +337,54 @@ const Settings = () => {
     }
   };
 
+  const handleAddMoney = async () => {
+    const amount = parseFloat(addMoneyAmount);
+    if (!amount || amount <= 0) {
+      toast({
+        title: "Invalid amount",
+        description: "Please enter a valid amount",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setAddingMoney(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { error } = await supabase
+        .from("profiles")
+        .update({ wallet_balance: walletBalance + amount })
+        .eq("id", user.id);
+
+      if (error) throw error;
+
+      await supabase.from("wallet_transactions").insert({
+        user_id: user.id,
+        amount: amount,
+        transaction_type: "deposit",
+        description: "Wallet deposit",
+      });
+
+      setWalletBalance(walletBalance + amount);
+      setAddMoneyAmount("");
+      
+      toast({
+        title: "Money Added",
+        description: `Successfully added $${amount.toFixed(2)} to your wallet`,
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setAddingMoney(false);
+    }
+  };
+
   return (
     <div className="min-h-screen pb-safe">
       <Navigation />
@@ -350,6 +402,59 @@ const Settings = () => {
         </div>
 
         <div className="space-y-6">
+          <Card>
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <Wallet className="w-5 h-5 text-primary" />
+                <CardTitle>FireWallet</CardTitle>
+              </div>
+              <CardDescription>
+                Add money to your wallet and use it to purchase flames instantly
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between p-4 bg-gradient-to-r from-primary/10 to-primary/5 rounded-lg border border-primary/20">
+                  <div className="flex items-center gap-3">
+                    <CreditCard className="w-8 h-8 text-primary" />
+                    <div>
+                      <p className="text-sm text-muted-foreground">Wallet Balance</p>
+                      <p className="text-2xl font-bold">${walletBalance.toFixed(2)}</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="addMoney">Add Money</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      id="addMoney"
+                      type="number"
+                      step="0.01"
+                      min="1"
+                      placeholder="Enter amount"
+                      value={addMoneyAmount}
+                      onChange={(e) => setAddMoneyAmount(e.target.value)}
+                    />
+                    <Button 
+                      onClick={handleAddMoney}
+                      disabled={addingMoney}
+                    >
+                      {addingMoney ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        "Add"
+                      )}
+                    </Button>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Add money to your wallet for instant flame purchases
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
           <Card className={isPremium ? "border-orange-500/50 bg-gradient-to-br from-orange-500/5 to-transparent" : ""}>
             <CardHeader>
               <div className="flex items-center gap-2">
