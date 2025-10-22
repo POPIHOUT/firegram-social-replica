@@ -133,7 +133,19 @@ const FirePay = () => {
         description: `${amount} flames added to your account instantly`,
       });
 
-      setTimeout(() => navigate("/feed"), 1500);
+      // Refresh wallet balance
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("wallet_balance")
+          .eq("id", user.id)
+          .single();
+
+        if (profile) {
+          setWalletBalance(Number(profile.wallet_balance) || 0);
+        }
+      }
     } catch (error: any) {
       toast({
         title: "Error",
