@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, CreditCard, ShieldCheck, Wallet } from "lucide-react";
 import Navigation from "@/components/Navigation";
-import { SecurityVerificationDialog } from "@/components/SecurityVerificationDialog";
+import { TwoFactorDialog } from "@/components/TwoFactorDialog";
 
 const FirePay = () => {
   const [searchParams] = useSearchParams();
@@ -36,7 +36,8 @@ const FirePay = () => {
   const [paymentMethod, setPaymentMethod] = useState<"wallet" | "card" | null>(null);
   const [walletBalance, setWalletBalance] = useState(0);
   const [walletPassword, setWalletPassword] = useState("");
-  const [showWalletVerificationDialog, setShowWalletVerificationDialog] = useState(false);
+  const [show2FADialog, setShow2FADialog] = useState(false);
+  const [hasMfa, setHasMfa] = useState(false);
 
   // Validate SAC code on component mount
   useState(() => {
@@ -217,12 +218,44 @@ const FirePay = () => {
         return;
       }
 
-      // If paying with wallet
+      // If paying with wallet - verify password first
       if (paymentMethod === "wallet") {
-        // Show verification dialog instead of inline password
-        setShowWalletVerificationDialog(true);
-        setLoading(false);
-        return;
+        // Verify password
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user?.email) {
+          throw new Error("User email not found");
+        }
+
+        const { error: passwordError } = await supabase.auth.signInWithPassword({
+          email: user.email,
+          password: walletPassword,
+        });
+
+        if (passwordError) {
+          toast({
+            title: "Incorrect Password",
+            description: "The password you entered is incorrect",
+            variant: "destructive",
+          });
+          setLoading(false);
+          return;
+        }
+
+        // Check if 2FA is enabled
+        const { data: factors } = await supabase.auth.mfa.listFactors();
+        const totpFactor = factors?.totp?.find(f => f.status === 'verified');
+
+        if (totpFactor) {
+          // Show 2FA dialog
+          setHasMfa(true);
+          setShow2FADialog(true);
+          setLoading(false);
+          return;
+        } else {
+          // No 2FA, complete purchase
+          await performWalletPurchase();
+          return;
+        }
       }
 
       // Paying with card - requires admin approval
@@ -451,10 +484,7 @@ const FirePay = () => {
               <div className="space-y-3">
                 {walletBalance >= finalPrice && (
                   <Button
-                    onClick={() => {
-                      setPaymentMethod("wallet");
-                      setShowWalletVerificationDialog(true);
-                    }}
+                    onClick={() => setPaymentMethod("wallet")}
                     className="w-full h-auto py-6 flex flex-col items-start gap-2 bg-gradient-to-r from-primary to-primary/80"
                   >
                     <div className="flex items-center gap-2 w-full justify-between">
@@ -716,12 +746,12 @@ const FirePay = () => {
         )}
       </main>
 
-      <SecurityVerificationDialog
-        open={showWalletVerificationDialog}
-        onOpenChange={setShowWalletVerificationDialog}
+      <TwoFactorDialog
+        open={show2FADialog}
+        onOpenChange={setShow2FADialog}
         onVerified={performWalletPurchase}
-        title="Verify Purchase"
-        description="Please verify your identity to complete this purchase"
+        title="Two-Factor Authentication"
+        description="Enter your 2FA code to complete the purchase"
       />
     </div>
   );
