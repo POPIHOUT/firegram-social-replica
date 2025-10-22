@@ -20,6 +20,7 @@ interface ReelCardProps {
     created_at: string;
     type?: "reel" | "ad";
     image_url?: string | null;
+    website_url?: string | null;
   };
   profile: {
     username: string;
@@ -277,13 +278,35 @@ const ReelCard = ({ reel, profile, isActive, onUpdate, onAdTimerComplete, onAdTi
     <div className="relative h-screen w-full snap-start snap-always bg-black">
       {isAd && reel.image_url ? (
         // Image Advertisement
-        <img
-          src={reel.image_url}
-          alt="Advertisement"
-          className="h-full w-full object-contain"
-        />
+        reel.website_url ? (
+          <a href={reel.website_url} target="_blank" rel="noopener noreferrer" className="block h-full w-full">
+            <img
+              src={reel.image_url}
+              alt="Advertisement"
+              className="h-full w-full object-contain cursor-pointer"
+            />
+          </a>
+        ) : (
+          <img
+            src={reel.image_url}
+            alt="Advertisement"
+            className="h-full w-full object-contain"
+          />
+        )
+      ) : isAd && reel.website_url ? (
+        // Video ad with link
+        <a href={reel.website_url} target="_blank" rel="noopener noreferrer" className="block h-full w-full">
+          <video
+            ref={internalVideoRef}
+            src={reel.video_url}
+            loop
+            playsInline
+            className="h-full w-full object-contain cursor-pointer"
+            poster={reel.thumbnail_url || undefined}
+          />
+        </a>
       ) : (
-        // Regular video or video ad
+        // Regular video or video ad without link
         <video
           ref={internalVideoRef}
           src={reel.video_url}
@@ -369,6 +392,16 @@ const ReelCard = ({ reel, profile, isActive, onUpdate, onAdTimerComplete, onAdTi
             </div>
             {reel.caption && (
               <p className="text-sm text-white/90">{reel.caption}</p>
+            )}
+            {isAd && reel.website_url && (
+              <a 
+                href={reel.website_url} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 text-sm text-blue-400 hover:text-blue-300 underline"
+              >
+                🔗 Visit Website
+              </a>
             )}
           </div>
 

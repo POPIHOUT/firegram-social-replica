@@ -20,6 +20,7 @@ const Create = () => {
   const [adType, setAdType] = useState<"image" | "video">("image");
   const [thumbnail, setThumbnail] = useState<File | null>(null);
   const [thumbnailPreview, setThumbnailPreview] = useState<string>("");
+  const [websiteUrl, setWebsiteUrl] = useState("");
   const [userFlames, setUserFlames] = useState(0);
   const [shopDialogOpen, setShopDialogOpen] = useState(false);
   const navigate = useNavigate();
@@ -261,6 +262,7 @@ const Create = () => {
             media_url: mediaUrl,
             thumbnail_url: thumbnailUrl,
             caption: caption || null,
+            website_url: websiteUrl || null,
             expires_at: expiresAt.toISOString(),
           });
 
@@ -276,7 +278,7 @@ const Create = () => {
 
         toast({
           title: "Advertisement created!",
-          description: `Your ${adType} ad will run for 7 days 🔥`,
+          description: "Your ad is pending approval and will be reviewed by our team 🔥",
         });
 
         setUserFlames(userFlames - cost);
@@ -667,6 +669,18 @@ const Create = () => {
                   />
                 </div>
 
+                <div>
+                  <Label htmlFor="ad-website">Website URL (Optional)</Label>
+                  <input
+                    id="ad-website"
+                    type="url"
+                    placeholder="https://example.com"
+                    value={websiteUrl}
+                    onChange={(e) => setWebsiteUrl(e.target.value)}
+                    className="w-full px-3 py-2 bg-muted border border-border rounded-md focus:border-primary focus:outline-none mt-2"
+                  />
+                </div>
+
                 <Button
                   type="submit"
                   disabled={loading || selectedFiles.length === 0 || userFlames < 50}
@@ -782,6 +796,18 @@ const Create = () => {
                     value={caption}
                     onChange={(e) => setCaption(e.target.value)}
                     className="min-h-[100px] bg-muted border-border focus:border-primary resize-none mt-2"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="ad-video-website">Website URL (Optional)</Label>
+                  <input
+                    id="ad-video-website"
+                    type="url"
+                    placeholder="https://example.com"
+                    value={websiteUrl}
+                    onChange={(e) => setWebsiteUrl(e.target.value)}
+                    className="w-full px-3 py-2 bg-muted border border-border rounded-md focus:border-primary focus:outline-none mt-2"
                   />
                 </div>
 

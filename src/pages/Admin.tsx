@@ -1406,7 +1406,7 @@ const Admin = () => {
             <TabsContent value="ads" className="space-y-3 sm:space-y-4">
               <div className="grid gap-3 sm:gap-4">
                 {advertisements.map((ad) => (
-                  <Card key={ad.id}>
+                  <Card key={ad.id} className={(ad as any).status === 'pending' ? 'border-orange-500/50' : ''}>
                     <CardContent className="p-3 sm:p-6">
                       <div className="flex gap-3 sm:gap-4">
                         {ad.type === 'video' ? (
@@ -1428,25 +1428,78 @@ const Admin = () => {
                               <AvatarFallback>{ad.profiles.username.charAt(0)}</AvatarFallback>
                             </Avatar>
                             <span className="font-semibold text-xs sm:text-sm truncate">{ad.profiles.username}</span>
-                            <Badge variant={ad.active ? "default" : "secondary"} className="text-xs">
-                              {ad.active ? "Active" : "Inactive"}
+                            <Badge variant={(ad as any).status === 'pending' ? 'default' : (ad as any).status === 'approved' ? 'default' : 'destructive'} className="text-xs">
+                              {(ad as any).status || 'pending'}
                             </Badge>
+                            {ad.active && (ad as any).status === 'approved' && (
+                              <Badge variant="secondary" className="text-xs">Active</Badge>
+                            )}
                           </div>
-                          <p className="text-xs sm:text-sm mb-1 sm:mb-2 line-clamp-2">{ad.caption}</p>
+                          {ad.caption && <p className="text-xs sm:text-sm mb-1 sm:mb-2 line-clamp-2">{ad.caption}</p>}
+                          {(ad as any).website_url && (
+                            <p className="text-xs text-blue-500 mb-1 truncate">🔗 {(ad as any).website_url}</p>
+                          )}
                           <div className="flex gap-2 sm:gap-4 text-xs sm:text-sm text-muted-foreground flex-wrap">
                             <span>Expires: {new Date(ad.expires_at).toLocaleDateString()}</span>
                             <span className="hidden sm:inline">{formatDistanceToNow(new Date(ad.created_at))} ago</span>
                           </div>
+                          {(ad as any).rejection_reason && (
+                            <p className="text-xs text-destructive mt-1">Reason: {(ad as any).rejection_reason}</p>
+                          )}
                         </div>
                         <div className="flex flex-col gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="h-8 w-8 sm:h-9 sm:w-9 p-0 flex-shrink-0"
-                            onClick={() => handleToggleAd(ad.id, ad.active)}
-                          >
-                            {ad.active ? <XCircle className="w-3 h-3 sm:w-4 sm:h-4" /> : <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4" />}
-                          </Button>
+                          {(ad as any).status === 'pending' && (
+                            <>
+                              <Button
+                                variant="default"
+                                size="sm"
+                                className="h-8 px-2 sm:h-9 sm:px-3 flex-shrink-0 text-xs"
+                                onClick={async () => {
+                                  try {
+                                    const { error } = await supabase.rpc('approve_advertisement', { ad_id: ad.id });
+                                    if (error) throw error;
+                                    toast({ title: "Ad Approved", description: "Advertisement has been approved" });
+                                    fetchData();
+                                  } catch (error: any) {
+                                    toast({ title: "Error", description: error.message, variant: "destructive" });
+                                  }
+                                }}
+                              >
+                                <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4 sm:mr-1" />
+                                <span className="hidden sm:inline">Approve</span>
+                              </Button>
+                              <Button
+                                variant="destructive"
+                                size="sm"
+                                className="h-8 px-2 sm:h-9 sm:px-3 flex-shrink-0 text-xs"
+                                onClick={async () => {
+                                  const reason = prompt("Reason for rejection:");
+                                  if (!reason) return;
+                                  try {
+                                    const { error } = await supabase.rpc('reject_advertisement', { ad_id: ad.id, reason });
+                                    if (error) throw error;
+                                    toast({ title: "Ad Rejected", description: "Advertisement has been rejected and flames refunded" });
+                                    fetchData();
+                                  } catch (error: any) {
+                                    toast({ title: "Error", description: error.message, variant: "destructive" });
+                                  }
+                                }}
+                              >
+                                <XCircle className="w-3 h-3 sm:w-4 sm:h-4 sm:mr-1" />
+                                <span className="hidden sm:inline">Reject</span>
+                              </Button>
+                            </>
+                          )}
+                          {(ad as any).status === 'approved' && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="h-8 w-8 sm:h-9 sm:w-9 p-0 flex-shrink-0"
+                              onClick={() => handleToggleAd(ad.id, ad.active)}
+                            >
+                              {ad.active ? <XCircle className="w-3 h-3 sm:w-4 sm:h-4" /> : <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4" />}
+                            </Button>
+                          )}
                           <Button
                             variant="destructive"
                             size="sm"

@@ -22,9 +22,14 @@ export type Database = {
           expires_at: string
           id: string
           media_url: string
+          processed_at: string | null
+          processed_by: string | null
+          rejection_reason: string | null
+          status: string
           thumbnail_url: string | null
           type: string
           user_id: string
+          website_url: string | null
         }
         Insert: {
           active?: boolean
@@ -33,9 +38,14 @@ export type Database = {
           expires_at: string
           id?: string
           media_url: string
+          processed_at?: string | null
+          processed_by?: string | null
+          rejection_reason?: string | null
+          status?: string
           thumbnail_url?: string | null
           type: string
           user_id: string
+          website_url?: string | null
         }
         Update: {
           active?: boolean
@@ -44,9 +54,14 @@ export type Database = {
           expires_at?: string
           id?: string
           media_url?: string
+          processed_at?: string | null
+          processed_by?: string | null
+          rejection_reason?: string | null
+          status?: string
           thumbnail_url?: string | null
           type?: string
           user_id?: string
+          website_url?: string | null
         }
         Relationships: [
           {
@@ -1130,6 +1145,7 @@ export type Database = {
         }
         Returns: undefined
       }
+      approve_advertisement: { Args: { ad_id: string }; Returns: undefined }
       approve_flame_purchase: {
         Args: { purchase_id: string }
         Returns: undefined
@@ -1185,6 +1201,10 @@ export type Database = {
       purchase_frame: { Args: { frame_uuid: string }; Returns: undefined }
       purchase_premium: { Args: never; Returns: undefined }
       redeem_wallet_code: { Args: { code_text: string }; Returns: number }
+      reject_advertisement: {
+        Args: { ad_id: string; reason: string }
+        Returns: undefined
+      }
       reject_flame_purchase: {
         Args: { purchase_id: string; reason: string }
         Returns: undefined
