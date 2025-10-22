@@ -170,7 +170,15 @@ const Admin = () => {
       .eq("id", session.user.id)
       .single();
 
-    if (!profile?.is_support) {
+    // Check if user has system_manager role
+    const { data: roles } = await supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", session.user.id);
+
+    const isSystemManager = roles?.some(r => r.role === 'system_manager');
+
+    if (!profile?.is_support && !isSystemManager) {
       toast({
         title: "Access Denied",
         description: "You don't have admin access",
