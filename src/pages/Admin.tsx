@@ -1075,26 +1075,17 @@ const Admin = () => {
 
           <Tabs defaultValue="users" className="w-full">
             <div className="w-full overflow-x-auto">
-              <TabsList className="w-full inline-flex sm:grid sm:grid-cols-10 h-auto sm:h-10 flex-nowrap">
+              <TabsList className="w-full inline-flex sm:grid sm:grid-cols-9 h-auto sm:h-10 flex-nowrap">
                 <TabsTrigger value="users" className="text-xs sm:text-sm whitespace-nowrap px-3 py-2">Users</TabsTrigger>
                 <TabsTrigger value="posts" className="text-xs sm:text-sm whitespace-nowrap px-3 py-2">Posts</TabsTrigger>
                 <TabsTrigger value="reels" className="text-xs sm:text-sm whitespace-nowrap px-3 py-2">Reels</TabsTrigger>
                 <TabsTrigger value="ads" className="text-xs sm:text-sm whitespace-nowrap px-3 py-2">Ads</TabsTrigger>
                 <TabsTrigger value="purchases" className="text-xs sm:text-sm flex items-center gap-1 whitespace-nowrap px-3 py-2">
-                  <Flame className="w-3 h-3" />
+                  <DollarSign className="w-3 h-3" />
                   <span className="hidden sm:inline">Purchases</span>
-                  {stats.pending_purchases > 0 && (
+                  {(stats.pending_purchases + stats.pending_deposits) > 0 && (
                     <Badge variant="destructive" className="ml-1 h-4 px-1 text-[10px]">
-                      {stats.pending_purchases}
-                    </Badge>
-                  )}
-                </TabsTrigger>
-                <TabsTrigger value="wallet" className="text-xs sm:text-sm flex items-center gap-1 whitespace-nowrap px-3 py-2">
-                  <Wallet className="w-3 h-3" />
-                  <span className="hidden sm:inline">Wallet</span>
-                  {stats.pending_deposits > 0 && (
-                    <Badge variant="destructive" className="ml-1 h-4 px-1 text-[10px]">
-                      {stats.pending_deposits}
+                      {stats.pending_purchases + stats.pending_deposits}
                     </Badge>
                   )}
                 </TabsTrigger>
@@ -1430,6 +1421,7 @@ const Admin = () => {
 
             <TabsContent value="purchases" className="space-y-4">
               <div className="grid gap-4">
+                {/* Flame Purchases */}
                 {flamePurchases.map((purchase) => (
                   <FlamePurchaseCard
                     key={purchase.id}
@@ -1441,20 +1433,10 @@ const Admin = () => {
                     }}
                   />
                 ))}
-                {flamePurchases.length === 0 && (
-                  <Card>
-                    <CardContent className="p-8 text-center text-muted-foreground">
-                      No flame purchases yet
-                    </CardContent>
-                  </Card>
-                )}
-              </div>
-            </TabsContent>
-
-            <TabsContent value="wallet" className="space-y-4">
-              <div className="grid gap-4">
+                
+                {/* Wallet Deposits */}
                 {walletDeposits.map((deposit) => (
-                  <Card key={deposit.id} className={deposit.status === 'pending' ? 'border-orange-500/50' : ''}>
+                  <Card key={deposit.id} className={deposit.status === 'pending' ? 'border-green-500/50' : ''}>
                     <CardContent className="p-6">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-4">
@@ -1463,7 +1445,13 @@ const Admin = () => {
                             <AvatarFallback>{deposit.profiles.username.charAt(0).toUpperCase()}</AvatarFallback>
                           </Avatar>
                           <div>
-                            <p className="font-semibold">{deposit.profiles.username}</p>
+                            <div className="flex items-center gap-2">
+                              <p className="font-semibold">{deposit.profiles.username}</p>
+                              <Badge variant="outline" className="bg-green-500/10 text-green-500 border-green-500/20">
+                                <Wallet className="w-3 h-3 mr-1" />
+                                Wallet Deposit
+                              </Badge>
+                            </div>
                             <p className="text-sm text-muted-foreground">
                               ${Number(deposit.amount).toFixed(2)} • {deposit.card_type} •••• {deposit.card_last4}
                             </p>
@@ -1507,10 +1495,11 @@ const Admin = () => {
                     </CardContent>
                   </Card>
                 ))}
-                {walletDeposits.length === 0 && (
+                
+                {flamePurchases.length === 0 && walletDeposits.length === 0 && (
                   <Card>
                     <CardContent className="p-8 text-center text-muted-foreground">
-                      No wallet deposits yet
+                      No purchases or deposits yet
                     </CardContent>
                   </Card>
                 )}
