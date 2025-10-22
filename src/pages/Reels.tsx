@@ -21,6 +21,7 @@ interface Profile {
   username: string;
   avatar_url: string | null;
   is_verified: boolean;
+  is_premium?: boolean;
 }
 
 const Reels = () => {
@@ -195,7 +196,7 @@ const Reels = () => {
         const userIds = [...new Set(mixedContent.map(item => item.user_id))];
         const { data: profilesData } = await supabase
           .from("profiles")
-          .select("id, username, avatar_url, is_verified")
+          .select("id, username, avatar_url, is_verified, is_premium")
           .in("id", userIds);
 
         if (profilesData) {

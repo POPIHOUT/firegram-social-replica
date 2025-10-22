@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Flame, MessageCircle, Bookmark, Shield, ChevronLeft, ChevronRight, Check } from "lucide-react";
+import firegramLogo from "@/assets/firegram-logo.png";
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { supabase } from "@/integrations/supabase/client";
@@ -24,6 +25,7 @@ interface PostCardProps {
       avatar_url: string;
       is_admin: boolean;
       is_verified: boolean;
+      is_premium?: boolean;
     };
   };
   onUpdate: () => void;
@@ -243,6 +245,13 @@ const PostCard = ({ post, onUpdate }: PostCardProps) => {
           </span>
           {post.profiles.is_verified && (
             <Check size={14} className="text-primary flex-shrink-0 sm:w-4 sm:h-4" />
+          )}
+          {post.profiles.is_premium && (
+            <img 
+              src={firegramLogo} 
+              alt="Premium" 
+              className="w-4 h-4 sm:w-5 sm:h-5 animate-pulse flex-shrink-0" 
+            />
           )}
           {post.profiles.is_admin && (
             <div className="flex items-center gap-0.5 sm:gap-1 px-1.5 sm:px-2 py-0.5 rounded-full bg-accent/20 flex-shrink-0">

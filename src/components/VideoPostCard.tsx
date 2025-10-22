@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { Heart, MessageCircle, Play, Check } from "lucide-react";
+import firegramLogo from "@/assets/firegram-logo.png";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card } from "@/components/ui/card";
@@ -20,6 +21,7 @@ interface VideoPostCardProps {
       username: string;
       avatar_url: string | null;
       is_verified: boolean;
+      is_premium?: boolean;
     };
   };
   onUpdate: () => void;
@@ -122,6 +124,13 @@ const VideoPostCard = ({ reel, onUpdate }: VideoPostCardProps) => {
             </p>
             {reel.profiles.is_verified && (
               <Check size={16} className="text-primary" />
+            )}
+            {reel.profiles.is_premium && (
+              <img 
+                src={firegramLogo} 
+                alt="Premium" 
+                className="w-5 h-5 animate-pulse" 
+              />
             )}
             <p className="text-xs text-muted-foreground">
               {new Date(reel.created_at).toLocaleDateString()}

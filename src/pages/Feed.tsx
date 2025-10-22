@@ -72,7 +72,8 @@ const Feed = () => {
               username,
               avatar_url,
               is_admin,
-              is_verified
+              is_verified,
+              is_premium
             )
           `)
           .order("created_at", { ascending: false }),
@@ -83,7 +84,8 @@ const Feed = () => {
             profiles (
               username,
               avatar_url,
-              is_verified
+              is_verified,
+              is_premium
             )
           `)
           .order("created_at", { ascending: false })

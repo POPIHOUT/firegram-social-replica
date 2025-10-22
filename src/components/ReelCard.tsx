@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { Flame, MessageCircle, Share2, Play, Pause, Check, Bookmark } from "lucide-react";
+import firegramLogo from "@/assets/firegram-logo.png";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -24,6 +25,7 @@ interface ReelCardProps {
     username: string;
     avatar_url: string | null;
     is_verified: boolean;
+    is_premium?: boolean;
   };
   isActive: boolean;
   onUpdate?: () => void;
@@ -355,6 +357,13 @@ const ReelCard = ({ reel, profile, isActive, onUpdate, onAdTimerComplete, onAdTi
                 </span>
                 {profile.is_verified && (
                   <Check size={16} className="text-white" />
+                )}
+                {profile.is_premium && (
+                  <img 
+                    src={firegramLogo} 
+                    alt="Premium" 
+                    className="w-5 h-5 animate-pulse" 
+                  />
                 )}
               </div>
             </div>
