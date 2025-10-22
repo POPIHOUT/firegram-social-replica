@@ -359,6 +359,14 @@ const Settings = () => {
   const handleEnableMfa = async () => {
     setEnablingMfa(true);
     try {
+      // First, check for and remove any existing unverified factors
+      const { data: existingFactors } = await supabase.auth.mfa.listFactors();
+      const unverifiedFactor = existingFactors?.totp?.find(f => f.status !== 'verified');
+      
+      if (unverifiedFactor) {
+        await supabase.auth.mfa.unenroll({ factorId: unverifiedFactor.id });
+      }
+
       const { data, error } = await supabase.auth.mfa.enroll({
         factorType: 'totp',
         friendlyName: 'FireGram'
@@ -379,7 +387,7 @@ const Settings = () => {
 
       toast({
         title: "Scan QR Code",
-        description: "Scan this code with Google Authenticator and enter the code below",
+        description: "Scan with Microsoft Authenticator or any TOTP app and enter the code",
       });
     } catch (error: any) {
       toast({
