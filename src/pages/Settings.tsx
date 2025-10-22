@@ -30,8 +30,6 @@ const Settings = () => {
   const [selectedEffectId, setSelectedEffectId] = useState<string | null>(null);
   const [cancellingPremium, setCancellingPremium] = useState(false);
   const [walletBalance, setWalletBalance] = useState(0);
-  const [addMoneyAmount, setAddMoneyAmount] = useState("");
-  const [addingMoney, setAddingMoney] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -338,21 +336,6 @@ const Settings = () => {
     }
   };
 
-  const handleAddMoney = async () => {
-    const amount = parseFloat(addMoneyAmount);
-    if (!amount || amount <= 0) {
-      toast({
-        title: "Invalid amount",
-        description: "Please enter a valid amount",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    // Navigate to FirePay for wallet deposit
-    navigate(`/firepay?wallet_deposit=true&amount=${amount}`);
-  };
-
   return (
     <div className="min-h-screen pb-safe">
       <Navigation />
@@ -377,7 +360,7 @@ const Settings = () => {
                 <CardTitle>FireWallet</CardTitle>
               </div>
               <CardDescription>
-                Add money to your wallet and use it to purchase flames instantly
+                Redeem wallet codes to add money instantly
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -392,32 +375,10 @@ const Settings = () => {
                   </div>
                   <RedeemWalletCode />
                 </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="addMoney">Add Money</Label>
-                  <div className="flex gap-2">
-                    <Input
-                      id="addMoney"
-                      type="number"
-                      step="0.01"
-                      min="1"
-                      placeholder="Enter amount"
-                      value={addMoneyAmount}
-                      onChange={(e) => setAddMoneyAmount(e.target.value)}
-                    />
-                    <Button 
-                      onClick={handleAddMoney}
-                      disabled={addingMoney || !addMoneyAmount}
-                    >
-                      {addingMoney ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : (
-                        "Continue to Payment"
-                      )}
-                    </Button>
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    Money will be added after admin approval via secure payment
+                
+                <div className="p-3 bg-muted rounded-lg">
+                  <p className="text-sm text-muted-foreground">
+                    💡 Use wallet codes to add money to your balance. Codes are provided by admins.
                   </p>
                 </div>
               </div>
