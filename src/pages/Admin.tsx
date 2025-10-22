@@ -132,6 +132,7 @@ const Admin = () => {
   const [flamesAmount, setFlamesAmount] = useState("");
   const [walletDialogOpen, setWalletDialogOpen] = useState(false);
   const [walletAmount, setWalletAmount] = useState("");
+  const [walletAction, setWalletAction] = useState<"add" | "remove">("add");
   const [followersDialogOpen, setFollowersDialogOpen] = useState(false);
   const [followersAmount, setFollowersAmount] = useState("");
   const [flamePurchases, setFlamePurchases] = useState<FlamePurchase[]>([]);
@@ -319,25 +320,38 @@ const Admin = () => {
     }
   };
 
-  const handleAddWalletMoney = async () => {
-    const amount = parseFloat(walletAmount);
-    if (!selectedUser || !amount || amount <= 0) {
-      toast({ title: "Invalid amount", description: "Please enter a valid amount", variant: "destructive" });
-      return;
-    }
+  const handleWalletAction = async () => {
+    if (!selectedUser) return;
 
     try {
-      const { error } = await supabase.rpc('admin_add_wallet_money', {
-        target_user_id: selectedUser.id,
-        amount_to_add: amount,
-        description_text: `Admin added $${amount} to wallet`
-      });
+      const amount = parseFloat(walletAmount);
+      if (isNaN(amount) || amount <= 0) {
+        toast({ title: "Invalid amount", description: "Please enter a valid amount", variant: "destructive" });
+        return;
+      }
+
+      let error;
+      if (walletAction === "add") {
+        const result = await supabase.rpc("admin_add_wallet_money", {
+          target_user_id: selectedUser.id,
+          amount_to_add: amount,
+          description_text: `Admin added money to wallet`
+        });
+        error = result.error;
+      } else {
+        const result = await supabase.rpc("admin_remove_wallet_money", {
+          target_user_id: selectedUser.id,
+          amount_to_remove: amount,
+          description_text: `Admin removed money from wallet`
+        });
+        error = result.error;
+      }
 
       if (error) throw error;
 
       toast({ 
-        title: "Wallet Money Added", 
-        description: `Added $${amount} to ${selectedUser.username}'s wallet` 
+        title: walletAction === "add" ? "Wallet Money Added" : "Wallet Money Removed",
+        description: `${walletAction === "add" ? "Added" : "Removed"} $${amount} ${walletAction === "add" ? "to" : "from"} ${selectedUser.username}'s wallet`
       });
       
       setWalletAmount("");
@@ -1173,11 +1187,26 @@ const Admin = () => {
                             className="text-xs h-8 bg-green-500/10 border-green-500/20 hover:bg-green-500/20"
                             onClick={() => {
                               setSelectedUser(user);
+                              setWalletAction("add");
                               setWalletDialogOpen(true);
                             }}
                           >
                             <Wallet className="w-3 h-3 sm:w-4 sm:h-4" />
-                            <span className="hidden sm:inline ml-1">Wallet</span>
+                            <span className="hidden sm:inline ml-1">Add $</span>
+                          </Button>
+
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="text-xs h-8 bg-red-500/10 border-red-500/20 hover:bg-red-500/20"
+                            onClick={() => {
+                              setSelectedUser(user);
+                              setWalletAction("remove");
+                              setWalletDialogOpen(true);
+                            }}
+                          >
+                            <Wallet className="w-3 h-3 sm:w-4 sm:h-4" />
+                            <span className="hidden sm:inline ml-1">Remove $</span>
                           </Button>
 
                           <Button
@@ -1838,15 +1867,15 @@ const Admin = () => {
       }}>
         <DialogContent className="max-w-[95vw] sm:max-w-lg">
           <DialogHeader>
-            <DialogTitle>Add Wallet Money 💵</DialogTitle>
+            <DialogTitle>{walletAction === "add" ? "Add" : "Remove"} Wallet Money 💵</DialogTitle>
             <DialogDescription>
-              Add money to {selectedUser?.username}'s FireWallet
+              {walletAction === "add" ? "Add money to" : "Remove money from"} {selectedUser?.username}'s FireWallet
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
-            <div className="p-4 rounded-lg bg-green-500/10 border border-green-500/20">
+            <div className={`p-4 rounded-lg ${walletAction === "add" ? "bg-green-500/10 border border-green-500/20" : "bg-red-500/10 border border-red-500/20"}`}>
               <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">Adding to:</span>
+                <span className="text-sm font-medium">{walletAction === "add" ? "Adding to" : "Removing from"}:</span>
                 <div className="flex items-center gap-2">
                   <Wallet className="w-5 h-5" />
                   <span className="font-bold">{selectedUser?.username}</span>
@@ -1880,11 +1909,11 @@ const Admin = () => {
               Cancel
             </Button>
             <Button 
-              onClick={handleAddWalletMoney}
+              onClick={handleWalletAction}
               disabled={!walletAmount}
-              className="bg-green-500 hover:bg-green-600 w-full sm:w-auto"
+              className={walletAction === "add" ? "bg-green-500 hover:bg-green-600 w-full sm:w-auto" : "bg-red-500 hover:bg-red-600 w-full sm:w-auto"}
             >
-              Add Money
+              {walletAction === "add" ? "Add" : "Remove"} Money
             </Button>
           </DialogFooter>
         </DialogContent>

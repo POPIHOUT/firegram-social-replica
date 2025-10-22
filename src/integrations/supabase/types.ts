@@ -1051,6 +1051,14 @@ export type Database = {
         }
         Returns: undefined
       }
+      admin_remove_wallet_money: {
+        Args: {
+          amount_to_remove: number
+          description_text: string
+          target_user_id: string
+        }
+        Returns: undefined
+      }
       approve_flame_purchase: {
         Args: { purchase_id: string }
         Returns: undefined
