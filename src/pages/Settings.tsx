@@ -379,17 +379,19 @@ const Settings = () => {
   const handleEnableMfa = async () => {
     setEnablingMfa(true);
     try {
-      // First, check for and remove any existing unverified factors
+      // Remove ALL existing factors (both verified and unverified)
       const { data: existingFactors } = await supabase.auth.mfa.listFactors();
-      const unverifiedFactor = existingFactors?.totp?.find(f => f.status !== 'verified');
       
-      if (unverifiedFactor) {
-        await supabase.auth.mfa.unenroll({ factorId: unverifiedFactor.id });
+      if (existingFactors?.totp && existingFactors.totp.length > 0) {
+        for (const factor of existingFactors.totp) {
+          await supabase.auth.mfa.unenroll({ factorId: factor.id });
+        }
       }
 
+      // Create new factor with timestamp to ensure uniqueness
       const { data, error } = await supabase.auth.mfa.enroll({
         factorType: 'totp',
-        friendlyName: 'FireGram'
+        friendlyName: `FireGram_${Date.now()}`
       });
 
       if (error) throw error;
