@@ -7,11 +7,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, ArrowLeft, Flame, Sparkles, Upload, ShoppingBag, X, Wallet, CreditCard } from "lucide-react";
+import { Loader2, ArrowLeft, Flame, Sparkles, Upload, ShoppingBag, X, Wallet, CreditCard, Shield, QrCode, Copy } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import firegramLogo from "@/assets/firegram-logo.png";
 import { RedeemWalletCode } from "@/components/RedeemWalletCode";
+import QRCode from "qrcode";
 
 const Settings = () => {
   const [loading, setLoading] = useState(false);
@@ -30,11 +31,18 @@ const Settings = () => {
   const [selectedEffectId, setSelectedEffectId] = useState<string | null>(null);
   const [cancellingPremium, setCancellingPremium] = useState(false);
   const [walletBalance, setWalletBalance] = useState(0);
+  const [mfaEnabled, setMfaEnabled] = useState(false);
+  const [qrCode, setQrCode] = useState<string>("");
+  const [totpSecret, setTotpSecret] = useState<string>("");
+  const [verifyCode, setVerifyCode] = useState("");
+  const [enablingMfa, setEnablingMfa] = useState(false);
+  const [disablingMfa, setDisablingMfa] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
   useEffect(() => {
     fetchUserData();
+    checkMfaStatus();
   }, []);
 
   const fetchUserData = async () => {
@@ -336,6 +344,134 @@ const Settings = () => {
     }
   };
 
+  const checkMfaStatus = async () => {
+    try {
+      const { data, error } = await supabase.auth.mfa.listFactors();
+      if (error) throw error;
+      
+      const totpFactor = data?.totp?.find(f => f.status === 'verified');
+      setMfaEnabled(!!totpFactor);
+    } catch (error: any) {
+      console.error("Error checking MFA status:", error);
+    }
+  };
+
+  const handleEnableMfa = async () => {
+    setEnablingMfa(true);
+    try {
+      const { data, error } = await supabase.auth.mfa.enroll({
+        factorType: 'totp',
+        friendlyName: 'FireGram 2FA'
+      });
+
+      if (error) throw error;
+
+      setTotpSecret(data.totp.secret);
+      
+      // Generate QR code
+      const qrCodeUrl = data.totp.qr_code;
+      const qrCodeDataUrl = await QRCode.toDataURL(qrCodeUrl);
+      setQrCode(qrCodeDataUrl);
+
+      toast({
+        title: "Scan QR Code",
+        description: "Scan this code with Google Authenticator and enter the code below",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setEnablingMfa(false);
+    }
+  };
+
+  const handleVerifyAndEnable = async () => {
+    if (verifyCode.length !== 6) {
+      toast({
+        title: "Invalid code",
+        description: "Please enter a 6-digit code",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setEnablingMfa(true);
+    try {
+      const { data: factors } = await supabase.auth.mfa.listFactors();
+      const totpFactor = factors?.totp?.[0];
+      
+      if (!totpFactor) throw new Error("No TOTP factor found");
+
+      const { error } = await supabase.auth.mfa.challengeAndVerify({
+        factorId: totpFactor.id,
+        code: verifyCode
+      });
+
+      if (error) throw error;
+
+      setMfaEnabled(true);
+      setQrCode("");
+      setTotpSecret("");
+      setVerifyCode("");
+
+      toast({
+        title: "2FA Enabled! 🔒",
+        description: "Your account is now protected with two-factor authentication",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Invalid verification code",
+        variant: "destructive",
+      });
+    } finally {
+      setEnablingMfa(false);
+    }
+  };
+
+  const handleDisableMfa = async () => {
+    if (!confirm("Are you sure you want to disable 2FA?")) return;
+
+    setDisablingMfa(true);
+    try {
+      const { data: factors } = await supabase.auth.mfa.listFactors();
+      const totpFactor = factors?.totp?.find(f => f.status === 'verified');
+      
+      if (!totpFactor) throw new Error("No verified TOTP factor found");
+
+      const { error } = await supabase.auth.mfa.unenroll({
+        factorId: totpFactor.id
+      });
+
+      if (error) throw error;
+
+      setMfaEnabled(false);
+      toast({
+        title: "2FA Disabled",
+        description: "Two-factor authentication has been disabled",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setDisablingMfa(false);
+    }
+  };
+
+  const copySecret = () => {
+    navigator.clipboard.writeText(totpSecret);
+    toast({
+      title: "Copied!",
+      description: "Secret key copied to clipboard",
+    });
+  };
+
   return (
     <div className="min-h-screen pb-safe">
       <Navigation />
@@ -569,6 +705,143 @@ const Settings = () => {
                   )}
                 </div>
               )}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <Shield className="w-5 h-5 text-primary" />
+                <CardTitle>Two-Factor Authentication (2FA)</CardTitle>
+              </div>
+              <CardDescription>
+                Add an extra layer of security with Google Authenticator
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {mfaEnabled ? (
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between p-4 bg-green-500/10 rounded-lg border border-green-500/20">
+                      <div className="flex items-center gap-3">
+                        <Shield className="w-8 h-8 text-green-500" />
+                        <div>
+                          <p className="font-semibold text-green-500">2FA Enabled</p>
+                          <p className="text-sm text-muted-foreground">Your account is protected</p>
+                        </div>
+                      </div>
+                      <Button
+                        variant="outline"
+                        onClick={handleDisableMfa}
+                        disabled={disablingMfa}
+                      >
+                        {disablingMfa ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          "Disable"
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {!qrCode ? (
+                      <>
+                        <div className="p-4 bg-muted rounded-lg">
+                          <p className="text-sm text-muted-foreground mb-2">
+                            🔒 Protect your account with an extra security layer
+                          </p>
+                          <p className="text-sm text-muted-foreground">
+                            You'll need Google Authenticator app to scan the QR code
+                          </p>
+                        </div>
+                        <Button
+                          onClick={handleEnableMfa}
+                          disabled={enablingMfa}
+                          className="w-full"
+                        >
+                          {enablingMfa ? (
+                            <>
+                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                              Loading...
+                            </>
+                          ) : (
+                            <>
+                              <Shield className="mr-2 h-4 w-4" />
+                              Enable 2FA
+                            </>
+                          )}
+                        </Button>
+                      </>
+                    ) : (
+                      <div className="space-y-4">
+                        <div className="text-center space-y-2">
+                          <p className="font-semibold">Scan this QR code</p>
+                          <p className="text-sm text-muted-foreground">
+                            Open Google Authenticator and scan the code below
+                          </p>
+                        </div>
+                        <div className="flex justify-center p-4 bg-white rounded-lg">
+                          <img src={qrCode} alt="QR Code" className="w-48 h-48" />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Or enter this secret key manually:</Label>
+                          <div className="flex gap-2">
+                            <Input
+                              value={totpSecret}
+                              readOnly
+                              className="font-mono text-sm"
+                            />
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              onClick={copySecret}
+                            >
+                              <Copy className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="verify-code">Enter 6-digit code from app</Label>
+                          <Input
+                            id="verify-code"
+                            type="text"
+                            placeholder="000000"
+                            value={verifyCode}
+                            onChange={(e) => setVerifyCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                            maxLength={6}
+                            className="text-center text-2xl tracking-widest"
+                          />
+                        </div>
+                        <div className="flex gap-2">
+                          <Button
+                            variant="outline"
+                            onClick={() => {
+                              setQrCode("");
+                              setTotpSecret("");
+                              setVerifyCode("");
+                            }}
+                            className="flex-1"
+                          >
+                            Cancel
+                          </Button>
+                          <Button
+                            onClick={handleVerifyAndEnable}
+                            disabled={verifyCode.length !== 6 || enablingMfa}
+                            className="flex-1"
+                          >
+                            {enablingMfa ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              "Verify & Enable"
+                            )}
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
             </CardContent>
           </Card>
 

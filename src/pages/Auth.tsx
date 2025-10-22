@@ -18,6 +18,8 @@ const Auth = () => {
   const [lastName, setLastName] = useState("");
   const [dateOfBirth, setDateOfBirth] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showMfaInput, setShowMfaInput] = useState(false);
+  const [mfaCode, setMfaCode] = useState("");
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -32,9 +34,35 @@ const Auth = () => {
           password,
         });
 
-        if (error) throw error;
+        if (error) {
+          // Check if MFA is required
+          if (error.message.includes('MFA') || error.message.includes('factor')) {
+            setShowMfaInput(true);
+            setLoading(false);
+            toast({
+              title: "2FA Required",
+              description: "Please enter your 6-digit code from Google Authenticator",
+            });
+            return;
+          }
+          throw error;
+        }
 
+        // Check if user has MFA enabled
         if (data.user) {
+          const { data: factors } = await supabase.auth.mfa.listFactors();
+          const hasMfa = factors?.totp?.some(f => f.status === 'verified');
+
+          if (hasMfa && !showMfaInput) {
+            setShowMfaInput(true);
+            setLoading(false);
+            toast({
+              title: "2FA Required",
+              description: "Please enter your 6-digit code from Google Authenticator",
+            });
+            return;
+          }
+
           toast({
             title: "Welcome back!",
             description: "You've successfully logged in.",
@@ -84,6 +112,56 @@ const Auth = () => {
     }
   };
 
+  const handleMfaVerify = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (mfaCode.length !== 6) {
+      toast({
+        title: "Invalid code",
+        description: "Please enter a 6-digit code",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const { data: factors } = await supabase.auth.mfa.listFactors();
+      const totpFactor = factors?.totp?.find(f => f.status === 'verified');
+      
+      if (!totpFactor) throw new Error("No MFA factor found");
+
+      const { data: challenge } = await supabase.auth.mfa.challenge({
+        factorId: totpFactor.id
+      });
+
+      if (!challenge) throw new Error("Failed to create challenge");
+
+      const { error } = await supabase.auth.mfa.verify({
+        factorId: totpFactor.id,
+        challengeId: challenge.id,
+        code: mfaCode
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Welcome back!",
+        description: "You've successfully logged in.",
+      });
+      navigate("/feed");
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Invalid verification code",
+        variant: "destructive",
+      });
+      setMfaCode("");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-background via-background to-card">
       <Card className="w-full max-w-md border-border/50 bg-card/80 backdrop-blur-sm glow-fire">
@@ -105,7 +183,49 @@ const Auth = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleAuth} className="space-y-4">
+          {showMfaInput ? (
+            <form onSubmit={handleMfaVerify} className="space-y-4">
+              <div className="text-center mb-4">
+                <p className="text-sm text-muted-foreground">
+                  Enter the 6-digit code from your Google Authenticator app
+                </p>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="mfa-code">2FA Code</Label>
+                <Input
+                  id="mfa-code"
+                  type="text"
+                  placeholder="000000"
+                  value={mfaCode}
+                  onChange={(e) => setMfaCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                  maxLength={6}
+                  required
+                  className="text-center text-2xl tracking-widest bg-muted border-border focus:border-primary transition-colors"
+                  autoFocus
+                />
+              </div>
+              <Button
+                type="submit"
+                className="w-full fire-gradient hover:opacity-90 transition-opacity font-semibold"
+                disabled={loading || mfaCode.length !== 6}
+              >
+                {loading ? "Verifying..." : "Verify Code"}
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full"
+                onClick={() => {
+                  setShowMfaInput(false);
+                  setMfaCode("");
+                  setPassword("");
+                }}
+              >
+                Back to Login
+              </Button>
+            </form>
+          ) : (
+            <form onSubmit={handleAuth} className="space-y-4">
             {!isLogin && (
               <>
                 <div className="grid grid-cols-2 gap-4">
@@ -190,9 +310,11 @@ const Auth = () => {
             >
               {loading ? "Loading..." : isLogin ? "Sign In" : "Sign Up"}
             </Button>
-          </form>
+            </form>
+          )}
 
-          <div className="mt-6 text-center">
+          {!showMfaInput && (
+            <div className="mt-6 text-center">
             <button
               type="button"
               onClick={() => setIsLogin(!isLogin)}
@@ -200,7 +322,8 @@ const Auth = () => {
             >
               {isLogin ? "Don't have an account? Sign up" : "Already have an account? Sign in"}
             </button>
-          </div>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
