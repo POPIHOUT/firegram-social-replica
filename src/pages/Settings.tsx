@@ -37,6 +37,8 @@ const Settings = () => {
   const [verifyCode, setVerifyCode] = useState("");
   const [enablingMfa, setEnablingMfa] = useState(false);
   const [disablingMfa, setDisablingMfa] = useState(false);
+  const [secretTimer, setSecretTimer] = useState(60);
+  const [showSecret, setShowSecret] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -44,6 +46,24 @@ const Settings = () => {
     fetchUserData();
     checkMfaStatus();
   }, []);
+
+  // Timer countdown for secret key
+  useEffect(() => {
+    if (showSecret && secretTimer > 0) {
+      const interval = setInterval(() => {
+        setSecretTimer((prev) => {
+          if (prev <= 1) {
+            setShowSecret(false);
+            setTotpSecret("");
+            setQrCode("");
+            return 60;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+      return () => clearInterval(interval);
+    }
+  }, [showSecret, secretTimer]);
 
   const fetchUserData = async () => {
     const { data: { user } } = await supabase.auth.getUser();
@@ -375,11 +395,13 @@ const Settings = () => {
       if (error) throw error;
 
       setTotpSecret(data.totp.secret);
-      setQrCode("enabled"); // Just a flag to show the setup form
+      setQrCode("enabled");
+      setShowSecret(true);
+      setSecretTimer(60);
 
       toast({
         title: "Secret Key Generated",
-        description: "Enter the key in Google Authenticator app",
+        description: "Save this key now! It will disappear in 60 seconds",
       });
     } catch (error: any) {
       toast({
@@ -779,29 +801,42 @@ const Settings = () => {
                       </>
                     ) : (
                       <div className="space-y-4">
-                        <div className="text-center space-y-2">
-                          <p className="font-semibold">Enter this key in Google Authenticator</p>
-                          <p className="text-sm text-muted-foreground">
-                            Add a new account and enter the secret key below
-                          </p>
-                        </div>
-                        <div className="space-y-2">
-                          <Label>Secret Key</Label>
-                          <div className="flex gap-2">
-                            <Input
-                              value={totpSecret}
-                              readOnly
-                              className="font-mono text-sm"
-                            />
-                            <Button
-                              variant="outline"
-                              size="icon"
-                              onClick={copySecret}
-                            >
-                              <Copy className="h-4 w-4" />
-                            </Button>
+                        {showSecret ? (
+                          <>
+                            <div className="text-center space-y-2">
+                              <p className="font-semibold">Enter this key in Google Authenticator</p>
+                              <p className="text-sm text-destructive font-semibold">
+                                ⏱️ Time remaining: {secretTimer} seconds
+                              </p>
+                              <p className="text-sm text-muted-foreground">
+                                Save this key now! It will disappear after the timer ends
+                              </p>
+                            </div>
+                            <div className="space-y-2">
+                              <Label>Secret Key</Label>
+                              <div className="flex gap-2">
+                                <Input
+                                  value={totpSecret}
+                                  readOnly
+                                  className="font-mono text-sm"
+                                />
+                                <Button
+                                  variant="outline"
+                                  size="icon"
+                                  onClick={copySecret}
+                                >
+                                  <Copy className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </div>
+                          </>
+                        ) : (
+                          <div className="p-4 bg-muted rounded-lg">
+                            <p className="text-sm text-muted-foreground">
+                              The secret key has been hidden for security.
+                            </p>
                           </div>
-                        </div>
+                        )}
                         <div className="space-y-2">
                           <Label htmlFor="verify-code">Enter 6-digit code from app</Label>
                           <Input
@@ -821,6 +856,8 @@ const Settings = () => {
                               setQrCode("");
                               setTotpSecret("");
                               setVerifyCode("");
+                              setShowSecret(false);
+                              setSecretTimer(60);
                             }}
                             className="flex-1"
                           >
@@ -828,7 +865,7 @@ const Settings = () => {
                           </Button>
                           <Button
                             onClick={handleVerifyAndEnable}
-                            disabled={verifyCode.length !== 6 || enablingMfa}
+                            disabled={verifyCode.length !== 6 || enablingMfa || !showSecret}
                             className="flex-1"
                           >
                             {enablingMfa ? (
