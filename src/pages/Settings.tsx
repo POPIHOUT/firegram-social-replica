@@ -12,6 +12,7 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import firegramLogo from "@/assets/firegram-logo.png";
 import { RedeemWalletCode } from "@/components/RedeemWalletCode";
+import { SecurityVerificationDialog } from "@/components/SecurityVerificationDialog";
 import QRCode from "qrcode";
 
 const Settings = () => {
@@ -40,6 +41,9 @@ const Settings = () => {
   const [secretTimer, setSecretTimer] = useState(60);
   const [showSecret, setShowSecret] = useState(false);
   const [currentFactorId, setCurrentFactorId] = useState<string>("");
+  const [showPasswordChangeDialog, setShowPasswordChangeDialog] = useState(false);
+  const [showDisable2FADialog, setShowDisable2FADialog] = useState(false);
+  const [pendingPasswordChange, setPendingPasswordChange] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -121,6 +125,12 @@ const Settings = () => {
       return;
     }
 
+    // Show verification dialog instead of directly changing password
+    setPendingPasswordChange(true);
+    setShowPasswordChangeDialog(true);
+  };
+
+  const performPasswordChange = async () => {
     setLoading(true);
 
     try {
@@ -138,6 +148,7 @@ const Settings = () => {
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
+      setPendingPasswordChange(false);
     } catch (error: any) {
       console.error("Error updating password:", error);
       toast({
@@ -467,8 +478,10 @@ const Settings = () => {
   };
 
   const handleDisableMfa = async () => {
-    if (!confirm("Are you sure you want to disable 2FA?")) return;
+    setShowDisable2FADialog(true);
+  };
 
+  const performDisableMfa = async () => {
     setDisablingMfa(true);
     try {
       const { data: factors } = await supabase.auth.mfa.listFactors();
@@ -962,6 +975,22 @@ const Settings = () => {
           </Card>
         </div>
       </main>
+
+      <SecurityVerificationDialog
+        open={showPasswordChangeDialog}
+        onOpenChange={setShowPasswordChangeDialog}
+        onVerified={performPasswordChange}
+        title="Verify Password Change"
+        description="Please verify your identity to change your password"
+      />
+
+      <SecurityVerificationDialog
+        open={showDisable2FADialog}
+        onOpenChange={setShowDisable2FADialog}
+        onVerified={performDisableMfa}
+        title="Verify 2FA Disable"
+        description="Please verify your identity to disable two-factor authentication"
+      />
     </div>
   );
 };
