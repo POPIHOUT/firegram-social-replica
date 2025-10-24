@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Flame, Send, X, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface Message {
   role: "user" | "assistant";
@@ -23,6 +24,7 @@ export const FireAssistant = () => {
   const [isLoading, setIsLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -135,22 +137,30 @@ export const FireAssistant = () => {
       {!isOpen && (
         <Button
           onClick={() => setIsOpen(true)}
-          className="fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-lg bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 z-50"
+          className={`fixed ${
+            isMobile 
+              ? "bottom-20 right-4 h-12 w-12" 
+              : "bottom-6 right-6 h-14 w-14"
+          } rounded-full shadow-lg bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 z-50`}
           size="icon"
         >
-          <Flame className="h-6 w-6" />
+          <Flame className={isMobile ? "h-5 w-5" : "h-6 w-6"} />
         </Button>
       )}
 
       {/* Chat Window */}
       {isOpen && (
-        <Card className="fixed bottom-6 right-6 w-96 h-[600px] shadow-2xl z-50 flex flex-col">
+        <Card className={`fixed ${
+          isMobile 
+            ? "inset-0 rounded-none" 
+            : "bottom-6 right-6 w-96 h-[600px] rounded-lg"
+        } shadow-2xl z-50 flex flex-col`}>
           {/* Header */}
           <div className="flex items-center justify-between p-4 border-b bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-t-lg">
             <div className="flex items-center gap-2">
               <Flame className="h-5 w-5" />
               <div>
-                <h3 className="font-semibold">FireAssistent</h3>
+                <h3 className="font-semibold">FireAssistant</h3>
                 <p className="text-xs opacity-90">BETA</p>
               </div>
             </div>
