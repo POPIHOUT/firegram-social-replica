@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import firegramLogo from "@/assets/firegram-logo.png";
 import { RedeemWalletCode } from "@/components/RedeemWalletCode";
 import { SecurityVerificationDialog } from "@/components/SecurityVerificationDialog";
+import { SupportTicketDialog } from "@/components/SupportTicketDialog";
 import QRCode from "qrcode";
 
 const Settings = () => {
@@ -45,6 +46,7 @@ const Settings = () => {
   const [showDisable2FADialog, setShowDisable2FADialog] = useState(false);
   const [pendingPasswordChange, setPendingPasswordChange] = useState(false);
   const [mustChangePassword, setMustChangePassword] = useState(false);
+  const [showSupportDialog, setShowSupportDialog] = useState(false);
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -1001,6 +1003,20 @@ const Settings = () => {
 
           <Card>
             <CardHeader>
+              <CardTitle>Support</CardTitle>
+              <CardDescription>
+                Potrebuješ pomoc? Kontaktuj náš support tím
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button onClick={() => setShowSupportDialog(true)}>
+                Vytvoriť Support Tiket
+              </Button>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
               <CardTitle>Account</CardTitle>
               <CardDescription>
                 Manage your account settings
@@ -1035,6 +1051,11 @@ const Settings = () => {
         onVerified={performDisableMfa}
         title="Verify 2FA Disable"
         description="Please verify your identity to disable two-factor authentication"
+      />
+
+      <SupportTicketDialog
+        open={showSupportDialog}
+        onOpenChange={setShowSupportDialog}
       />
     </div>
   );

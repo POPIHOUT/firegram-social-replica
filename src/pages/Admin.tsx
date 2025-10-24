@@ -12,7 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
-import { Shield, Users, FileText, Film, Ban, Clock, Trash2, CheckCircle, XCircle, Loader2, Settings, Megaphone, Flame, DollarSign, Crown, Wallet, KeyRound } from "lucide-react";
+import { Shield, Users, FileText, Film, Ban, Clock, Trash2, CheckCircle, XCircle, Loader2, Settings, Megaphone, Flame, DollarSign, Crown, Wallet, KeyRound, MessageSquare } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { formatDistanceToNow } from "date-fns";
 import FlamePurchaseCard from "@/components/FlamePurchaseCard";
@@ -20,6 +20,7 @@ import SACCodesManagement from "@/components/SACCodesManagement";
 import { UpdateLockManagement } from "@/components/UpdateLockManagement";
 import { UpdateAnnouncementManagement } from "@/components/UpdateAnnouncementManagement";
 import { WalletCodesManagement } from "@/components/WalletCodesManagement";
+import { SupportManagement } from "@/components/SupportManagement";
 
 interface User {
   id: string;
