@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { ProtectedRoute } from "./components/ProtectedRoute";
+import { FireAssistant } from "@/components/FireAssistant";
 import Auth from "./pages/Auth";
 import Feed from "./pages/Feed";
 import Reels from "./pages/Reels";
@@ -26,6 +27,7 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <Sonner />
+      <FireAssistant />
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Navigate to="/auth" replace />} />

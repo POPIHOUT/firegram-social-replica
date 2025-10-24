@@ -1151,6 +1151,10 @@ const Admin = () => {
                 <TabsTrigger value="update-info" className="text-xs sm:text-sm whitespace-nowrap px-3 py-2">
                   Info
                 </TabsTrigger>
+                <TabsTrigger value="support" className="text-xs sm:text-sm flex items-center gap-1 whitespace-nowrap px-3 py-2">
+                  <MessageSquare className="w-3 h-3" />
+                  <span className="hidden sm:inline">Support</span>
+                </TabsTrigger>
               </TabsList>
             </div>
 
@@ -1684,6 +1688,10 @@ const Admin = () => {
 
             <TabsContent value="update-info" className="space-y-3 sm:space-y-4">
               <UpdateAnnouncementManagement />
+            </TabsContent>
+
+            <TabsContent value="support" className="space-y-3 sm:space-y-4">
+              <SupportManagement />
             </TabsContent>
           </Tabs>
           </>

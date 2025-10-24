@@ -1,1 +1,4 @@
 project_id = "aehbsmsgusvmmguuqavh"
+
+[functions.fire-assistant]
+verify_jwt = false
