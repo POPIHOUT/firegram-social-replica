@@ -152,7 +152,7 @@ export const FireAssistant = () => {
       {isOpen && (
         <Card className={`fixed ${
           isMobile 
-            ? "inset-0 rounded-none" 
+            ? "bottom-20 right-4 w-[calc(100vw-2rem)] max-w-sm h-[400px] rounded-lg" 
             : "top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-[400px] rounded-lg"
         } shadow-2xl z-50 flex flex-col`}>
           {/* Header */}
