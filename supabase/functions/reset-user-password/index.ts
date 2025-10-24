@@ -56,19 +56,67 @@ serve(async (req) => {
       );
     }
 
-    const { targetUserId } = await req.json();
+    const { targetUserId, username, newPassword } = await req.json();
 
-    if (!targetUserId) {
+    let userId = targetUserId;
+
+    // If username provided, find user by username
+    if (!userId && username) {
+      const { data: profileData } = await supabaseAdmin
+        .from("profiles")
+        .select("id")
+        .eq("username", username)
+        .single();
+      
+      if (!profileData) {
+        return new Response(
+          JSON.stringify({ error: "User not found with that username" }),
+          { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      userId = profileData.id;
+    }
+
+    if (!userId) {
       return new Response(
-        JSON.stringify({ error: "Target user ID is required" }),
+        JSON.stringify({ error: "Target user ID or username is required" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // Generate password reset link
+    // If newPassword is provided, set it directly
+    if (newPassword) {
+      const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(
+        userId,
+        { password: newPassword }
+      );
+
+      if (updateError) {
+        throw updateError;
+      }
+
+      // Clear must_change_password flag
+      await supabaseAdmin
+        .from("profiles")
+        .update({ must_change_password: false })
+        .eq("id", userId);
+
+      return new Response(
+        JSON.stringify({ 
+          success: true,
+          message: "Password updated successfully."
+        }),
+        { 
+          status: 200, 
+          headers: { ...corsHeaders, "Content-Type": "application/json" } 
+        }
+      );
+    }
+
+    // Generate password reset link (legacy behavior)
     const { data: resetLinkData, error: resetLinkError } = await supabaseAdmin.auth.admin.generateLink({
       type: 'recovery',
-      email: (await supabaseAdmin.auth.admin.getUserById(targetUserId)).data.user?.email || '',
+      email: (await supabaseAdmin.auth.admin.getUserById(userId)).data.user?.email || '',
     });
 
     if (resetLinkError) {
