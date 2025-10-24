@@ -169,6 +169,48 @@ export type Database = {
         }
         Relationships: []
       }
+      discord_logs: {
+        Row: {
+          action: string
+          admin_id: string | null
+          admin_username: string | null
+          created_at: string | null
+          details: Json | null
+          id: string
+          sent: boolean | null
+          target_user_id: string | null
+          target_username: string | null
+          user_id: string | null
+          username: string | null
+        }
+        Insert: {
+          action: string
+          admin_id?: string | null
+          admin_username?: string | null
+          created_at?: string | null
+          details?: Json | null
+          id?: string
+          sent?: boolean | null
+          target_user_id?: string | null
+          target_username?: string | null
+          user_id?: string | null
+          username?: string | null
+        }
+        Update: {
+          action?: string
+          admin_id?: string | null
+          admin_username?: string | null
+          created_at?: string | null
+          details?: Json | null
+          id?: string
+          sent?: boolean | null
+          target_user_id?: string | null
+          target_username?: string | null
+          user_id?: string | null
+          username?: string | null
+        }
+        Relationships: []
+      }
       effects: {
         Row: {
           created_at: string | null
@@ -1183,6 +1225,19 @@ export type Database = {
       is_conversation_participant: {
         Args: { _conversation_id: string; _user_id: string }
         Returns: boolean
+      }
+      log_to_discord: {
+        Args: {
+          p_action: string
+          p_admin_id?: string
+          p_admin_username?: string
+          p_details?: Json
+          p_target_user_id?: string
+          p_target_username?: string
+          p_user_id?: string
+          p_username?: string
+        }
+        Returns: undefined
       }
       purchase_effect: { Args: { effect_uuid: string }; Returns: undefined }
       purchase_flames_with_wallet:
