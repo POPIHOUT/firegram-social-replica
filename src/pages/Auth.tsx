@@ -11,6 +11,7 @@ import firegramLogo from "@/assets/firegram-logo.png";
 
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [username, setUsername] = useState("");
@@ -216,6 +217,35 @@ const Auth = () => {
     }
   };
 
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/settings?changePassword=true`,
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Reset Link Sent",
+        description: "Check your email for a password reset link.",
+      });
+      setShowForgotPassword(false);
+      setEmail("");
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-background via-background to-card">
       <Card className="w-full max-w-md border-border/50 bg-card/80 backdrop-blur-sm glow-fire">
@@ -237,7 +267,46 @@ const Auth = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {showMfaInput ? (
+          {showForgotPassword ? (
+            <form onSubmit={handleForgotPassword} className="space-y-4">
+              <div className="text-center mb-4">
+                <p className="text-sm text-muted-foreground">
+                  Enter your email address and we'll send you a link to reset your password.
+                </p>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="reset-email">Email</Label>
+                <Input
+                  id="reset-email"
+                  type="email"
+                  placeholder="your@email.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  className="bg-muted border-border focus:border-primary transition-colors"
+                  autoFocus
+                />
+              </div>
+              <Button
+                type="submit"
+                className="w-full fire-gradient hover:opacity-90 transition-opacity font-semibold"
+                disabled={loading}
+              >
+                {loading ? "Sending..." : "Send Reset Link"}
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full"
+                onClick={() => {
+                  setShowForgotPassword(false);
+                  setEmail("");
+                }}
+              >
+                Back to Login
+              </Button>
+            </form>
+          ) : showMfaInput ? (
             <form onSubmit={handleMfaVerify} className="space-y-4">
               <div className="text-center mb-4">
                 <p className="text-sm text-muted-foreground">
@@ -365,10 +434,21 @@ const Auth = () => {
             >
               {loading ? "Loading..." : isLogin ? "Sign In" : "Sign Up"}
             </Button>
+            {isLogin && (
+              <div className="mt-2 text-center">
+                <button
+                  type="button"
+                  onClick={() => setShowForgotPassword(true)}
+                  className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                >
+                  Forgot password?
+                </button>
+              </div>
+            )}
             </form>
           )}
 
-          {!showMfaInput && (
+          {!showMfaInput && !showForgotPassword && (
             <div className="mt-6 text-center">
             <button
               type="button"
