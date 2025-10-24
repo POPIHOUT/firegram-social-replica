@@ -152,6 +152,8 @@ const Admin = () => {
   const [userRole, setUserRole] = useState<string | null>(null);
   const [resetPasswordDialogOpen, setResetPasswordDialogOpen] = useState(false);
   const [tempPassword, setTempPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [isResetting, setIsResetting] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -924,26 +926,41 @@ const Admin = () => {
   };
 
   const handleResetPassword = async () => {
-    if (!selectedUser) return;
+    if (!selectedUser || !newPassword.trim()) {
+      toast({
+        title: "Error",
+        description: "Please enter a new password",
+        variant: "destructive",
+      });
+      return;
+    }
 
+    setIsResetting(true);
     try {
       const { data, error } = await supabase.functions.invoke("reset-user-password", {
-        body: { targetUserId: selectedUser.id },
+        body: { 
+          username: selectedUser.username,
+          newPassword: newPassword 
+        },
       });
 
       if (error) throw error;
 
-      setTempPassword(data.resetLink);
       toast({
-        title: "Reset Link Generated",
-        description: "Password reset link has been generated successfully",
+        title: "Password Changed",
+        description: `Password for ${selectedUser.username} has been changed successfully`,
       });
+      
+      setResetPasswordDialogOpen(false);
+      setNewPassword("");
     } catch (error: any) {
       toast({
         title: "Error",
         description: error.message,
         variant: "destructive",
       });
+    } finally {
+      setIsResetting(false);
     }
   };
 
@@ -1252,18 +1269,20 @@ const Admin = () => {
                             <span className="hidden sm:inline ml-2">Roles</span>
                           </Button>
 
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="text-xs h-8 bg-yellow-500/10 border-yellow-500/20 hover:bg-yellow-500/20"
-                            onClick={() => {
-                              setSelectedUser(user);
-                              setResetPasswordDialogOpen(true);
-                            }}
-                          >
-                            <KeyRound className="w-3 h-3 sm:w-4 sm:h-4" />
-                            <span className="hidden sm:inline ml-2">Reset Password</span>
-                          </Button>
+                          {userRole === 'System Manager' && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="text-xs h-8 bg-yellow-500/10 border-yellow-500/20 hover:bg-yellow-500/20"
+                              onClick={() => {
+                                setSelectedUser(user);
+                                setResetPasswordDialogOpen(true);
+                              }}
+                            >
+                              <KeyRound className="w-3 h-3 sm:w-4 sm:h-4" />
+                              <span className="hidden sm:inline ml-2">Reset Password</span>
+                            </Button>
+                          )}
 
                           {user.banned ? (
                             <Button
@@ -2075,88 +2094,75 @@ const Admin = () => {
 
       <Dialog open={resetPasswordDialogOpen} onOpenChange={(open) => {
         setResetPasswordDialogOpen(open);
-        if (!open) setTempPassword("");
+        if (!open) {
+          setNewPassword("");
+          setTempPassword("");
+        }
       }}>
         <DialogContent className="max-w-[95vw] sm:max-w-lg">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <KeyRound className="w-5 h-5 text-yellow-500" />
-              Reset User Password
+              Change User Password
             </DialogTitle>
             <DialogDescription>
-              Generate a password reset link for {selectedUser?.username}.
+              Set a new password for {selectedUser?.username}. Only System Managers can perform this action.
             </DialogDescription>
           </DialogHeader>
           
-          {!tempPassword ? (
-            <div className="space-y-4">
-              <div className="p-4 rounded-lg bg-yellow-500/10 border border-yellow-500/20">
-                <p className="text-sm">
-                  This will:
-                </p>
-                <ul className="text-sm list-disc list-inside mt-2 space-y-1">
-                  <li>Generate a secure password reset link</li>
-                  <li>User can click the link to reset their password</li>
-                  <li>Link is valid for a limited time</li>
-                </ul>
-              </div>
-              
-              <DialogFooter className="flex-col sm:flex-row gap-2">
-                <Button 
-                  variant="outline" 
-                  onClick={() => setResetPasswordDialogOpen(false)}
-                  className="w-full sm:w-auto"
-                >
-                  Cancel
-                </Button>
-                <Button 
-                  onClick={handleResetPassword}
-                  className="bg-yellow-500 hover:bg-yellow-600 w-full sm:w-auto"
-                >
-                  Reset Password
-                </Button>
-              </DialogFooter>
+          <div className="space-y-4">
+            <div className="p-4 rounded-lg bg-yellow-500/10 border border-yellow-500/20">
+              <p className="text-sm font-medium mb-2">⚠️ Important:</p>
+              <ul className="text-sm list-disc list-inside space-y-1">
+                <li>This will immediately change the user's password</li>
+                <li>The user will need to use this new password to log in</li>
+                <li>Make sure to communicate the new password securely</li>
+              </ul>
             </div>
-          ) : (
-            <div className="space-y-4">
-              <div className="p-4 rounded-lg bg-green-500/10 border border-green-500/20">
-                <p className="text-sm font-medium mb-2">Password Reset Link Generated:</p>
-                <div className="flex items-center gap-2">
-                  <code className="flex-1 p-3 bg-background rounded border font-mono text-sm break-all">
-                    {tempPassword}
-                  </code>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => {
-                      navigator.clipboard.writeText(tempPassword);
-                      toast({
-                        title: "Copied",
-                        description: "Reset link copied to clipboard",
-                      });
-                    }}
-                  >
-                    Copy
-                  </Button>
-                </div>
-                <p className="text-xs text-muted-foreground mt-3">
-                  ⚠️ Save this link securely. Send it to {selectedUser?.username} through a secure channel so they can reset their password.
-                </p>
-              </div>
-              
-              <DialogFooter>
-                <Button 
-                  onClick={() => {
-                    setResetPasswordDialogOpen(false);
-                    setTempPassword("");
-                  }}
-                  className="w-full"
-                >
-                  Done
-                </Button>
-              </DialogFooter>
+
+            <div className="space-y-2">
+              <Label htmlFor="new-password">New Password</Label>
+              <Input
+                id="new-password"
+                type="text"
+                placeholder="Enter new password..."
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                className="font-mono"
+              />
+              <p className="text-xs text-muted-foreground">
+                The password will be set exactly as you type it
+              </p>
             </div>
-          )}
+          </div>
+          
+          <DialogFooter className="flex-col sm:flex-row gap-2">
+            <Button 
+              variant="outline" 
+              onClick={() => {
+                setResetPasswordDialogOpen(false);
+                setNewPassword("");
+              }}
+              className="w-full sm:w-auto"
+              disabled={isResetting}
+            >
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleResetPassword}
+              className="bg-yellow-500 hover:bg-yellow-600 w-full sm:w-auto"
+              disabled={!newPassword.trim() || isResetting}
+            >
+              {isResetting ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Changing Password...
+                </>
+              ) : (
+                "Change Password"
+              )}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
