@@ -1005,12 +1005,12 @@ const Settings = () => {
             <CardHeader>
               <CardTitle>Support</CardTitle>
               <CardDescription>
-                Potrebuješ pomoc? Kontaktuj náš support tím
+                Need help? Contact our support team
               </CardDescription>
             </CardHeader>
             <CardContent>
               <Button onClick={() => setShowSupportDialog(true)}>
-                Vytvoriť Support Tiket
+                Create Support Ticket
               </Button>
             </CardContent>
           </Card>

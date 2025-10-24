@@ -16,7 +16,7 @@ export const FireAssistant = () => {
   const [messages, setMessages] = useState<Message[]>([
     {
       role: "assistant",
-      content: "👋 Ahoj! Som FireAssistent, tvoj pomocník pre FireGram. Ako ti môžem pomôcť? (BETA)"
+      content: "👋 Hello! I'm FireAssistant, your helper for FireGram. How can I help you? (BETA)"
     }
   ]);
   const [input, setInput] = useState("");
@@ -105,8 +105,8 @@ export const FireAssistant = () => {
     } catch (error) {
       console.error("Error:", error);
       toast({
-        title: "Chyba",
-        description: "Nepodarilo sa spojiť s asistentom. Skús to prosím znova.",
+        title: "Error",
+        description: "Failed to connect with assistant. Please try again.",
         variant: "destructive",
       });
       setMessages(prev => prev.slice(0, -1));
@@ -200,7 +200,7 @@ export const FireAssistant = () => {
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyPress={handleKeyPress}
-                placeholder="Napíš správu..."
+                placeholder="Type a message..."
                 disabled={isLoading}
                 className="flex-1"
               />

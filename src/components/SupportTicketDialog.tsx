@@ -24,8 +24,8 @@ export const SupportTicketDialog = ({ open, onOpenChange }: SupportTicketDialogP
   const handleSubmit = async () => {
     if (!subject.trim() || !description.trim()) {
       toast({
-        title: "Chyba",
-        description: "Vyplň všetky polia.",
+        title: "Error",
+        description: "Please fill in all fields.",
         variant: "destructive",
       });
       return;
@@ -48,8 +48,8 @@ export const SupportTicketDialog = ({ open, onOpenChange }: SupportTicketDialogP
       if (error) throw error;
 
       toast({
-        title: "Úspech",
-        description: "Tvoj support tiket bol odoslaný.",
+        title: "Success",
+        description: "Your support ticket has been submitted.",
       });
 
       setSubject("");
@@ -59,8 +59,8 @@ export const SupportTicketDialog = ({ open, onOpenChange }: SupportTicketDialogP
     } catch (error) {
       console.error("Error creating ticket:", error);
       toast({
-        title: "Chyba",
-        description: "Nepodarilo sa vytvoriť tiket. Skús to prosím znova.",
+        title: "Error",
+        description: "Failed to create ticket. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -72,46 +72,46 @@ export const SupportTicketDialog = ({ open, onOpenChange }: SupportTicketDialogP
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Nový Support Tiket</DialogTitle>
+          <DialogTitle>New Support Ticket</DialogTitle>
           <DialogDescription>
-            Popíš svoj problém a náš tím ti pomôže čo najskôr.
+            Describe your problem and our team will help you as soon as possible.
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="subject">Predmet</Label>
+            <Label htmlFor="subject">Subject</Label>
             <Input
               id="subject"
               value={subject}
               onChange={(e) => setSubject(e.target.value)}
-              placeholder="Krátky popis problému"
+              placeholder="Brief description of the problem"
               maxLength={100}
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="priority">Priorita</Label>
+            <Label htmlFor="priority">Priority</Label>
             <Select value={priority} onValueChange={setPriority}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="low">Nízka</SelectItem>
-                <SelectItem value="medium">Stredná</SelectItem>
-                <SelectItem value="high">Vysoká</SelectItem>
-                <SelectItem value="urgent">Urgentná</SelectItem>
+                <SelectItem value="low">Low</SelectItem>
+                <SelectItem value="medium">Medium</SelectItem>
+                <SelectItem value="high">High</SelectItem>
+                <SelectItem value="urgent">Urgent</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="description">Popis problému</Label>
+            <Label htmlFor="description">Problem Description</Label>
             <Textarea
               id="description"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="Podrobne popíš čo sa stalo..."
+              placeholder="Describe in detail what happened..."
               rows={6}
               maxLength={2000}
             />
@@ -123,11 +123,11 @@ export const SupportTicketDialog = ({ open, onOpenChange }: SupportTicketDialogP
 
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Zrušiť
+            Cancel
           </Button>
           <Button onClick={handleSubmit} disabled={isSubmitting}>
             {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Odoslať
+            Submit
           </Button>
         </DialogFooter>
       </DialogContent>

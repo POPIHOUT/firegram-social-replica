@@ -64,7 +64,7 @@ export const SupportManagement = () => {
       setTickets((data as any) || []);
     } catch (error: any) {
       toast({
-        title: "Chyba",
+        title: "Error",
         description: error.message,
         variant: "destructive",
       });
@@ -83,7 +83,7 @@ export const SupportManagement = () => {
       setReplies((data as any) || []);
     } catch (error: any) {
       toast({
-        title: "Chyba",
+        title: "Error",
         description: error.message,
         variant: "destructive",
       });
@@ -110,15 +110,15 @@ export const SupportManagement = () => {
       if (error) throw error;
 
       toast({
-        title: "Úspech",
-        description: "Odpoveď bola odoslaná.",
+        title: "Success",
+        description: "Reply has been sent.",
       });
 
       setReplyMessage("");
       await fetchReplies(selectedTicket.id);
     } catch (error: any) {
       toast({
-        title: "Chyba",
+        title: "Error",
         description: error.message,
         variant: "destructive",
       });
@@ -140,15 +140,15 @@ export const SupportManagement = () => {
       if (error) throw error;
 
       toast({
-        title: "Úspech",
-        description: "Status tiketu bol aktualizovaný.",
+        title: "Success",
+        description: "Ticket status has been updated.",
       });
 
       setSelectedTicket({ ...selectedTicket, status });
       await fetchTickets();
     } catch (error: any) {
       toast({
-        title: "Chyba",
+        title: "Error",
         description: error.message,
         variant: "destructive",
       });
@@ -210,7 +210,7 @@ export const SupportManagement = () => {
           <DialogHeader>
             <DialogTitle>{selectedTicket?.subject}</DialogTitle>
             <DialogDescription>
-              Od: @{selectedTicket?.profiles.username} • {selectedTicket && formatDistanceToNow(new Date(selectedTicket.created_at), { addSuffix: true })}
+              From: @{selectedTicket?.profiles.username} • {selectedTicket && formatDistanceToNow(new Date(selectedTicket.created_at), { addSuffix: true })}
             </DialogDescription>
           </DialogHeader>
 
@@ -248,7 +248,7 @@ export const SupportManagement = () => {
               <Textarea
                 value={replyMessage}
                 onChange={(e) => setReplyMessage(e.target.value)}
-                placeholder="Napíš odpoveď..."
+                placeholder="Write a reply..."
                 rows={4}
               />
             </div>
@@ -276,11 +276,11 @@ export const SupportManagement = () => {
 
           <DialogFooter>
             <Button variant="outline" onClick={() => setSelectedTicket(null)}>
-              Zavrieť
+              Close
             </Button>
             <Button onClick={handleReply} disabled={!replyMessage.trim() || isReplying}>
               {isReplying && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Odoslať odpoveď
+              Send Reply
             </Button>
           </DialogFooter>
         </DialogContent>
