@@ -153,7 +153,7 @@ export const FireAssistant = () => {
         <Card className={`fixed ${
           isMobile 
             ? "inset-0 rounded-none" 
-            : "top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-[500px] rounded-lg"
+            : "top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-[400px] rounded-lg"
         } shadow-2xl z-50 flex flex-col`}>
           {/* Header */}
           <div className="flex items-center justify-between p-4 border-b bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-t-lg">
