@@ -933,10 +933,10 @@ const Admin = () => {
 
       if (error) throw error;
 
-      setTempPassword(data.tempPassword);
+      setTempPassword(data.resetLink);
       toast({
-        title: "Password Reset",
-        description: "User password has been reset successfully",
+        title: "Reset Link Generated",
+        description: "Password reset link has been generated successfully",
       });
     } catch (error: any) {
       toast({
@@ -2084,7 +2084,7 @@ const Admin = () => {
               Reset User Password
             </DialogTitle>
             <DialogDescription>
-              Reset password for {selectedUser?.username}. User will be required to change password on next login.
+              Generate a password reset link for {selectedUser?.username}.
             </DialogDescription>
           </DialogHeader>
           
@@ -2095,9 +2095,9 @@ const Admin = () => {
                   This will:
                 </p>
                 <ul className="text-sm list-disc list-inside mt-2 space-y-1">
-                  <li>Generate a temporary password</li>
-                  <li>Force user to change password on next login</li>
-                  <li>User won't be able to use the app until they change it</li>
+                  <li>Generate a secure password reset link</li>
+                  <li>User can click the link to reset their password</li>
+                  <li>Link is valid for a limited time</li>
                 </ul>
               </div>
               
@@ -2120,9 +2120,9 @@ const Admin = () => {
           ) : (
             <div className="space-y-4">
               <div className="p-4 rounded-lg bg-green-500/10 border border-green-500/20">
-                <p className="text-sm font-medium mb-2">Temporary Password Generated:</p>
+                <p className="text-sm font-medium mb-2">Password Reset Link Generated:</p>
                 <div className="flex items-center gap-2">
-                  <code className="flex-1 p-3 bg-background rounded border font-mono text-sm">
+                  <code className="flex-1 p-3 bg-background rounded border font-mono text-sm break-all">
                     {tempPassword}
                   </code>
                   <Button
@@ -2132,7 +2132,7 @@ const Admin = () => {
                       navigator.clipboard.writeText(tempPassword);
                       toast({
                         title: "Copied",
-                        description: "Password copied to clipboard",
+                        description: "Reset link copied to clipboard",
                       });
                     }}
                   >
@@ -2140,7 +2140,7 @@ const Admin = () => {
                   </Button>
                 </div>
                 <p className="text-xs text-muted-foreground mt-3">
-                  ⚠️ Save this password securely. It won't be shown again. Send it to {selectedUser?.username} through a secure channel.
+                  ⚠️ Save this link securely. Send it to {selectedUser?.username} through a secure channel so they can reset their password.
                 </p>
               </div>
               

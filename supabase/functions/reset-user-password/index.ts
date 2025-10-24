@@ -65,41 +65,27 @@ serve(async (req) => {
       );
     }
 
-    // Generate temporary password using database function
-    const { data: tempPasswordData, error: tempPasswordError } = await supabaseAdmin
-      .rpc("generate_temp_password");
+    // Generate password reset link
+    const { data: resetLinkData, error: resetLinkError } = await supabaseAdmin.auth.admin.generateLink({
+      type: 'recovery',
+      email: (await supabaseAdmin.auth.admin.getUserById(targetUserId)).data.user?.email || '',
+    });
 
-    if (tempPasswordError) {
-      throw tempPasswordError;
+    if (resetLinkError) {
+      throw resetLinkError;
     }
 
-    const tempPassword = tempPasswordData;
+    const resetLink = resetLinkData.properties?.action_link;
 
-    // Update user password using admin API
-    const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(
-      targetUserId,
-      { password: tempPassword }
-    );
-
-    if (updateError) {
-      throw updateError;
-    }
-
-    // Set must_change_password flag
-    const { error: profileError } = await supabaseAdmin
-      .from("profiles")
-      .update({ must_change_password: true })
-      .eq("id", targetUserId);
-
-    if (profileError) {
-      throw profileError;
+    if (!resetLink) {
+      throw new Error("Failed to generate reset link");
     }
 
     return new Response(
       JSON.stringify({ 
         success: true, 
-        tempPassword: tempPassword,
-        message: "Password reset successfully. User must change password on next login."
+        resetLink: resetLink,
+        message: "Password reset link generated successfully. Share this link with the user."
       }),
       { 
         status: 200, 
